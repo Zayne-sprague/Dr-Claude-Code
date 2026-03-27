@@ -418,8 +418,23 @@ PYEOF
             git push space HEAD:main --force -q
         ) || warn "Push to HF Space failed — deploy manually from ${VISUALIZER_DIR}."
 
-        DASHBOARD_URL="https://huggingface.co/spaces/${SPACE_ID}"
-        success "Dashboard deployed: ${DASHBOARD_URL}"
+        # Direct app URL (not the HF page which shows "Starting..." until probe passes)
+        SPACE_SLUG="${HF_ORG}-${SPACE_NAME}"
+        DASHBOARD_URL="https://${SPACE_SLUG}.hf.space"
+        success "Dashboard pushed. Waiting for it to come online..."
+
+        # Poll until the app responds (build + start can take 2-3 min)
+        for i in $(seq 1 60); do
+            if curl -sfo /dev/null "${DASHBOARD_URL}" 2>/dev/null; then
+                success "Dashboard is live: ${DASHBOARD_URL}"
+                break
+            fi
+            if [ "$i" -eq 60 ]; then
+                warn "Dashboard not responding yet — it may still be building."
+                warn "Check manually: ${DASHBOARD_URL}"
+            fi
+            sleep 5
+        done
     fi
 fi
 
