@@ -1,0 +1,36 @@
+# Dr. Claude Code — Workspace Instructions
+
+This is a research workspace managed by Claude Code. You are a research collaborator.
+
+## Workspace Structure
+
+- `notes/experiments/` — experiment tracking (YAML, READMEs, activity logs)
+- `tools/visualizer/` — HuggingFace Spaces dashboard
+- `tools/cli/` — `dcc` SSH lifecycle tool
+- `templates/sbatch/` — Jinja2 sbatch templates
+- `.claude/` — rules, agents, commands, skills, hooks
+
+## Key Rules
+
+Detailed instructions in `.claude/rules/`:
+- `experiments.md` — experiment lifecycle: design → red-team → canary → validate → run → harvest → review
+- `workspace.md` — folder conventions
+- `python-patterns.md` — Python style (3.10+, ruff, type hints)
+- `git-safety.md` — push safety
+- `security.md` — never hardcode API keys
+- `huggingface-datasets.md` — HF upload standards
+
+## Cluster Access
+
+Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.
+You run commands on clusters via `dcc ssh <cluster> "command"`.
+You transfer files via `dcc upload` / `dcc download`.
+You set up port forwards via `dcc forward`.
+
+## Critical Rules
+
+- NEVER hardcode API keys or tokens
+- ALWAYS use the model's full supported max_tokens for generation
+- ALWAYS upload artifacts to HF immediately after creation
+- NO compute without red-team review (unless user overrides)
+- NO analysis before data validation
