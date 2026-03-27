@@ -171,7 +171,7 @@ success "All preflight checks passed."
 header "Configuration"
 
 # --- Workspace ---
-DEFAULT_WORKSPACE="${SAVED_WORKSPACE:-${HOME}/Research}"
+DEFAULT_WORKSPACE="${SAVED_WORKSPACE:-$(pwd)}"
 WORKSPACE=$(prompt_default "Workspace location" "$DEFAULT_WORKSPACE")
 WORKSPACE="${WORKSPACE/#\~/$HOME}"
 
