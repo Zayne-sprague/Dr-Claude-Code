@@ -233,7 +233,7 @@ def load_experiment(exp_dir: Path) -> tuple[dict, list[dict], list[dict], list[d
             sub_experiments.append(sub)
 
     # Collect ALL .md and .yaml files related to this experiment, organized by path
-    RESEARCH_ROOT = Path("/Users/rs2020/Research")
+    RESEARCH_ROOT = Path(os.environ.get("WORKSPACE", Path.home() / "Research"))
     SKIP_DIRS = {"old", "__pycache__", ".venv", "node_modules", ".git", "zaynes"}
     experiment_notes = []
     seen_paths = set()

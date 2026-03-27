@@ -144,7 +144,7 @@ export default function ExperimentDetail({ experiment, onBack, onSelectNote, onR
             )}
             {experiment.zayne_summary ? (
               <div className="mt-1 max-w-2xl">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/80">Zayne's Summary</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/80">Researcher's Summary</span>
                 <p className="text-sm text-gray-300 mt-0.5">
                   {experiment.zayne_summary}
                 </p>
@@ -192,10 +192,10 @@ export default function ExperimentDetail({ experiment, onBack, onSelectNote, onR
               </div>
             )}
 
-            {/* Zayne's README */}
+            {/* Researcher's README */}
             {experiment.zayne_readme && (
               <div className="border-l-4 border-amber-500 bg-gray-900/80 rounded-r p-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Zayne's README</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Researcher's README</span>
                 <div className="mt-2">
                   <Markdown content={experiment.zayne_readme} />
                 </div>

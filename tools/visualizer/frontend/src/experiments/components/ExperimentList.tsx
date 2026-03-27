@@ -123,10 +123,10 @@ export default function ExperimentList({ experiments, onSelect, onRefresh, onSum
                           {exp.live_message}
                         </p>
                       )}
-                      {/* Zayne's summary takes priority, fallback to hypothesis */}
+                      {/* Researcher's summary takes priority, fallback to hypothesis */}
                       {exp.zayne_summary ? (
                         <div className="mt-1">
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70">Zayne's Summary</span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70">Researcher's Summary</span>
                           <p className="text-xs text-gray-300 line-clamp-2">
                             {exp.zayne_summary}
                           </p>

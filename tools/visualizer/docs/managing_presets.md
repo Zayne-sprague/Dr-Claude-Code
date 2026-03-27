@@ -138,7 +138,7 @@ This forces the Space to re-download all preset files from `AGG_VIS_PRESETS` wit
 import shutil
 from huggingface_hub import hf_hub_download
 
-local_dir = "/Users/rs2020/Research/tools/visualizers/agg_visualizer/backend/presets"
+local_dir = Path(__file__).parent.parent / "backend" / "presets"
 for vis_type in ["model", "arena", "rlm", "harbor"]:
     try:
         path = hf_hub_download(PRESETS_REPO, f"{vis_type}_presets.json", repo_type="dataset")

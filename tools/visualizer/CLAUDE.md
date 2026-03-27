@@ -1,9 +1,9 @@
-# agg_visualizer — Reasoning Horizons Dashboard
+# Experiment Dashboard Visualizer
 
 Research dashboard with experiment tracking and trace visualization.
 
-- **Live**: https://huggingface.co/spaces/your-org/agg-trace-visualizer
-- **GitHub**: `TAUR-Lab/reasoning-horizons-dashboard`
+- **Live**: https://huggingface.co/spaces/{HF_ORG}/dashboard
+- **GitHub**: `{github-org}/dashboard-repo`
 - **Remotes**: `origin` (GitHub), `space` (HF Space)
 
 ## Updating the Website
@@ -12,22 +12,22 @@ When the user says "update the website", "sync the dashboard", or "push to the w
 
 1. **Build the frontend**:
    ```bash
-   cd /Users/rs2020/Research/tools/visualizers/agg_visualizer/frontend && npm run build
+   cd tools/visualizer/frontend && npm run build
    ```
 
 2. **Import experiment data** (reads local files, uploads to HF dataset):
    ```bash
-   cd /Users/rs2020/Research/tools/visualizers/agg_visualizer && python3 scripts/import_experiments.py
+   cd tools/visualizer && python3 scripts/import_experiments.py
    ```
 
 3. **Sync the live Space** (tells the running app to re-download data from HF):
    ```bash
-   curl -s -X POST https://your-org-agg-trace-visualizer.hf.space/api/experiments/sync
+   curl -s -X POST https://{HF_ORG}-dashboard.hf.space/api/experiments/sync
    ```
 
 4. **Push code to HF Space** (deploys new frontend/backend code):
    ```bash
-   cd /Users/rs2020/Research/tools/visualizers/agg_visualizer
+   cd tools/visualizer
    git add -A && git commit -m "update dashboard"
    git push origin main
    git push space main
@@ -39,7 +39,7 @@ If only `summary_findings.md` changed (no code changes), steps 2-3 are sufficien
 
 ## Summary Findings
 
-- Source file: `/Users/rs2020/Research/notes/experiments/summary_findings.md`
+- Source file: `{WORKSPACE}/notes/experiments/summary_findings.md`
 - Only the user writes this file — never edit it
 - Synced to HF via `import_experiments.py` → served at `GET /api/experiments/summary`
 - Shown on the Experiments page via the "Findings / Summary" button

@@ -198,7 +198,7 @@ export default function TimelineTab({ entries, onArtifactClick }: TimelineTabPro
                       : "text-amber-400"
                   }`}
                 >
-                  {entry.author === "agent" ? "Claude Code" : "Zayne"}
+                  {entry.author === "agent" ? "Claude Code" : "Researcher"}
                 </span>
               </div>
 
