@@ -400,21 +400,28 @@ Research experiment dashboard — powered by Dr. Claude Code.
 READMEOF
 
         # Create the Space repo if it doesn't exist
-        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF' || warn "Space creation via API failed — will try git push."
+        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF'
 import os, sys
 from huggingface_hub import HfApi
 api = HfApi(token=os.environ["DCC_HF_TOKEN"])
+space_id = os.environ["DCC_SPACE_ID"]
 try:
     api.create_repo(
-        repo_id=os.environ["DCC_SPACE_ID"],
+        repo_id=space_id,
         repo_type="space",
+        space_sdk="docker",
         exist_ok=True,
         private=False,
     )
-    print("Space repo ready.")
+    print(f"Space repo ready: {space_id}")
 except Exception as e:
-    print(f"Note: {e}", file=sys.stderr)
+    print(f"Error creating space: {e}", file=sys.stderr)
+    sys.exit(1)
 PYEOF
+        if [ $? -ne 0 ]; then
+            warn "Space creation failed. Check your HF org name and token permissions."
+            DEPLOY_OK=false
+        fi
 
         # Push via git (this also creates the Space if the API call didn't)
         info "Pushing visualizer to HF Space..."
