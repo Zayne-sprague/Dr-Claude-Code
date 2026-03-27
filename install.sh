@@ -85,7 +85,9 @@ prompt_secret() {
     local prompt="$1"
     local result
     read -rsp "$(echo -e "${BLUE}>${RESET} ${prompt}: ")" result
-    echo ""  # newline after hidden input
+    echo "" >&2  # newline after hidden input (to stderr so it doesn't get captured)
+    # Strip whitespace/newlines that sneak in from paste
+    result=$(echo "$result" | tr -d '[:space:]')
     echo "$result"
 }
 
@@ -240,9 +242,7 @@ if [ -z "$HF_TOKEN" ]; then
     info "Create one at: ${BOLD}https://huggingface.co/settings/tokens${RESET} (needs write access)"
     echo ""
 
-    MAX_ATTEMPTS=3
-    ATTEMPT=0
-    while [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; do
+    while true; do
         HF_TOKEN=$(prompt_secret "HuggingFace token (input hidden)")
 
         if [ -z "$HF_TOKEN" ]; then
@@ -259,18 +259,14 @@ if [ -z "$HF_TOKEN" ]; then
             success "Authenticated as: ${HF_USERNAME}"
             break
         else
-            ATTEMPT=$((ATTEMPT + 1))
-            if [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; then
-                warn "Try again (attempt $((ATTEMPT + 1))/${MAX_ATTEMPTS})."
-                warn "Make sure the token has write access and is not expired."
+            warn "Make sure the token has write access and is not expired."
+            if prompt_yes_no "Try again?" "y"; then
                 HF_TOKEN=""
+                continue
             else
-                warn "Max attempts reached."
-                if prompt_yes_no "Skip HuggingFace setup? You can add it later." "y"; then
-                    HF_TOKEN=""
-                    break
-                fi
-                ATTEMPT=0  # let them keep trying
+                warn "Skipping HuggingFace setup. You can add it later."
+                HF_TOKEN=""
+                break
             fi
         fi
     done
