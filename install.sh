@@ -187,20 +187,34 @@ validate_hf_token() {
         pip install --quiet huggingface_hub 2>/dev/null || python3 -m pip install --quiet huggingface_hub 2>/dev/null || true
     fi
 
-    local username
-    username=$(DCC_HF_TOKEN="$token" python3 -c "
+    # Write a temp Python script to avoid any bash interpolation issues
+    local tmp_script
+    tmp_script=$(mktemp /tmp/dcc_validate_XXXXXX.py)
+    cat > "$tmp_script" << 'PYEOF'
 import os, sys
 try:
     from huggingface_hub import HfApi
-    api = HfApi(token=os.environ['DCC_HF_TOKEN'])
-    info = api.whoami()
-    print(info['name'])
+    token = os.environ.get("DCC_HF_TOKEN", "")
+    if not token:
+        print("No token provided", file=sys.stderr)
+        sys.exit(1)
+    api = HfApi(token=token)
+    user_info = api.whoami()
+    print(user_info["name"])
+except ImportError:
+    print("huggingface_hub not installed", file=sys.stderr)
+    sys.exit(1)
 except Exception as e:
     print(str(e), file=sys.stderr)
     sys.exit(1)
-" 2>/tmp/dcc_hf_error)
+PYEOF
 
-    if [ $? -eq 0 ] && [ -n "$username" ]; then
+    local username
+    username=$(DCC_HF_TOKEN="$token" python3 "$tmp_script" 2>/tmp/dcc_hf_error)
+    local exit_code=$?
+    rm -f "$tmp_script"
+
+    if [ $exit_code -eq 0 ] && [ -n "$username" ]; then
         HF_USERNAME="$username"
         return 0
     else
