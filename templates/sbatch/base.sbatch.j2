@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --job-name={{ job_name }}
+#SBATCH --partition={{ partition }}
+#SBATCH {{ gpu_directive }}
+#SBATCH --time={{ time_limit | default("8:00:00") }}
+#SBATCH --output={{ scratch }}/logs/%j.out
+#SBATCH --error={{ scratch }}/logs/%j.err
+{% if slurm_account %}#SBATCH --account={{ slurm_account }}{% endif %}
+{% if exclude_nodes %}#SBATCH --exclude={{ exclude_nodes }}{% endif %}
+
+# === Environment Setup ===
+{% for module in module_loads %}
+module load {{ module }}
+{% endfor %}
+
+{% if conda_env %}
+source activate {{ conda_env }}
+{% endif %}
+
+# Redirect caches to scratch (avoid quota issues on home)
+export HF_HOME={{ scratch }}/.cache/huggingface
+export TORCH_HOME={{ scratch }}/.cache/torch
+export TMPDIR={{ scratch }}/tmp
+mkdir -p $HF_HOME $TORCH_HOME $TMPDIR {{ scratch }}/logs
+
+{{ body }}

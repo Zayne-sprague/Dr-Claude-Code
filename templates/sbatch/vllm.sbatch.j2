@@ -1,0 +1,108 @@
+#!/bin/bash
+#SBATCH --job-name={{ job_name | default("vllm-serve") }}
+#SBATCH --partition={{ partition }}
+#SBATCH {{ gpu_directive }}
+#SBATCH --time={{ time_limit | default("8:00:00") }}
+#SBATCH --output={{ scratch }}/logs/%j.out
+#SBATCH --error={{ scratch }}/logs/%j.err
+{% if slurm_account %}#SBATCH --account={{ slurm_account }}{% endif %}
+{% if exclude_nodes %}#SBATCH --exclude={{ exclude_nodes }}{% endif %}
+
+# === Environment Setup ===
+{% for module in module_loads %}
+module load {{ module }}
+{% endfor %}
+
+{% if conda_env %}
+source activate {{ conda_env }}
+{% endif %}
+
+export HF_HOME={{ scratch }}/.cache/huggingface
+export TORCH_HOME={{ scratch }}/.cache/torch
+export TMPDIR={{ scratch }}/tmp
+mkdir -p $HF_HOME $TORCH_HOME $TMPDIR {{ scratch }}/logs
+
+# === Find Open Port ===
+find_open_port() {
+    local port
+    for port in $(shuf -i 8000-9999 -n 100); do
+        if ! ss -tuln 2>/dev/null | grep -q ":${port} " && \
+           ! lsof -i ":${port}" &>/dev/null 2>&1; then
+            echo "$port"
+            return 0
+        fi
+    done
+    # fallback: let OS pick
+    python3 -c "import socket; s=socket.socket(); s.bind(('',0)); print(s.getsockname()[1]); s.close()"
+}
+
+VLLM_PORT=$(find_open_port)
+VLLM_NODE=$(hostname)
+
+# Broadcast location so callers can parse from logs
+echo "VLLM_PORT=${VLLM_PORT}"
+echo "VLLM_NODE=${VLLM_NODE}"
+echo "VLLM_BASE_URL=http://${VLLM_NODE}:${VLLM_PORT}/v1"
+
+# === Graceful Shutdown ===
+VLLM_PID=""
+cleanup() {
+    echo "[vllm] Caught signal — shutting down server (PID=${VLLM_PID})"
+    if [ -n "$VLLM_PID" ] && kill -0 "$VLLM_PID" 2>/dev/null; then
+        kill -SIGTERM "$VLLM_PID"
+        # Give it up to 30 s to exit cleanly
+        for i in $(seq 1 30); do
+            kill -0 "$VLLM_PID" 2>/dev/null || break
+            sleep 1
+        done
+        kill -SIGKILL "$VLLM_PID" 2>/dev/null || true
+    fi
+    echo "[vllm] Shutdown complete."
+    exit 0
+}
+trap cleanup SIGTERM SIGINT EXIT
+
+# === Launch vLLM Server ===
+python -m vllm.entrypoints.openai.api_server \
+    --model {{ model }} \
+    --tensor-parallel-size {{ tensor_parallel_size | default(1) }} \
+    --port "${VLLM_PORT}" \
+    --host 0.0.0.0 \
+    --trust-remote-code \
+    {% if max_model_len %}--max-model-len {{ max_model_len }} \{% endif %}
+    {% if gpu_memory_utilization %}--gpu-memory-utilization {{ gpu_memory_utilization }} \{% endif %}
+    {% if extra_vllm_args %}{{ extra_vllm_args }} \{% endif %}
+    &
+
+VLLM_PID=$!
+echo "[vllm] Server launched (PID=${VLLM_PID}), waiting for readiness..."
+
+# === Wait for Startup (up to 10 min) ===
+HEALTH_URL="http://localhost:${VLLM_PORT}/health"
+MAX_WAIT=600  # seconds
+ELAPSED=0
+READY=0
+
+while [ $ELAPSED -lt $MAX_WAIT ]; do
+    if curl -sf "$HEALTH_URL" >/dev/null 2>&1; then
+        READY=1
+        break
+    fi
+    # Exit early if process died
+    if ! kill -0 "$VLLM_PID" 2>/dev/null; then
+        echo "[vllm] ERROR: server process exited unexpectedly" >&2
+        exit 1
+    fi
+    sleep 5
+    ELAPSED=$((ELAPSED + 5))
+done
+
+if [ $READY -eq 0 ]; then
+    echo "[vllm] ERROR: server did not become healthy within ${MAX_WAIT}s" >&2
+    exit 1
+fi
+
+echo "[vllm] Server is ready at http://${VLLM_NODE}:${VLLM_PORT}/v1"
+
+# === Wait on Server ===
+wait "$VLLM_PID"

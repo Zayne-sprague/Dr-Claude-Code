@@ -1,0 +1,58 @@
+#!/bin/bash
+#SBATCH --job-name={{ job_name | default("training") }}
+#SBATCH --partition={{ partition }}
+#SBATCH {{ gpu_directive }}
+#SBATCH --time={{ time_limit | default("8:00:00") }}
+#SBATCH --output={{ scratch }}/logs/%j.out
+#SBATCH --error={{ scratch }}/logs/%j.err
+{% if slurm_account %}#SBATCH --account={{ slurm_account }}{% endif %}
+{% if exclude_nodes %}#SBATCH --exclude={{ exclude_nodes }}{% endif %}
+
+# === Environment Setup ===
+{% for module in module_loads %}
+module load {{ module }}
+{% endfor %}
+
+{% if conda_env %}
+source activate {{ conda_env }}
+{% endif %}
+
+export HF_HOME={{ scratch }}/.cache/huggingface
+export TORCH_HOME={{ scratch }}/.cache/torch
+export TMPDIR={{ scratch }}/tmp
+mkdir -p $HF_HOME $TORCH_HOME $TMPDIR {{ scratch }}/logs
+
+# === Checkpoint Directory ===
+OUTPUT_DIR="{{ output_dir }}"
+mkdir -p "${OUTPUT_DIR}"
+
+# === Auto-detect Latest Checkpoint ===
+RESUME_ARGS=""
+LATEST_CKPT=$(ls -d "${OUTPUT_DIR}"/checkpoint-* 2>/dev/null | sort -V | tail -1)
+if [ -n "$LATEST_CKPT" ]; then
+    echo "[training] Resuming from checkpoint: ${LATEST_CKPT}"
+    RESUME_ARGS="--resume_from_checkpoint ${LATEST_CKPT}"
+else
+    echo "[training] No checkpoint found — starting from scratch."
+fi
+
+{% if wandb_project %}
+# === W&B Setup ===
+export WANDB_PROJECT="{{ wandb_project }}"
+{% if wandb_run_name %}export WANDB_RUN_NAME="{{ wandb_run_name }}"{% endif %}
+{% if wandb_entity %}export WANDB_ENTITY="{{ wandb_entity }}"{% endif %}
+export WANDB_DIR="{{ scratch }}/wandb"
+mkdir -p "$WANDB_DIR"
+{% endif %}
+
+# === Run Training ===
+{{ train_cmd }} \
+    --output_dir "${OUTPUT_DIR}" \
+    ${RESUME_ARGS} \
+    {% if extra_train_args %}{{ extra_train_args }} \{% endif %}
+    {% if wandb_project %}--report_to wandb \{% endif %}
+    "$@"
+
+EXIT_CODE=$?
+echo "[training] Training finished with exit code ${EXIT_CODE}."
+exit $EXIT_CODE
