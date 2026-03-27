@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Cleanup script for testing the installer from scratch.
-# Removes the test workspace, HF Space, and local state so you can re-run install.sh cleanly.
+# Removes workspace contents (keeps the dir + this script + install.sh), deletes HF Space, resets state.
 #
-# Usage: bash dev/cleanup-test.sh [workspace_path]
-#        Default workspace: reads from ~/.dcc/config.yaml or uses ~/Blog/ddrc
+# Usage: bash cleanup-test.sh [workspace_path]
+#        Default workspace: reads from ~/.dcc/config.yaml
 
 set -euo pipefail
 
@@ -15,22 +15,29 @@ RESET='\033[0m'
 
 info()  { echo -e "${YELLOW}[cleanup]${RESET} $*"; }
 done_() { echo -e "${GREEN}[cleanup]${RESET} $*"; }
-err()   { echo -e "${RED}[cleanup]${RESET} $*"; }
 
 # Determine workspace
 WORKSPACE="${1:-}"
 if [ -z "$WORKSPACE" ] && [ -f ~/.dcc/config.yaml ]; then
     WORKSPACE=$(grep '^workspace:' ~/.dcc/config.yaml 2>/dev/null | sed 's/workspace: *//' | tr -d '"')
 fi
-WORKSPACE="${WORKSPACE:-$HOME/Blog/ddrc}"
+if [ -z "$WORKSPACE" ]; then
+    echo "No workspace found. Pass it as an argument: bash cleanup-test.sh /path/to/workspace"
+    exit 1
+fi
+
+# Find this script's own path so we can preserve it
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 
 echo -e "${BOLD}${RED}=== Dr-Claude-Code Test Cleanup ===${RESET}"
 echo ""
-echo "This will remove:"
-echo "  - Workspace:     ${WORKSPACE}"
-echo "  - HF Space:      (if configured)"
-echo "  - ~/.dcc/        (config + install state)"
-echo "  - dcc CLI        (from tools venv)"
+echo "Workspace: ${WORKSPACE}"
+echo ""
+echo "Will remove:"
+echo "  - Everything in workspace EXCEPT install.sh and this cleanup script"
+echo "  - HF Space (if configured)"
+echo "  - ~/.dcc/"
 echo ""
 read -rp "Are you sure? (type 'yes'): " CONFIRM
 if [ "$CONFIRM" != "yes" ]; then
@@ -58,13 +65,34 @@ except Exception as e:
 " 2>/dev/null || info "Could not delete HF Space (may need manual deletion)"
 fi
 
-# --- Remove workspace ---
+# --- Clean workspace contents (keep dir, install.sh, cleanup script) ---
 if [ -d "$WORKSPACE" ]; then
-    info "Removing workspace: ${WORKSPACE}"
-    rm -rf "$WORKSPACE"
-    done_ "Workspace removed."
+    info "Cleaning workspace contents..."
+
+    # Copy install.sh and cleanup script to temp
+    TMPHOLD=$(mktemp -d)
+    [ -f "${WORKSPACE}/install.sh" ] && cp "${WORKSPACE}/install.sh" "${TMPHOLD}/install.sh"
+    if [ -f "$SCRIPT_PATH" ]; then
+        mkdir -p "${TMPHOLD}/dev"
+        cp "$SCRIPT_PATH" "${TMPHOLD}/dev/cleanup-test.sh"
+    fi
+
+    # Remove everything
+    rm -rf "${WORKSPACE:?}"/*
+    rm -rf "${WORKSPACE}"/.[!.]* 2>/dev/null || true  # hidden files (.claude, .tools-venv, etc.)
+
+    # Restore kept files
+    [ -f "${TMPHOLD}/install.sh" ] && cp "${TMPHOLD}/install.sh" "${WORKSPACE}/install.sh" && chmod +x "${WORKSPACE}/install.sh"
+    if [ -f "${TMPHOLD}/dev/cleanup-test.sh" ]; then
+        mkdir -p "${WORKSPACE}/dev"
+        cp "${TMPHOLD}/dev/cleanup-test.sh" "${WORKSPACE}/dev/cleanup-test.sh"
+        chmod +x "${WORKSPACE}/dev/cleanup-test.sh"
+    fi
+    rm -rf "$TMPHOLD"
+
+    done_ "Workspace cleaned (kept install.sh + dev/cleanup-test.sh)"
 else
-    info "Workspace not found: ${WORKSPACE} (already clean)"
+    info "Workspace not found: ${WORKSPACE}"
 fi
 
 # --- Remove ~/.dcc ---
@@ -78,10 +106,10 @@ fi
 if command -v dcc &>/dev/null; then
     DCC_PATH=$(command -v dcc)
     if [[ "$DCC_PATH" != *".tools-venv"* ]]; then
-        info "dcc found at ${DCC_PATH} (not in a tools-venv). Uninstalling..."
+        info "Uninstalling global dcc..."
         pip uninstall -y dcc 2>/dev/null || true
     fi
 fi
 
 echo ""
-done_ "Clean. Ready to re-run install.sh"
+done_ "Clean. Ready to re-run: ./install.sh"
