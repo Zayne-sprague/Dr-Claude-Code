@@ -381,9 +381,26 @@ else
     if [ "$DEPLOY_OK" = "true" ]; then
         SPACE_NAME="dr-claude-dashboard"
         SPACE_ID="${HF_ORG}/${SPACE_NAME}"
-        info "Creating HuggingFace Space: ${SPACE_ID} ..."
 
-        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF' || { warn "Space creation failed — you can push manually later."; DEPLOY_OK=false; }
+        info "Deploying dashboard to HuggingFace Space: ${SPACE_ID} ..."
+
+        # Ensure the visualizer README has the correct Space metadata
+        cat > "${VISUALIZER_DIR}/README.md" <<READMEOF
+---
+title: Research Dashboard
+emoji: 🔬
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
+Research experiment dashboard — powered by Dr. Claude Code.
+READMEOF
+
+        # Create the Space repo if it doesn't exist
+        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF' || warn "Space creation via API failed — will try git push."
 import os, sys
 from huggingface_hub import HfApi
 api = HfApi(token=os.environ["DCC_HF_TOKEN"])
@@ -391,20 +408,16 @@ try:
     api.create_repo(
         repo_id=os.environ["DCC_SPACE_ID"],
         repo_type="space",
-        space_sdk="docker",
         exist_ok=True,
         private=False,
     )
-    print("Space ready.")
+    print("Space repo ready.")
 except Exception as e:
-    print(f"Error: {e}", file=sys.stderr)
-    sys.exit(1)
+    print(f"Note: {e}", file=sys.stderr)
 PYEOF
-    fi
 
-    if [ "$DEPLOY_OK" = "true" ]; then
+        # Push via git (this also creates the Space if the API call didn't)
         info "Pushing visualizer to HF Space..."
-        SPACE_REPO="https://huggingface.co/spaces/${SPACE_ID}"
         (
             cd "$VISUALIZER_DIR"
             if [ ! -d ".git" ]; then
@@ -412,6 +425,8 @@ PYEOF
                 git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
             elif ! git remote get-url space &>/dev/null; then
                 git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
+            else
+                git remote set-url space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
             fi
             git add -A
             git diff --cached --quiet || git commit -q -m "deploy: dr-claude-code visualizer"
