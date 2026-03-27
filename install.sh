@@ -443,20 +443,35 @@ PYEOF
         # Direct app URL (not the HF page which shows "Starting..." until probe passes)
         SPACE_SLUG="${HF_ORG}-${SPACE_NAME}"
         DASHBOARD_URL="https://${SPACE_SLUG}.hf.space"
-        success "Dashboard pushed. Waiting for it to come online..."
+        DASHBOARD_LIVE=false
 
-        # Poll until the app responds (build + start can take 2-3 min)
-        for i in $(seq 1 60); do
-            if curl -sfo /dev/null "${DASHBOARD_URL}" 2>/dev/null; then
+        info "Dashboard pushed. HF is building the Docker image — this takes 3-5 minutes."
+        printf "${BLUE}[dcc]${RESET} Waiting: "
+
+        for i in $(seq 1 90); do
+            # Check if app responds with 200
+            HTTP_CODE=$(curl -so /dev/null -w "%{http_code}" "${DASHBOARD_URL}" 2>/dev/null || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+                echo ""
                 success "Dashboard is live: ${DASHBOARD_URL}"
+                DASHBOARD_LIVE=true
                 break
             fi
-            if [ "$i" -eq 60 ]; then
-                warn "Dashboard not responding yet — it may still be building."
-                warn "Check manually: ${DASHBOARD_URL}"
+            # Show progress dots with elapsed time every 30s
+            if (( i % 6 == 0 )); then
+                printf " %ds" $((i * 5))
+            else
+                printf "."
             fi
             sleep 5
         done
+
+        if [ "$DASHBOARD_LIVE" = "false" ]; then
+            echo ""
+            warn "Dashboard still building (this is normal for first deploy)."
+            warn "It will be live at: ${DASHBOARD_URL}"
+            warn "Check build status: https://huggingface.co/spaces/${SPACE_ID}"
+        fi
     fi
 fi
 
@@ -523,7 +538,7 @@ echo ""
 echo "     > Help me set up my compute cluster"
 echo ""
 
-if [ -n "${DASHBOARD_URL:-}" ]; then
+if [ "${DASHBOARD_LIVE:-false}" = "true" ]; then
     echo -e "${BOLD}Opening dashboard...${RESET}"
     case "$(uname -s)" in
         Darwin) open "$DASHBOARD_URL" ;;
