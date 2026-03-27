@@ -188,11 +188,11 @@ validate_hf_token() {
     fi
 
     local username
-    username=$(python3 -c "
-from huggingface_hub import HfApi
-import sys
+    username=$(DCC_HF_TOKEN="$token" python3 -c "
+import os, sys
 try:
-    api = HfApi(token='${token}')
+    from huggingface_hub import HfApi
+    api = HfApi(token=os.environ['DCC_HF_TOKEN'])
     info = api.whoami()
     print(info['name'])
 except Exception as e:
@@ -373,12 +373,13 @@ else
         SPACE_ID="${HF_ORG}/${SPACE_NAME}"
         info "Creating HuggingFace Space: ${SPACE_ID} ..."
 
-        "${TOOLS_VENV}/bin/python" - <<PYEOF || { warn "Space creation failed — you can push manually later."; DEPLOY_OK=false; }
+        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF' || { warn "Space creation failed — you can push manually later."; DEPLOY_OK=false; }
+import os, sys
 from huggingface_hub import HfApi
-api = HfApi(token="${HF_TOKEN}")
+api = HfApi(token=os.environ["DCC_HF_TOKEN"])
 try:
     api.create_repo(
-        repo_id="${SPACE_ID}",
+        repo_id=os.environ["DCC_SPACE_ID"],
         repo_type="space",
         space_sdk="docker",
         exist_ok=True,
@@ -386,7 +387,6 @@ try:
     )
     print("Space ready.")
 except Exception as e:
-    import sys
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 PYEOF
@@ -430,7 +430,7 @@ cat > "$DCC_CONFIG_FILE" <<YAML
 # Dr-Claude-Code configuration
 workspace: ${WORKSPACE}
 hf_org: ${HF_ORG}
-hf_token: ${HF_TOKEN}
+hf_token_set: $([ -n "${HF_TOKEN}" ] && echo "true" || echo "false")
 dashboard_url: ${DASHBOARD_URL:-""}
 tools_venv: ${WORKSPACE}/.tools-venv
 installed_at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -439,7 +439,7 @@ success "Config written to ${DCC_CONFIG_FILE}"
 
 # HF login
 if [ -n "$HF_TOKEN" ]; then
-    "${TOOLS_VENV}/bin/python" -c "from huggingface_hub import login; login(token='${HF_TOKEN}', add_to_git_credential=False)" 2>/dev/null \
+    DCC_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" -c "import os; from huggingface_hub import login; login(token=os.environ['DCC_HF_TOKEN'], add_to_git_credential=False)" 2>/dev/null \
         && success "Logged in to HuggingFace" \
         || warn "HF login failed — run 'huggingface-cli login' manually."
 fi
