@@ -418,33 +418,20 @@ pinned: false
 Research experiment dashboard — powered by Dr. Claude Code.
 READMEOF
 
-        # Deploy via git push — the README YAML frontmatter tells HF this is a Docker Space.
-        # We do NOT use create_repo API (it has a metadata bug that leaves Spaces broken).
-        # Instead: push README first to create the Space, then push the full code.
+        # Deploy via single git push — README YAML frontmatter tells HF this is a Docker Space.
         info "Deploying to HF Space..."
         (
             cd "$VISUALIZER_DIR"
 
             # Ensure neither .gitignore nor .dockerignore excludes frontend/dist/ (we ship pre-built)
-            if grep -q "frontend/dist" .gitignore 2>/dev/null; then
-                sed -i.bak '/frontend\/dist/d' .gitignore && rm -f .gitignore.bak
-            fi
-            if grep -q "frontend/dist" .dockerignore 2>/dev/null; then
-                sed -i.bak '/frontend\/dist/d' .dockerignore && rm -f .dockerignore.bak
-            fi
+            sed -i.bak '/frontend\/dist/d' .gitignore 2>/dev/null; rm -f .gitignore.bak
+            sed -i.bak '/frontend\/dist/d' .dockerignore 2>/dev/null; rm -f .dockerignore.bak
 
-            # Fresh git repo each deploy
+            # Fresh git repo — single commit with everything
             rm -rf .git
             git init -q
             git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
 
-            # First push: just the README to create the Space with correct SDK metadata
-            git add README.md
-            git commit -q -m "init: create docker space"
-            info "  Creating Space via git push..."
-            git push space HEAD:main --force 2>&1 | grep -vE "(Invalid input|→ at |^remote: $|^400$|✖)" || true
-
-            # Second push: everything including pre-built frontend
             git add -A
             DIST_COUNT=$(git ls-files frontend/dist/ | wc -l | tr -d ' ')
             if [ "$DIST_COUNT" -eq 0 ]; then
@@ -454,7 +441,7 @@ READMEOF
             info "  ${DIST_COUNT} frontend files staged"
 
             git commit -q -m "deploy: dr-claude-code visualizer"
-            info "  Pushing full code..."
+            info "  Pushing to HF Space..."
             git push space HEAD:main --force 2>&1 | grep -vE "(Invalid input|→ at |^remote: $|^400$|✖)" || true
         ) || warn "Push to HF Space failed — deploy manually from ${VISUALIZER_DIR}."
 
