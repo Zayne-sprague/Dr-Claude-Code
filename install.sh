@@ -425,9 +425,12 @@ READMEOF
         (
             cd "$VISUALIZER_DIR"
 
-            # Ensure .gitignore does NOT exclude frontend/dist/ (we ship pre-built)
+            # Ensure neither .gitignore nor .dockerignore excludes frontend/dist/ (we ship pre-built)
             if grep -q "frontend/dist" .gitignore 2>/dev/null; then
                 sed -i.bak '/frontend\/dist/d' .gitignore && rm -f .gitignore.bak
+            fi
+            if grep -q "frontend/dist" .dockerignore 2>/dev/null; then
+                sed -i.bak '/frontend\/dist/d' .dockerignore && rm -f .dockerignore.bak
             fi
 
             # Fresh git repo each deploy
