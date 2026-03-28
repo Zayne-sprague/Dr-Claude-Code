@@ -125,23 +125,37 @@ class SSHSessionManager:
             return True, "busy (timeout on check — VPN lag suspected)"
 
     def connect(self, cluster: str, timeout: int = 120) -> RemoteResult:
+        cfg = self._cluster_cfg(cluster)
+        uses_2fa = cfg.get("uses_2fa", False) or cfg.get("two_factor", False)
         args = self._base_ssh_args(cluster)
-        # Insert -f flag before the host (last element)
         host = args[-1]
-        args = args[:-1] + ["-f", host, "while true; do sleep 30; done"]
 
         start = time.monotonic()
-        result = subprocess.run(
-            args,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
+
+        if uses_2fa:
+            # 2FA needs an interactive terminal — run foreground SSH that
+            # establishes the ControlMaster, then exits cleanly.
+            # The ControlPersist setting keeps the socket alive after this exits.
+            interactive_args = args[:-1] + [host, "echo 'Auth OK'"]
+            result = subprocess.run(
+                interactive_args,
+                timeout=timeout,
+            )
+        else:
+            # No 2FA — background immediately with -f
+            args = args[:-1] + ["-f", host, "while true; do sleep 30; done"]
+            result = subprocess.run(
+                args,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+
         duration = time.monotonic() - start
 
         return RemoteResult(
-            stdout=result.stdout,
-            stderr=result.stderr,
+            stdout=getattr(result, 'stdout', '') or '',
+            stderr=getattr(result, 'stderr', '') or '',
             returncode=result.returncode,
             cluster=cluster,
             command="connect",

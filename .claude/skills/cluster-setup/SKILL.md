@@ -52,12 +52,27 @@ Route to the appropriate phase based on their answer.
 
 ### Step 1.1 — Gather connection info
 
-Ask the user for:
+**FIRST: Check `~/.ssh/config` for existing aliases.**
+
+```bash
+cat ~/.ssh/config 2>/dev/null
+```
+
+If the user's cluster name already appears as a `Host` entry in their SSH config, you already have the hostname, user, port, and key. Tell the user: "I found `<name>` in your SSH config — using hostname `<hostname>`, user `<user>`." Use those values directly.
+
+**Hostname validation:** A valid SSH hostname looks like:
+- A FQDN: `login.torch.hpc.nyu.edu`, `frontera.tacc.utexas.edu`
+- An IP: `192.168.1.100`
+- An SSH config alias: a short name that appears as `Host <name>` in `~/.ssh/config`
+
+If the user gives just a short name like `torch` and it's NOT in `~/.ssh/config`, ask: "Is `torch` a hostname or an alias? I need the full hostname like `login.torch.hpc.nyu.edu`."
+
+Ask the user for (skip any you already found in SSH config):
 - **Cluster nickname** (e.g., `torch`, `vista`, `empire`) — short identifier used in `dcc` commands
 - **Hostname** (e.g., `greene.hpc.nyu.edu`) — the SSH target. If user gives `user@host`, parse both.
 - **Username**
 - **VPN required?** (yes/no) — if yes, remind user to connect VPN before each auth
-- **2FA required?** (yes/no) — note: 2FA clusters need ControlMaster SSH to avoid repeated prompts
+- **2FA required?** (yes/no) — note: 2FA clusters need ControlMaster SSH to avoid repeated prompts. If the SSH config has `ControlMaster` entries, the cluster likely uses 2FA.
 
 ### Step 1.2 — Write initial config and authenticate
 
