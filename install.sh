@@ -504,9 +504,13 @@ success "Config written to ${DCC_CONFIG_FILE}"
 
 # HF login
 if [ -n "$HF_TOKEN" ]; then
-    DCC_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" -c "import os; from huggingface_hub import login; login(token=os.environ['DCC_HF_TOKEN'], add_to_git_credential=False)" 2>/dev/null \
+    DCC_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" - <<'PYEOF' 2>/dev/null \
         && success "Logged in to HuggingFace" \
         || warn "HF login failed — run 'huggingface-cli login' manually."
+import os
+from huggingface_hub import login
+login(token=os.environ["DCC_HF_TOKEN"], add_to_git_credential=False)
+PYEOF
 fi
 
 # Clean up install state (successful install)
