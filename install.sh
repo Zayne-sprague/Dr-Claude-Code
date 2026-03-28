@@ -400,9 +400,12 @@ Research experiment dashboard — powered by Dr. Claude Code.
 READMEOF
 
         # Create the Space repo if it doesn't exist
-        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF' 2>/dev/null
-import os, sys, warnings
+        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF'
+import os, sys, warnings, io
 warnings.filterwarnings("ignore")
+# Capture stderr to filter HF API noise
+_real_stderr = sys.stderr
+sys.stderr = io.StringIO()
 
 from huggingface_hub import HfApi
 api = HfApi(token=os.environ["DCC_HF_TOKEN"])
@@ -417,7 +420,7 @@ try:
     )
     print(f"Space repo ready: {space_id}")
 except Exception as e:
-    # Print to stdout so it's visible (stderr is suppressed above)
+    sys.stderr = _real_stderr
     print(f"Error creating space: {e}")
     sys.exit(1)
 PYEOF
@@ -440,7 +443,8 @@ PYEOF
             fi
             git add -A
             git diff --cached --quiet || git commit -q -m "deploy: dr-claude-code visualizer"
-            git push space HEAD:main --force -q
+            # Suppress HF's noisy 400 validation warnings during Docker Space pushes
+            git push space HEAD:main --force 2>&1 | grep -vE "(Invalid input|→ at |^remote: $|^400$|✖)" || true
         ) || warn "Push to HF Space failed — deploy manually from ${VISUALIZER_DIR}."
 
         # Direct app URL (not the HF page which shows "Starting..." until probe passes)
