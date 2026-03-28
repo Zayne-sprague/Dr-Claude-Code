@@ -449,6 +449,7 @@ READMEOF
                 git remote set-url space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
             fi
             git add -A
+            git add -f frontend/dist/  # force-add even if previously gitignored
             git diff --cached --quiet || git commit -q -m "deploy: dr-claude-code visualizer"
             # Suppress HF's noisy 400 validation warnings during Docker Space pushes
             git push space HEAD:main --force 2>&1 | grep -vE "(Invalid input|→ at |^remote: $|^400$|✖)" || true
