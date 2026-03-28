@@ -54,14 +54,42 @@ Route to the appropriate phase based on their answer.
 
 Ask the user for:
 - **Cluster nickname** (e.g., `torch`, `vista`, `empire`) — short identifier used in `dcc` commands
-- **Hostname** (e.g., `greene.hpc.nyu.edu`)
+- **Hostname** (e.g., `greene.hpc.nyu.edu`) — the SSH target. If user gives `user@host`, parse both.
 - **Username**
 - **VPN required?** (yes/no) — if yes, remind user to connect VPN before each auth
 - **2FA required?** (yes/no) — note: 2FA clusters need ControlMaster SSH to avoid repeated prompts
-- **Default partition** (can be detected in next step)
-- **Default SLURM account** (e.g., `courant`, `gpu_users`) — needed for `sbatch --account=`
 
-### Step 1.2 — Test basic SSH connectivity
+### Step 1.2 — Write initial config and authenticate
+
+**CRITICAL: Write the config BEFORE attempting any dcc commands.**
+`dcc auth` and `dcc ssh` read from `~/.dcc/clusters.yaml` — they will error if the cluster isn't configured yet.
+
+Write a minimal cluster entry to `~/.dcc/clusters.yaml` using the info gathered so far:
+
+```yaml
+clusters:
+  <nickname>:
+    type: slurm
+    hostname: <hostname>
+    user: <username>
+    vpn_required: <true|false>
+    uses_2fa: <true|false>
+    default_partition: ""
+    partitions: {}
+    slurm_account: ""
+    module_loads: []
+    scratch_path: "$SCRATCH"
+    conda_path: "$CONDA_PREFIX"
+    gpu_directive_format: "--gpus={count}"
+```
+
+Then tell the user to authenticate:
+
+> "I've written the cluster config. Now connect to it:
+> `! dcc auth <nickname>`
+> (Make sure VPN is connected if required. You'll need to complete 2FA.)"
+
+Wait for the user to confirm they're connected. Then verify:
 
 ```bash
 dcc ssh <nickname> "echo 'SSH OK' && hostname"
@@ -69,7 +97,7 @@ dcc ssh <nickname> "echo 'SSH OK' && hostname"
 
 If this fails:
 - Check if user is on VPN (if required)
-- Check if `dcc auth <nickname>` has been run yet — if not, tell the user: "Run `dcc auth <nickname>` first to establish the ControlMaster connection."
+- Check if `dcc auth <nickname>` succeeded
 - If still failing, ask for the full SSH config and debug manually
 
 ### Step 1.3 — Detect GPU partitions
@@ -117,9 +145,9 @@ If output shows generic GPUs (e.g., `gpu:8`), use generic: `--gres=gpu:1`.
 
 Record this for sbatch template generation.
 
-### Step 1.6 — Write cluster config
+### Step 1.6 — Update cluster config with detected info
 
-Append to `~/.dcc/clusters.yaml`:
+Update the entry in `~/.dcc/clusters.yaml` with all detected details:
 
 ```yaml
 clusters:
