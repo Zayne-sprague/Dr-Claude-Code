@@ -418,26 +418,10 @@ pinned: false
 Research experiment dashboard — powered by Dr. Claude Code.
 READMEOF
 
-        # Create the Space repo via REST API (avoids huggingface_hub library metadata bugs)
-        info "Creating Space..."
-        CREATE_RESP=$(curl -s -w "\n%{http_code}" -X POST "https://huggingface.co/api/repos/create" \
-            -H "Authorization: Bearer ${HF_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "{\"type\":\"space\",\"name\":\"${SPACE_NAME}\",\"organization\":\"${HF_ORG}\",\"sdk\":\"docker\",\"private\":false}")
-        CREATE_HTTP=$(echo "$CREATE_RESP" | tail -1)
-        CREATE_BODY=$(echo "$CREATE_RESP" | sed '$d')
-
-        if [ "$CREATE_HTTP" = "200" ] || [ "$CREATE_HTTP" = "201" ]; then
-            success "Space created: ${SPACE_ID}"
-        elif [ "$CREATE_HTTP" = "409" ] || echo "$CREATE_BODY" | grep -q "already exists"; then
-            success "Space already exists: ${SPACE_ID}"
-        else
-            warn "Space creation returned HTTP ${CREATE_HTTP}"
-            warn "Will try git push anyway..."
-        fi
-
-        # Push via git (this also creates the Space if the API call didn't)
-        info "Pushing visualizer to HF Space..."
+        # Deploy via git push — the README YAML frontmatter tells HF this is a Docker Space.
+        # We do NOT use create_repo API (it has a metadata bug that leaves Spaces broken).
+        # Instead: push README first to create the Space, then push the full code.
+        info "Deploying to HF Space..."
         (
             cd "$VISUALIZER_DIR"
 
@@ -446,21 +430,28 @@ READMEOF
                 sed -i.bak '/frontend\/dist/d' .gitignore && rm -f .gitignore.bak
             fi
 
-            # Fresh git repo each deploy (avoids stale history issues)
+            # Fresh git repo each deploy
             rm -rf .git
             git init -q
             git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
 
-            # Stage everything — verify dist is included
+            # First push: just the README to create the Space with correct SDK metadata
+            git add README.md
+            git commit -q -m "init: create docker space"
+            info "  Creating Space via git push..."
+            git push space HEAD:main --force 2>&1 | grep -vE "(Invalid input|→ at |^remote: $|^400$|✖)" || true
+
+            # Second push: everything including pre-built frontend
             git add -A
             DIST_COUNT=$(git ls-files frontend/dist/ | wc -l | tr -d ' ')
             if [ "$DIST_COUNT" -eq 0 ]; then
                 echo "ERROR: frontend/dist/ not staged — build may have failed" >&2
                 exit 1
             fi
-            echo "  ${DIST_COUNT} frontend files staged"
+            info "  ${DIST_COUNT} frontend files staged"
 
             git commit -q -m "deploy: dr-claude-code visualizer"
+            info "  Pushing full code..."
             git push space HEAD:main --force 2>&1 | grep -vE "(Invalid input|→ at |^remote: $|^400$|✖)" || true
         ) || warn "Push to HF Space failed — deploy manually from ${VISUALIZER_DIR}."
 
