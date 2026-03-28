@@ -400,8 +400,10 @@ Research experiment dashboard — powered by Dr. Claude Code.
 READMEOF
 
         # Create the Space repo if it doesn't exist
-        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF'
-import os, sys
+        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF' 2>/dev/null
+import os, sys, warnings
+warnings.filterwarnings("ignore")
+
 from huggingface_hub import HfApi
 api = HfApi(token=os.environ["DCC_HF_TOKEN"])
 space_id = os.environ["DCC_SPACE_ID"]
@@ -415,7 +417,8 @@ try:
     )
     print(f"Space repo ready: {space_id}")
 except Exception as e:
-    print(f"Error creating space: {e}", file=sys.stderr)
+    # Print to stdout so it's visible (stderr is suppressed above)
+    print(f"Error creating space: {e}")
     sys.exit(1)
 PYEOF
         if [ $? -ne 0 ]; then
