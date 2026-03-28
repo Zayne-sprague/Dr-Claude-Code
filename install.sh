@@ -193,22 +193,41 @@ validate_hf_token() {
     local tmp_script
     tmp_script=$(mktemp /tmp/dcc_validate_XXXXXX.py)
     cat > "$tmp_script" << 'PYEOF'
-import os, sys
+import os, sys, io, warnings
+warnings.filterwarnings("ignore")
+# Redirect stdout/stderr so HF library noise doesn't leak to terminal
+_orig_stdout, _orig_stderr = sys.stdout, sys.stderr
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+
+exit_code = 0
+result = ""
+error_msg = ""
 try:
     from huggingface_hub import HfApi
     token = os.environ.get("DCC_HF_TOKEN", "")
     if not token:
-        print("No token provided", file=sys.stderr)
-        sys.exit(1)
-    api = HfApi(token=token)
-    user_info = api.whoami()
-    print(user_info["name"])
+        error_msg = "No token provided"
+        exit_code = 1
+    else:
+        api = HfApi(token=token)
+        user_info = api.whoami()
+        result = user_info["name"]
 except ImportError:
-    print("huggingface_hub not installed", file=sys.stderr)
-    sys.exit(1)
+    error_msg = "huggingface_hub not installed"
+    exit_code = 1
 except Exception as e:
-    print(str(e), file=sys.stderr)
-    sys.exit(1)
+    error_msg = str(e)
+    exit_code = 1
+
+# Restore real stdout/stderr and print ONLY our result
+sys.stdout = _orig_stdout
+sys.stderr = _orig_stderr
+if result:
+    print(result)
+if error_msg:
+    print(error_msg, file=sys.stderr)
+sys.exit(exit_code)
 PYEOF
 
     local username
@@ -399,34 +418,22 @@ pinned: false
 Research experiment dashboard — powered by Dr. Claude Code.
 READMEOF
 
-        # Create the Space repo if it doesn't exist
-        DCC_HF_TOKEN="$HF_TOKEN" DCC_SPACE_ID="$SPACE_ID" "${TOOLS_VENV}/bin/python" - <<'PYEOF'
-import os, sys, warnings, io
-warnings.filterwarnings("ignore")
-# Capture stderr to filter HF API noise
-_real_stderr = sys.stderr
-sys.stderr = io.StringIO()
+        # Create the Space repo via REST API (avoids huggingface_hub library metadata bugs)
+        info "Creating Space..."
+        CREATE_RESP=$(curl -s -w "\n%{http_code}" -X POST "https://huggingface.co/api/repos/create" \
+            -H "Authorization: Bearer ${HF_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"type\":\"space\",\"name\":\"${SPACE_NAME}\",\"organization\":\"${HF_ORG}\",\"sdk\":\"docker\",\"private\":false}")
+        CREATE_HTTP=$(echo "$CREATE_RESP" | tail -1)
+        CREATE_BODY=$(echo "$CREATE_RESP" | sed '$d')
 
-from huggingface_hub import HfApi
-api = HfApi(token=os.environ["DCC_HF_TOKEN"])
-space_id = os.environ["DCC_SPACE_ID"]
-try:
-    api.create_repo(
-        repo_id=space_id,
-        repo_type="space",
-        space_sdk="docker",
-        exist_ok=True,
-        private=False,
-    )
-    print(f"Space repo ready: {space_id}")
-except Exception as e:
-    sys.stderr = _real_stderr
-    print(f"Error creating space: {e}")
-    sys.exit(1)
-PYEOF
-        if [ $? -ne 0 ]; then
-            warn "Space creation failed. Check your HF org name and token permissions."
-            DEPLOY_OK=false
+        if [ "$CREATE_HTTP" = "200" ] || [ "$CREATE_HTTP" = "201" ]; then
+            success "Space created: ${SPACE_ID}"
+        elif [ "$CREATE_HTTP" = "409" ] || echo "$CREATE_BODY" | grep -q "already exists"; then
+            success "Space already exists: ${SPACE_ID}"
+        else
+            warn "Space creation returned HTTP ${CREATE_HTTP}"
+            warn "Will try git push anyway..."
         fi
 
         # Push via git (this also creates the Space if the API call didn't)
