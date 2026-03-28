@@ -440,18 +440,27 @@ READMEOF
         info "Pushing visualizer to HF Space..."
         (
             cd "$VISUALIZER_DIR"
-            if [ ! -d ".git" ]; then
-                git init -q
-                git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
-            elif ! git remote get-url space &>/dev/null; then
-                git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
-            else
-                git remote set-url space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
+
+            # Ensure .gitignore does NOT exclude frontend/dist/ (we ship pre-built)
+            if grep -q "frontend/dist" .gitignore 2>/dev/null; then
+                sed -i.bak '/frontend\/dist/d' .gitignore && rm -f .gitignore.bak
             fi
+
+            # Fresh git repo each deploy (avoids stale history issues)
+            rm -rf .git
+            git init -q
+            git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
+
+            # Stage everything — verify dist is included
             git add -A
-            git add -f frontend/dist/  # force-add even if previously gitignored
-            git diff --cached --quiet || git commit -q -m "deploy: dr-claude-code visualizer"
-            # Suppress HF's noisy 400 validation warnings during Docker Space pushes
+            DIST_COUNT=$(git ls-files frontend/dist/ | wc -l | tr -d ' ')
+            if [ "$DIST_COUNT" -eq 0 ]; then
+                echo "ERROR: frontend/dist/ not staged — build may have failed" >&2
+                exit 1
+            fi
+            echo "  ${DIST_COUNT} frontend files staged"
+
+            git commit -q -m "deploy: dr-claude-code visualizer"
             git push space HEAD:main --force 2>&1 | grep -vE "(Invalid input|→ at |^remote: $|^400$|✖)" || true
         ) || warn "Push to HF Space failed — deploy manually from ${VISUALIZER_DIR}."
 
