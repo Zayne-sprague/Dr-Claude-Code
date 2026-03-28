@@ -484,7 +484,7 @@ READMEOF
             echo ""
             warn "Dashboard still building (this is normal for first deploy)."
             warn "It will be live at: ${DASHBOARD_URL}"
-            warn "Check build status: https://huggingface.co/spaces/${SPACE_ID}"
+            warn "Just wait a few minutes and refresh that URL."
         fi
     fi
 fi
