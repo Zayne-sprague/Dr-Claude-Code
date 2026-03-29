@@ -35,6 +35,22 @@ Detailed references in `.claude/references/` (loaded when needed):
 - `huggingface-datasets.md` — HF upload examples and patterns
 - `datasets_and_tasks/` — benchmark reference files
 
+## Compute Setup References
+
+Setup guides for compute backends in `.claude/references/compute/`:
+- `slurm/` — SLURM HPC cluster setup
+- `runpod/` — RunPod cloud GPU setup
+- `local/` — Local GPU setup
+- `wandb/` — Weights & Biases setup
+- `huggingface/` — HuggingFace setup
+
+## API Keys
+
+Use `key_handler.KeyHandler` for all API key management. Never hardcode keys.
+- Keys stored in `packages/key_handler/key_handler/key_handler.py` (gitignored)
+- Template at `key_handler__template.py` — copy and fill in your keys
+- Call `KeyHandler.set_env_key()` at script start to inject into environment
+
 ## Cluster Access
 
 Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.

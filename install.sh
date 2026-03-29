@@ -366,6 +366,18 @@ else
     warn "dcc install issue — check ${TOOLS_VENV}"
 fi
 
+# Install key_handler package
+KEY_HANDLER_DIR="${WORKSPACE}/packages/key_handler"
+if [ -d "$KEY_HANDLER_DIR" ] && [ -f "${KEY_HANDLER_DIR}/pyproject.toml" ]; then
+    info "Installing key_handler..."
+    "${TOOLS_VENV}/bin/pip" install --quiet -e "$KEY_HANDLER_DIR"
+    success "key_handler installed"
+    info "  Keys go in: ${KEY_HANDLER_DIR}/key_handler/key_handler.py (gitignored)"
+    info "  Template:   ${KEY_HANDLER_DIR}/key_handler/key_handler__template.py"
+else
+    warn "key_handler package not found — skipping"
+fi
+
 CURRENT_PHASE="dashboard"
 save_state
 
@@ -490,6 +502,21 @@ CLAUDE_MD="${WORKSPACE}/.claude/CLAUDE.md"
 if [ -f "$CLAUDE_MD" ]; then
     sed -i.bak "s|\\\$HF_ORG|${HF_ORG}|g" "$CLAUDE_MD" && rm -f "${CLAUDE_MD}.bak"
     success "Injected HF_ORG into .claude/CLAUDE.md"
+fi
+
+# Create key_handler.py from template with HF token pre-filled
+KEY_HANDLER_TEMPLATE="${WORKSPACE}/packages/key_handler/key_handler/key_handler__template.py"
+KEY_HANDLER_FILE="${WORKSPACE}/packages/key_handler/key_handler/key_handler.py"
+if [ -f "$KEY_HANDLER_TEMPLATE" ] && [ ! -f "$KEY_HANDLER_FILE" ]; then
+    cp "$KEY_HANDLER_TEMPLATE" "$KEY_HANDLER_FILE"
+    if [ -n "$HF_TOKEN" ]; then
+        sed -i.bak "s|your-hf-token|${HF_TOKEN}|g" "$KEY_HANDLER_FILE" && rm -f "${KEY_HANDLER_FILE}.bak"
+        success "Created key_handler.py with HF token pre-filled"
+        info "  Add your other keys at: ${KEY_HANDLER_FILE}"
+    else
+        success "Created key_handler.py from template"
+        info "  Fill in your keys at: ${KEY_HANDLER_FILE}"
+    fi
 fi
 
 # Store config
