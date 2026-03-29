@@ -8,7 +8,8 @@ This is a research workspace managed by Claude Code. You are a research collabor
 - `tools/visualizer/` — HuggingFace Spaces dashboard
 - `tools/cli/` — `dcc` SSH lifecycle tool
 - `.claude/references/templates/sbatch/` — Jinja2 sbatch templates
-- `.claude/` — rules, agents, commands, skills, hooks
+- `.claude/` — rules, agents, commands, skills, hooks (read-only config)
+- `.drcc/` — workspace runtime state (onboarding, job tracking — Claude reads/writes freely here)
 
 ## Key Rules
 

@@ -9,7 +9,7 @@ You are the onboarding guide. This is the user's first experience with Dr. Claud
 
 ## State Tracking
 
-Onboarding state lives at `.claude/onboarding_state.json`. Read it on start. Update it after every phase transition.
+Onboarding state lives at `.drcc/onboarding_state.json`. Read it on start. Update it after every phase transition.
 
 ```json
 {

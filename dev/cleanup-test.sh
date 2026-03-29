@@ -32,8 +32,8 @@ if [ -f ~/.dcc/config.yaml ]; then
     HF_USER=$(grep '^hf_user:' ~/.dcc/config.yaml 2>/dev/null | sed 's/hf_user: *//' | tr -d '"' | tr -d ' ')
 fi
 # Also try reading from onboarding state
-if [ -z "$HF_ORG" ] && [ -f "${WORKSPACE}/.claude/onboarding_state.json" ]; then
-    HF_ORG=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.claude/onboarding_state.json')); print(d.get('hf_org',''))" 2>/dev/null || echo "")
+if [ -z "$HF_ORG" ] && [ -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
+    HF_ORG=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.drcc/onboarding_state.json')); print(d.get('hf_org',''))" 2>/dev/null || echo "")
 fi
 
 echo -e "${BOLD}${RED}=== Dr-Claude-Code Test Cleanup ===${RESET}"
@@ -81,8 +81,8 @@ fi
 
 # --- Kill dcc SSH sessions (only clusters from this workspace's config) ---
 # We do NOT touch all sockets — that would break other workspaces (e.g., ~/Research)
-if [ -f "${WORKSPACE}/.claude/onboarding_state.json" ]; then
-    CLUSTER=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.claude/onboarding_state.json')); print(d.get('cluster_name',''))" 2>/dev/null || echo "")
+if [ -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
+    CLUSTER=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.drcc/onboarding_state.json')); print(d.get('cluster_name',''))" 2>/dev/null || echo "")
     if [ -n "$CLUSTER" ] && [ -S ~/.ssh/sockets/*"@${CLUSTER}" ] 2>/dev/null; then
         info "Disconnecting cluster: ${CLUSTER}"
         ssh -O exit -S ~/.ssh/sockets/*"@${CLUSTER}" dummy 2>/dev/null || true

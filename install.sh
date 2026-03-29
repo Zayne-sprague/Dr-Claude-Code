@@ -88,6 +88,31 @@ else
     warn "  .claude/ exists — preserving your config"
 fi
 
+# .drcc/ — workspace state (onboarding, etc.) — Claude has full read/write here
+mkdir -p "${WORKSPACE}/.drcc"
+if [ ! -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
+    cat > "${WORKSPACE}/.drcc/onboarding_state.json" <<'STATEJSON'
+{
+  "phase": "welcome",
+  "plugins_installed": false,
+  "plugins_skipped": false,
+  "compute_type": null,
+  "cluster_name": null,
+  "cluster_connected": false,
+  "model_serving": false,
+  "model_job_id": null,
+  "model_url": null,
+  "visualizer_deployed": false,
+  "dashboard_url": null,
+  "hf_org": null,
+  "test_data_uploaded": false,
+  "completed": false,
+  "skipped_to": null,
+  "updated_at": null
+}
+STATEJSON
+fi
+
 # ── Install tools ─────────────────────────────────────────
 TOOLS_VENV="${WORKSPACE}/.tools-venv"
 [ ! -d "$TOOLS_VENV" ] && python3 -m venv "$TOOLS_VENV"
