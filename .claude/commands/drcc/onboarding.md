@@ -123,26 +123,63 @@ Update state: `plugins_installed: true`, `phase: "plugins_done"`
 First, assess their local environment:
 
 ```bash
-# Check for local GPUs
-nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null || echo "NO_LOCAL_GPU"
+# Check for NVIDIA GPU
+nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null || echo "NO_NVIDIA_GPU"
+# Check for Apple Silicon
+sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "NOT_MACOS"
+# Check system memory (for Apple Silicon unified memory)
+sysctl -n hw.memsize 2>/dev/null | awk '{printf "%.0f GB\n", $1/1073741824}' 2>/dev/null || true
 # Check OS
 uname -s
 # Check what's available
 which ssh 2>/dev/null && echo "SSH_AVAILABLE"
+which ollama 2>/dev/null && echo "OLLAMA_AVAILABLE"
+which mlx_lm 2>/dev/null && echo "MLX_AVAILABLE"
 ```
 
 Then present options conversationally based on what you found:
 
-**If local GPU detected:**
+**If NVIDIA GPU detected:**
 > "Looks like you're running a **[GPU model] ([VRAM])** locally. Nice!"
 >
 > "We recommend serving a small model as your first test. I can:"
-> 1. "Set it up right here on your local GPU"
+> 1. "Set it up right here on your local GPU with vLLM"
 > 2. "Help you connect to a SLURM cluster or RunPod if you'd rather use remote compute"
 >
 > "What would you prefer?"
 
-**If no local GPU:**
+**If Apple Silicon detected (M1/M2/M3/M4):**
+> "You're on **[chip name]** with **[X] GB** unified memory — that can actually run small models locally!"
+>
+> "For a quick test, I can:"
+> 1. "Run a small model locally using **Ollama** or **MLX** (no GPU cluster needed)"
+> 2. "Help you connect to a **SLURM cluster** for bigger models"
+> 3. "Set up **RunPod** cloud GPUs"
+>
+> "For the onboarding demo, local inference on Apple Silicon works great. Want to try that?"
+
+Apple Silicon model recommendations by memory:
+- 8 GB: Qwen2.5-0.5B (Q4 quantized)
+- 16 GB: Qwen2.5-1.5B or Llama-3.2-1B
+- 32 GB+: Qwen2.5-7B (Q4) or Llama-3.1-8B (Q4)
+- 64 GB+: Qwen2.5-14B or Llama-3.1-8B (fp16)
+
+For Apple Silicon local inference, prefer **Ollama** (easiest):
+```bash
+# Install if not present
+brew install ollama
+ollama serve &  # start in background
+ollama pull qwen2.5:1.5b  # or appropriate size
+```
+Ollama provides an OpenAI-compatible API at `http://localhost:11434/v1/` — the rest of the pipeline (test script, HF upload, visualizer) works identically.
+
+If they prefer MLX:
+```bash
+pip install mlx-lm
+mlx_lm.server --model mlx-community/Qwen2.5-1.5B-Instruct-4bit --port 8000
+```
+
+**If no local GPU and not Apple Silicon:**
 > "I don't see a local GPU on this machine. No worries — we can use remote compute."
 >
 > "Do you have access to:"
@@ -150,7 +187,7 @@ Then present options conversationally based on what you found:
 > 2. "**RunPod** (cloud GPUs)"
 > 3. "Neither — I'll set one up later"
 
-Based on their answer, update state with `compute_type` ("local", "slurm", "runpod", "none").
+Based on their answer, update state with `compute_type` ("local_nvidia", "local_apple", "slurm", "runpod", "none").
 
 ### If SLURM or RunPod:
 
@@ -183,19 +220,35 @@ Update state: `compute_type: "none"`, `phase: "compute_skipped"`
 
 Pick a model based on available compute:
 
-| Available VRAM | Model | Why |
-|---|---|---|
-| 24 GB (RTX 4090, 3090) | Qwen/Qwen2.5-1.5B-Instruct | Small, fast, fits easily |
-| 48 GB (L40S, A6000) | Qwen/Qwen2.5-7B-Instruct | Good quality, fits in one GPU |
-| 80 GB (A100, H100) | Qwen/Qwen3-8B | Great quality, reasoning capable |
-| 141 GB (H200) | Qwen/Qwen3-8B | Same — no need to go bigger for a test |
-| RunPod | Qwen/Qwen2.5-7B-Instruct | Cost effective for testing |
+| Compute | Model | Method | Why |
+|---|---|---|---|
+| Apple Silicon 8 GB | qwen2.5:0.5b | Ollama | Fits in limited memory |
+| Apple Silicon 16 GB | qwen2.5:1.5b | Ollama | Good balance of speed + quality |
+| Apple Silicon 32 GB+ | qwen2.5:7b | Ollama | Solid quality on unified memory |
+| Apple Silicon 64 GB+ | qwen2.5:14b | Ollama | Great quality, plenty of headroom |
+| 24 GB NVIDIA (4090, 3090) | Qwen/Qwen2.5-1.5B-Instruct | vLLM | Small, fast, fits easily |
+| 48 GB NVIDIA (L40S, A6000) | Qwen/Qwen2.5-7B-Instruct | vLLM | Good quality, one GPU |
+| 80 GB NVIDIA (A100, H100) | Qwen/Qwen3-8B | vLLM | Great quality, reasoning capable |
+| 141 GB NVIDIA (H200) | Qwen/Qwen3-8B | vLLM | Same — no need to go bigger for a test |
+| RunPod | Qwen/Qwen2.5-7B-Instruct | vLLM | Cost effective |
 
 > "Let's serve a model to make sure everything works! Based on your [compute], I'd suggest **[model]** — it's [reason]."
 >
 > "Want me to set it up?"
 
-If yes, invoke the **serve-model skill** to deploy vLLM.
+**If Apple Silicon (Ollama):**
+```bash
+# Install Ollama if needed
+which ollama || brew install ollama
+# Start server + pull model
+ollama serve &
+ollama pull <model_tag>
+```
+Ollama serves at `http://localhost:11434` with OpenAI-compatible API at `http://localhost:11434/v1/`.
+Update state: `model_serving: true`, `model_url: "http://localhost:11434/v1"`
+
+**If NVIDIA local or SLURM/RunPod:**
+Invoke the **serve-model skill** to deploy vLLM.
 
 **If the job is queued (SLURM pending):**
 Update state: `model_job_id: <id>`, `model_serving: false`
