@@ -80,22 +80,37 @@ After they confirm it's installed, note it in state.
 
 ### Agent Deck
 
-Agent Deck needs to be installed separately and requires restarting Claude Code within it:
+Agent Deck lets users run multiple Claude sessions in parallel. It requires installing the plugin, then restarting Claude inside agent-deck.
 
 > "Agent Deck lets you run multiple Claude sessions in parallel — super useful for installing packages on different clusters simultaneously, or running experiments while doing other work."
 >
-> "To install it, run these two commands in your Claude Code session:"
+> "To install the plugin, run these in your Claude Code session:"
 > ```
 > /plugin marketplace add asheshgoplani/agent-deck
 > /plugin install agent-deck@agent-deck
 > ```
->
-> "Then exit this session and restart inside Agent Deck:"
+
+After they confirm the plugin is installed, **pre-create the agent-deck session** so it's waiting for them:
+
+```bash
+# Create an onboarding session in agent-deck pointing to their workspace
+WORKSPACE=$(grep '^workspace:' ~/.dcc/config.yaml 2>/dev/null | sed 's/workspace: *//' | tr -d '"' | tr -d ' ')
+agent-deck add -t "Dr Claude Code" -c claude "${WORKSPACE}" -g "research"
+```
+
+If `agent-deck` CLI is not on PATH yet, tell the user:
+> "agent-deck CLI isn't on your PATH yet. Run this first:"
 > ```bash
-> agent-deck
+> npm install -g agent-deck
 > ```
->
-> "Inside Agent Deck, create a session and Claude Code will run within it. When you come back, tell me 'resume onboarding' and I'll pick up where we left off."
+
+Once the session is pre-created, tell the user:
+
+> "I've set up an Agent Deck session for you. Now:"
+> 1. "Type `exit` to leave this Claude session"
+> 2. "Run `agent-deck` in your terminal"
+> 3. "You'll see a **Dr Claude Code** session waiting — just press Enter"
+> 4. "Once you're in, say **resume onboarding** and I'll pick up where we left off"
 
 Update state: `plugins_installed: true`, `phase: "plugins_done"`
 
