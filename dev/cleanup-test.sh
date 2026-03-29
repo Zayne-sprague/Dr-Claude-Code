@@ -5,7 +5,8 @@
 # Usage: bash dev/cleanup-test.sh [workspace_path]
 #        Default: reads from ~/.dcc/config.yaml or uses current dir
 
-set -euo pipefail
+set -uo pipefail
+# Note: no -e — we want cleanup to continue even if individual steps fail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
