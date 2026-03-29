@@ -164,4 +164,4 @@ info "Claude will deploy your dashboard, help you connect a cluster, and walk yo
 echo ""
 
 cd "$WORKSPACE"
-exec claude --prompt "/drcc:onboarding"
+exec claude "/drcc:onboarding"
