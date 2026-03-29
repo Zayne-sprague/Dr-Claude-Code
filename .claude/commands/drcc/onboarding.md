@@ -126,10 +126,11 @@ When the user returns (says "resume onboarding" or similar) and state shows `plu
 >
 > | Key | What it does |
 > |---|---|
-> | `Ctrl+Q` | Leave session (keeps it running in background) |
-> | `Ctrl+C` | Back to Agent Deck main window |
+> | `Ctrl+Q` | Back to Agent Deck main window (session keeps running) |
+> | `q` or `Ctrl+C` | Exit Agent Deck to terminal |
 > | `Enter` / arrow keys | Select and enter a session |
 > | `n` | Create a new Claude Code session |
+> | `?` | Show all keybindings |
 >
 > "Full docs: https://github.com/asheshgoplani/agent-deck"
 >

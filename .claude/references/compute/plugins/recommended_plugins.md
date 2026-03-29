@@ -38,9 +38,13 @@ agent-deck
 
 This opens a session manager. Create sessions, each runs its own Claude Code instance.
 
-**Usage within Agent Deck:**
-- `Ctrl+N` — new session
-- `Ctrl+Tab` — switch sessions
-- Sessions persist if you disconnect
+**Essential keybindings:**
+- `Ctrl+Q` — back to main window (session keeps running)
+- `q` / `Ctrl+C` — exit Agent Deck to terminal
+- `Enter` / arrow keys — select and enter a session
+- `n` — create new session
+- `?` — show all keybindings
 
-**Note:** You need to exit your current Claude Code session first, then launch `agent-deck` which manages Claude sessions for you.
+**Note:** Exit your current Claude Code session first, then launch `agent-deck` which manages Claude sessions for you.
+
+Full docs: https://github.com/asheshgoplani/agent-deck
