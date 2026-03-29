@@ -20,6 +20,21 @@ Detailed instructions in `.claude/rules/`:
 - `security.md` — never hardcode API keys
 - `huggingface-datasets.md` — HF upload standards
 
+## Benchmark & Task References
+
+@.claude/references/datasets_and_tasks/datasets_and_tasks_map.md
+
+Before setting up evaluation, data generation, or RL training for any benchmark/task, check the table above. If a reference file exists, read it — it contains evaluation method, prompt templates, known pitfalls, and setup checklists.
+
+## References (on-demand)
+
+Detailed references in `.claude/references/` (loaded when needed):
+- `experiments.md` — full experiment lifecycle detail
+- `workspace.md` — folder structure, session startup
+- `tool-decision-guide.md` — when to use which tool
+- `huggingface-datasets.md` — HF upload examples and patterns
+- `datasets_and_tasks/` — benchmark reference files
+
 ## Cluster Access
 
 Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.
