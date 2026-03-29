@@ -115,52 +115,68 @@ If this fails:
 - Check if `dcc auth <nickname>` succeeded
 - If still failing, ask for the full SSH config and debug manually
 
-### Step 1.3 — Detect GPU partitions
+### Step 1.3 — Detect accounts, partitions, and access
+
+Ask: "Do you know which SLURM account and partitions you have access to, or would you like me to discover them automatically?"
+
+**If the user knows:** use what they tell you and skip to Step 1.4.
+
+**If they want auto-discovery:** run this sequence. Standard SLURM introspection commands (`sacctmgr`, `scontrol`) often don't reveal real access restrictions. The only reliable method is `sbatch --test-only`.
 
 ```bash
-dcc ssh <nickname> "sinfo --format='%P %G %D %a' --noheader | grep -E 'gpu|h100|h200|a100|l40|v100|rtx' -i"
+# Step A: Get user's SLURM accounts
+dcc ssh <nickname> "sacctmgr show associations where user=\$USER format=Account%30 --noheader --parsable2 2>/dev/null | sort -u"
 ```
 
-Parse the output. For each partition line:
-- Column 1: partition name
-- Column 2: GRES (generic resources) — e.g., `gpu:h100:8` means 8× H100s
-- Column 3: node count
-- Column 4: availability (up/down)
+Record the accounts (e.g., `torch_pr_219_courant`, `users`).
 
-Present a summary to the user:
-```
-Found GPU partitions:
-  h100_courant    — gpu:h100:8   (8 nodes, up)
-  l40s_courant    — gpu:l40s:4   (4 nodes, up)
-  gpu             — gpu:v100:16  (16 nodes, up)
+```bash
+# Step B: Get all GPU partitions and their GRES format
+dcc ssh <nickname> "sinfo --format='%P %G %D %a' --noheader"
 ```
 
-Ask: "Which partition should be the default for new jobs?"
+Parse partitions and GRES. Determine if the cluster uses typed GRES (e.g., `gpu:h100:8`) or generic (`gpu:8`).
+
+```bash
+# Step C: Test ACTUAL access with sbatch --test-only
+# This is the ONLY reliable way — sacctmgr and scontrol often show misleading AllowAccounts=ALL
+```
+
+For each GPU partition found, test access using the correct GRES format:
+
+```bash
+# If typed GRES (gpu:h100:8):
+dcc ssh <nickname> "sbatch --test-only --partition=<partition> --gres=gpu:<type>:1 --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
+
+# If generic GRES (gpu:8):
+dcc ssh <nickname> "sbatch --test-only --partition=<partition> --gpus=1 --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
+```
+
+- If it returns a simulated start time → **access confirmed**
+- If it says "not valid for this job" → **no access**, skip this partition
+
+Present only the partitions the user CAN access:
+
+```
+I tested your access on each partition:
+  ✓ h200_courant  — gpu:h200:8 (12 nodes) — account: torch_pr_219_courant
+  ✓ l40s_courant  — gpu:l40s:4 (6 nodes)  — account: torch_pr_219_courant
+  ✗ h100          — no access
+  ✗ a100          — no access
+
+I'll use h200_courant as the default. Sound good?
+```
 
 ### Step 1.4 — Detect scratch path and modules
 
 ```bash
-dcc ssh <nickname> "echo \$SCRATCH && ls /scratch 2>/dev/null | head -5 && module avail cuda 2>&1 | head -10"
+dcc ssh <nickname> "echo SCRATCH=\$SCRATCH; echo WORK=\$WORK; echo HOME=\$HOME; echo CONDA=\$CONDA_PREFIX; module avail cuda 2>&1 | head -10"
 ```
 
-Note the scratch path (e.g., `/scratch/$USER`, `/scratch1/$USER`, `/tmp/scratch`).
-
+Note the scratch path (e.g., `/scratch/$USER`, `/scratch1/$USER`).
 Check if CUDA modules are available via the module system. Record the CUDA version.
 
-### Step 1.5 — Determine GPU GRES directive format
-
-Some clusters use `--gres=gpu:N`, others use `--gres=gpu:<type>:N`.
-
-```bash
-dcc ssh <nickname> "sinfo -o '%G' --noheader | head -3"
-```
-
-If output shows typed GPUs (e.g., `gpu:h100:8`), the cluster uses typed GRES: `--gres=gpu:h100:1`.
-If output shows generic GPUs (e.g., `gpu:8`), use generic: `--gres=gpu:1`.
-
-Record this for sbatch template generation.
-
-### Step 1.6 — Update cluster config with detected info
+### Step 1.5 — Update cluster config with detected info
 
 Update the entry in `~/.dcc/clusters.yaml` with all detected details:
 
@@ -186,7 +202,7 @@ clusters:
     notes: ""
 ```
 
-### Step 1.7 — Verify with dcc
+### Step 1.6 — Verify with dcc
 
 ```bash
 dcc cluster list
