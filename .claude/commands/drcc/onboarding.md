@@ -219,9 +219,10 @@ Invoke the **cluster-setup skill** to walk them through connecting.
 
 **Critical for SLURM with 2FA:** When the skill reaches the `dcc auth` step, tell the user:
 
-> "You'll need to authenticate with 2FA. Open a **new terminal tab** and run:"
+> "You'll need to authenticate with 2FA. Open a **new terminal tab**, `cd` to your workspace, and run:"
 > ```bash
-> dcc auth <cluster_name>
+> cd <workspace_path>
+> .tools-venv/bin/dcc auth <cluster_name>
 > ```
 > "Complete the 2FA there, then come back here and tell me when you're connected."
 

@@ -52,12 +52,24 @@ Use `key_handler.KeyHandler` for all API key management. Never hardcode keys.
 - Template at `key_handler__template.py` — copy and fill in your keys
 - Call `KeyHandler.set_env_key()` at script start to inject into environment
 
+## Tools Venv
+
+All CLI tools (`dcc`, `key_handler`) are installed in `.tools-venv/`. Always use the full path:
+- `.tools-venv/bin/dcc` — not bare `dcc` (it may not be on the user's PATH)
+- `.tools-venv/bin/python` — for any Python that needs `key_handler` or `huggingface_hub`
+
+When telling the user to run `dcc` in their terminal, remind them:
+```
+.tools-venv/bin/dcc auth <cluster>
+```
+Or tell them to add it to PATH: `export PATH="$(pwd)/.tools-venv/bin:$PATH"`
+
 ## Cluster Access
 
-Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.
-You run commands on clusters via `dcc ssh <cluster> "command"`.
-You transfer files via `dcc upload` / `dcc download`.
-You set up port forwards via `dcc forward`.
+Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `.tools-venv/bin/dcc auth <cluster>`.
+You run commands on clusters via `.tools-venv/bin/dcc ssh <cluster> "command"`.
+You transfer files via `.tools-venv/bin/dcc upload` / `.tools-venv/bin/dcc download`.
+You set up port forwards via `.tools-venv/bin/dcc forward`.
 
 ## Critical Rules
 
