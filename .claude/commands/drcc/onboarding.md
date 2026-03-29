@@ -293,30 +293,50 @@ Update state: `model_serving: true`
 
 ## Phase 5: Visualizer / Dashboard
 
-Check HF token status:
+**IMPORTANT: The ONLY source of truth for the HF token is `packages/key_handler/key_handler/key_handler.py`.** Do NOT use `~/.cache/huggingface/token`, do NOT use `HfApi().token`, do NOT hardcode or guess tokens. Always read from key_handler.
+
+Check if key_handler has a valid HF token:
 
 ```bash
-cat ~/.dcc/config.yaml 2>/dev/null
-```
-
-Also check if key_handler has an HF token:
-```python
 python3 -c "
-try:
-    from key_handler import KeyHandler
-    KeyHandler.set_env_key()
-    import os
-    token = os.environ.get('HF_TOKEN', '')
-    print(f'TOKEN_SET:{bool(token and \"your-\" not in token)}')
-except:
-    print('TOKEN_SET:False')
+import sys
+sys.path.insert(0, 'packages/key_handler')
+from key_handler import KeyHandler
+token = getattr(KeyHandler, 'hf_key', '') or ''
+if token and 'your-' not in token:
+    print(f'TOKEN:{token}')
+else:
+    print('TOKEN:NONE')
 "
 ```
 
-**If no HF token:**
-> "To deploy your dashboard, we need a HuggingFace token. Want to set that up now, or skip?"
+If the token is set, validate it:
+```bash
+python3 -c "
+import sys, os
+sys.path.insert(0, 'packages/key_handler')
+from key_handler import KeyHandler
+token = KeyHandler.hf_key
+from huggingface_hub import HfApi
+api = HfApi(token=token)
+info = api.whoami()
+print(f'VALID:{info[\"name\"]}')
+" 2>/dev/null || echo "INVALID"
+```
 
-If yes, walk them through getting a token and saving it to key_handler.
+**If no token or invalid:**
+> "To deploy your dashboard, we need a valid HuggingFace token. Want to set that up now, or skip?"
+
+If yes, walk them through:
+1. Go to https://huggingface.co/settings/tokens
+2. Create a token with **write** access
+3. Paste it here
+
+Then write it to key_handler:
+```python
+# Read the current key_handler.py, replace the hf_key value
+```
+Edit `packages/key_handler/key_handler/key_handler.py` — replace the `hf_key = "your-..."` line with the actual token. Then re-validate.
 
 **If HF token available:**
 
@@ -328,18 +348,25 @@ Introduce the dashboard before asking for the org:
 >
 > "To set it up, I need to know: what HuggingFace org or username should I deploy it under?"
 
-Then deploy:
+Then deploy. **Always read the token from key_handler for every HF operation:**
+
+```bash
+# Get token from key_handler (the ONLY source of truth)
+HF_TOKEN=$(python3 -c "import sys; sys.path.insert(0,'packages/key_handler'); from key_handler import KeyHandler; print(KeyHandler.hf_key)")
+```
+
+Steps:
 1. Build frontend: `cd tools/visualizer/frontend && npm install --silent && npm run build`
 2. Write README with YAML frontmatter (sdk: docker, app_port: 7860)
 3. Fix `.gitignore` and `.dockerignore` — remove `frontend/dist` entries
-4. Create HF Space via REST API:
+4. Create HF Space via REST API using `$HF_TOKEN` from above
    ```bash
    curl -s -X POST "https://huggingface.co/api/repos/create" \
      -H "Authorization: Bearer ${HF_TOKEN}" \
      -H "Content-Type: application/json" \
      -d '{"type":"space","name":"dr-claude-dashboard","organization":"'${HF_ORG}'","sdk":"docker","private":false}'
    ```
-5. Fresh git init, add all (including dist/), push to Space
+5. Fresh git init, add all (including dist/), push to Space using token in git remote URL
 6. Save dashboard URL: `https://${HF_ORG}-dr-claude-dashboard.hf.space`
 
 > "Dashboard is deploying — Docker build takes 3-5 minutes on HF. The direct URL is:"
