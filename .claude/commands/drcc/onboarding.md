@@ -107,12 +107,27 @@ If `agent-deck` CLI is not on PATH yet, tell the user:
 Once the session is pre-created, tell the user:
 
 > "I've set up an Agent Deck session for you. Now:"
-> 1. "Type `exit` to leave this Claude session"
+> 1. "Press `Ctrl+Q` to leave this Claude session (keeps it alive in the background)"
 > 2. "Run `agent-deck` in your terminal"
-> 3. "You'll see a **Dr Claude Code** session waiting — just press Enter"
+> 3. "You'll see a **Dr Claude Code** session — arrow keys to select, **Enter** to jump in"
 > 4. "Once you're in, say **resume onboarding** and I'll pick up where we left off"
 
 Update state: `plugins_installed: true`, `phase: "plugins_done"`
+
+**When user resumes after agent-deck install**, give a quick Agent Deck cheat sheet:
+
+> "Welcome back! Quick Agent Deck survival guide:"
+>
+> | Key | What it does |
+> |---|---|
+> | `Ctrl+Q` | Leave session (keeps it running in background) |
+> | `Ctrl+C` | Back to Agent Deck main window |
+> | `Enter` / arrow keys | Select and enter a session |
+> | `n` | Create a new Claude Code session |
+>
+> "Full docs: https://github.com/asheshgoplani/agent-deck"
+>
+> "Now let's continue setting up your compute!"
 
 **Important:** If the user comes back and you see `plugins_installed: true` or `plugins_skipped: true` in state, don't re-ask about plugins. Move to Phase 3.
 
