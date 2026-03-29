@@ -94,28 +94,27 @@ fi
 if [ -d "$WORKSPACE" ]; then
     info "Cleaning workspace contents..."
 
-    TMPHOLD=$(mktemp -d)
-    [ -f "${WORKSPACE}/install.sh" ] && cp "${WORKSPACE}/install.sh" "${TMPHOLD}/install.sh"
-    SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-    if [ -f "$SCRIPT_PATH" ]; then
-        mkdir -p "${TMPHOLD}/dev"
-        cp "$SCRIPT_PATH" "${TMPHOLD}/dev/cleanup-test.sh"
-    fi
+    # Detect if install.sh / dev are symlinks (dev workflow) or real files
+    INSTALL_LINK="" DEV_LINK=""
+    [ -L "${WORKSPACE}/install.sh" ] && INSTALL_LINK=$(readlink "${WORKSPACE}/install.sh")
+    [ -L "${WORKSPACE}/dev" ] && DEV_LINK=$(readlink "${WORKSPACE}/dev")
 
     # Nuke everything
     rm -rf "${WORKSPACE:?}"/*
     rm -rf "${WORKSPACE}"/.[!.]* 2>/dev/null || true
 
-    # Restore kept files
-    [ -f "${TMPHOLD}/install.sh" ] && cp "${TMPHOLD}/install.sh" "${WORKSPACE}/install.sh" && chmod +x "${WORKSPACE}/install.sh"
-    if [ -f "${TMPHOLD}/dev/cleanup-test.sh" ]; then
-        mkdir -p "${WORKSPACE}/dev"
-        cp "${TMPHOLD}/dev/cleanup-test.sh" "${WORKSPACE}/dev/cleanup-test.sh"
-        chmod +x "${WORKSPACE}/dev/cleanup-test.sh"
+    # Restore — symlinks if they were symlinks, copies otherwise
+    if [ -n "$INSTALL_LINK" ]; then
+        ln -s "$INSTALL_LINK" "${WORKSPACE}/install.sh"
+    elif [ -f "$INSTALL_LINK" ] 2>/dev/null; then
+        cp "$INSTALL_LINK" "${WORKSPACE}/install.sh" && chmod +x "${WORKSPACE}/install.sh"
     fi
-    rm -rf "$TMPHOLD"
 
-    done_ "Workspace cleaned (kept install.sh + dev/cleanup-test.sh)"
+    if [ -n "$DEV_LINK" ]; then
+        ln -s "$DEV_LINK" "${WORKSPACE}/dev"
+    fi
+
+    done_ "Workspace cleaned (preserved install.sh + dev/ links)"
 else
     info "Workspace not found: ${WORKSPACE}"
 fi
