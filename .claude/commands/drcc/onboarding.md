@@ -363,9 +363,9 @@ Steps:
      -H "Content-Type: application/json" \
      -d '{"type":"space","name":"dr-claude-dashboard","organization":"'${HF_ORG}'","sdk":"docker","private":false}'
    ```
-5. Fresh git init, add all (including dist/), push to Space using token in git remote URL. **Clean up the .git dir immediately after push in the same bash command** (don't leave a nested .git inside the workspace):
+5. Fresh git init, add all (including dist/), push to Space using token in git remote URL. Leave the `.git` — it's useful for future re-deploys:
    ```bash
-   cd tools/visualizer && rm -rf .git && git init -q && git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_ORG}/dr-claude-dashboard" && git add -A && git commit -q -m "deploy" && git push space HEAD:main --force -q && rm -rf .git
+   cd tools/visualizer && rm -rf .git && git init -q && git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_ORG}/dr-claude-dashboard" && git add -A && git commit -q -m "deploy" && git push space HEAD:main --force -q
    ```
 6. Save dashboard URL: `https://${HF_ORG}-dr-claude-dashboard.hf.space`
 
