@@ -295,12 +295,12 @@ Update state: `model_serving: true`
 
 **IMPORTANT: The ONLY source of truth for the HF token is `packages/key_handler/key_handler/key_handler.py`.** Do NOT use `~/.cache/huggingface/token`, do NOT use `HfApi().token`, do NOT hardcode or guess tokens. Always read from key_handler.
 
+**IMPORTANT: Always use `.tools-venv/bin/python` (not `python3`) for key_handler imports.** The system Python doesn't have key_handler installed. The tools venv does.
+
 Check if key_handler has a valid HF token:
 
 ```bash
-python3 -c "
-import sys
-sys.path.insert(0, 'packages/key_handler')
+.tools-venv/bin/python -c "
 from key_handler import KeyHandler
 token = getattr(KeyHandler, 'hf_key', '') or ''
 if token and 'your-' not in token:
@@ -312,13 +312,10 @@ else:
 
 If the token is set, validate it:
 ```bash
-python3 -c "
-import sys, os
-sys.path.insert(0, 'packages/key_handler')
+.tools-venv/bin/python -c "
 from key_handler import KeyHandler
-token = KeyHandler.hf_key
 from huggingface_hub import HfApi
-api = HfApi(token=token)
+api = HfApi(token=KeyHandler.hf_key)
 info = api.whoami()
 print(f'VALID:{info[\"name\"]}')
 " 2>/dev/null || echo "INVALID"
@@ -351,8 +348,8 @@ Introduce the dashboard before asking for the org:
 Then deploy. **Always read the token from key_handler for every HF operation:**
 
 ```bash
-# Get token from key_handler (the ONLY source of truth)
-HF_TOKEN=$(python3 -c "import sys; sys.path.insert(0,'packages/key_handler'); from key_handler import KeyHandler; print(KeyHandler.hf_key)")
+# Get token from key_handler (the ONLY source of truth) — MUST use .tools-venv/bin/python
+HF_TOKEN=$(.tools-venv/bin/python -c "from key_handler import KeyHandler; print(KeyHandler.hf_key)")
 ```
 
 Steps:
@@ -498,3 +495,4 @@ When onboarding is invoked and state exists with `completed: false`:
 - **Check the filesystem, not just state.** State can be stale — verify by reading actual files.
 - **2FA is a pain point.** Always remind them about the new terminal tab for auth.
 - **Dashboard takes time.** Never block waiting for HF to build. Tell them the URL and move on.
+- **Use `.tools-venv/bin/python` for ALL key_handler and huggingface_hub operations.** System `python3` doesn't have these packages installed. This is the #1 cause of "token not found" errors.
