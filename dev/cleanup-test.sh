@@ -46,7 +46,7 @@ echo "  - Everything in workspace EXCEPT install.sh and this cleanup script"
 echo "  - HF Space: ${HF_ORG:-?}/dr-claude-dashboard (if exists)"
 echo "  - HF test dataset: ${HF_ORG:-?}/drcc-onboarding-test (if exists)"
 echo "  - ~/.dcc/ (config + install state)"
-echo "  - ~/.ssh/sockets/ (ControlMaster sockets)"
+echo "  - SSH socket for this workspace's cluster only (won't touch other workspaces)"
 echo "  - HF login cache"
 echo ""
 read -rp "Are you sure? (type 'yes'): " CONFIRM
@@ -79,16 +79,16 @@ except Exception as e:
 PYEOF
 fi
 
-# --- Kill any running dcc SSH sessions ---
-info "Killing SSH ControlMaster sockets..."
-if [ -d ~/.ssh/sockets ]; then
-    for sock in ~/.ssh/sockets/*; do
-        [ -S "$sock" ] && ssh -O exit -S "$sock" dummy 2>/dev/null || true
-    done
-    rm -f ~/.ssh/sockets/* 2>/dev/null || true
-    done_ "SSH sockets cleaned"
-else
-    info "No SSH sockets found"
+# --- Kill dcc SSH sessions (only clusters from this workspace's config) ---
+# We do NOT touch all sockets — that would break other workspaces (e.g., ~/Research)
+if [ -f "${WORKSPACE}/.claude/onboarding_state.json" ]; then
+    CLUSTER=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.claude/onboarding_state.json')); print(d.get('cluster_name',''))" 2>/dev/null || echo "")
+    if [ -n "$CLUSTER" ] && [ -S ~/.ssh/sockets/*"@${CLUSTER}" ] 2>/dev/null; then
+        info "Disconnecting cluster: ${CLUSTER}"
+        ssh -O exit -S ~/.ssh/sockets/*"@${CLUSTER}" dummy 2>/dev/null || true
+        rm -f ~/.ssh/sockets/*"@${CLUSTER}" 2>/dev/null || true
+        done_ "Disconnected ${CLUSTER}"
+    fi
 fi
 
 # --- Clean workspace contents (keep install.sh + cleanup script) ---
