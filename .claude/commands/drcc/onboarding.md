@@ -320,8 +320,13 @@ If yes, walk them through getting a token and saving it to key_handler.
 
 **If HF token available:**
 
-Ask for their HF org:
-> "What HuggingFace org or username should I use for your dashboard?"
+Introduce the dashboard before asking for the org:
+
+> "Let me tell you about the **experiment dashboard**. It's a website — hosted free on HuggingFace Spaces — that gives you a live overview of all your research experiments. You'll see your hypotheses, which jobs are running, results as they come in, and you can visualize model outputs like reasoning traces."
+>
+> "It's your control panel. Whenever Claude finishes a job, it uploads results to HuggingFace and syncs them to your dashboard automatically. No manual work."
+>
+> "To set it up, I need to know: what HuggingFace org or username should I deploy it under?"
 
 Then deploy:
 1. Build frontend: `cd tools/visualizer/frontend && npm install --silent && npm run build`
