@@ -29,7 +29,11 @@ def _write_raw(data: dict[str, Any]) -> None:
 
 
 def load_clusters() -> dict[str, dict[str, Any]]:
-    return _read_raw()
+    data = _read_raw()
+    # YAML may have a top-level "clusters:" wrapper or be flat
+    if "clusters" in data and isinstance(data["clusters"], dict):
+        return data["clusters"]
+    return data
 
 
 def get_cluster(name: str) -> dict[str, Any]:
@@ -46,20 +50,27 @@ def get_cluster(name: str) -> dict[str, Any]:
 
 def save_cluster(name: str, config: dict[str, Any]) -> None:
     data = _read_raw()
-    data[name] = config
+    if "clusters" in data and isinstance(data["clusters"], dict):
+        data["clusters"][name] = config
+    else:
+        data[name] = config
     _write_raw(data)
 
 
 def remove_cluster(name: str) -> None:
-    data = _read_raw()
-    if name not in data:
-        available = ", ".join(sorted(data)) or "(none configured)"
+    clusters = load_clusters()
+    if name not in clusters:
+        available = ", ".join(sorted(clusters)) or "(none configured)"
         raise KeyError(
             f"Cluster '{name}' not found. Available: {available}"
         )
-    del data[name]
+    data = _read_raw()
+    if "clusters" in data and isinstance(data["clusters"], dict):
+        del data["clusters"][name]
+    else:
+        del data[name]
     _write_raw(data)
 
 
 def list_cluster_names() -> list[str]:
-    return sorted(_read_raw().keys())
+    return sorted(load_clusters().keys())
