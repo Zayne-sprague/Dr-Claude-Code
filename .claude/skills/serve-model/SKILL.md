@@ -283,6 +283,46 @@ To stop:
   dcc forward stop <local_port>
 ```
 
+### Optional: Launch Chat UI
+
+Offer to start the built-in ChatGPT-style web UI:
+
+> "Want me to open a chat UI so you can talk to the model in your browser?"
+
+If yes:
+```bash
+python tools/chat-ui/chat_server.py  # won't work as module unless installed
+# Instead, run directly:
+.tools-venv/bin/python -c "
+from importlib.util import spec_from_file_location, module_from_spec
+spec = spec_from_file_location('chat', 'tools/chat-ui/chat_server.py')
+mod = module_from_spec(spec)
+spec.loader.exec_module(mod)
+mod.run_chat_server('http://localhost:<local_port>', '<model_name>', port=5000)
+"
+```
+
+Or more simply — the chat server is pure stdlib, just run it:
+```bash
+.tools-venv/bin/python -c "
+import sys; sys.path.insert(0, 'tools/chat-ui')
+from chat_server import run_chat_server
+run_chat_server('http://localhost:<local_port>', '<model_name>', port=5000)
+" &
+```
+
+Then tell the user:
+> "Chat UI is at **http://localhost:5000** — open it in your browser!"
+
+For Ollama (Apple Silicon), the base URL is `http://localhost:11434`:
+```bash
+.tools-venv/bin/python -c "
+import sys; sys.path.insert(0, 'tools/chat-ui')
+from chat_server import run_chat_server
+run_chat_server('http://localhost:11434', '<model_tag>', port=5000)
+" &
+```
+
 ---
 
 ## Phase 6: Stop the Server
