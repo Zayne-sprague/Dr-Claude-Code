@@ -71,7 +71,7 @@ Superpowers installs from within Claude Code:
 > "Superpowers is a Claude Code plugin. To install it, run this in your Claude Code session:"
 >
 > ```
-> /plugins add superpowers@claude-plugins-official
+> /plugin install superpowers@claude-plugins-official
 > ```
 >
 > "Go ahead and run that — I'll wait."
@@ -84,12 +84,13 @@ Agent Deck needs to be installed separately and requires restarting Claude Code 
 
 > "Agent Deck lets you run multiple Claude sessions in parallel — super useful for installing packages on different clusters simultaneously, or running experiments while doing other work."
 >
-> "To install it:"
-> ```bash
-> npm install -g agent-deck
+> "To install it, run these two commands in your Claude Code session:"
+> ```
+> /plugin marketplace add asheshgoplani/agent-deck
+> /plugin install agent-deck@agent-deck
 > ```
 >
-> "Then restart your session inside Agent Deck:"
+> "Then exit this session and restart inside Agent Deck:"
 > ```bash
 > agent-deck
 > ```

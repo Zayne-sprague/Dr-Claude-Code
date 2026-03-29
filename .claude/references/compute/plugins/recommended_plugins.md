@@ -6,7 +6,7 @@ Workflow skills for research: brainstorming, TDD, planning, code review, debuggi
 
 **Install (inside Claude Code):**
 ```
-/plugins add superpowers@claude-plugins-official
+/plugin install superpowers@claude-plugins-official
 ```
 
 No restart needed. Skills are immediately available.
@@ -25,9 +25,10 @@ Run multiple Claude Code sessions in parallel. Essential for:
 - Running experiments while doing other work
 - Managing long-running jobs in background sessions
 
-**Install:**
-```bash
-npm install -g agent-deck
+**Install (inside Claude Code):**
+```
+/plugin marketplace add asheshgoplani/agent-deck
+/plugin install agent-deck@agent-deck
 ```
 
 **Start Agent Deck:**
