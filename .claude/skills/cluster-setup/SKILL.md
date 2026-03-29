@@ -198,7 +198,7 @@ If both succeed, tell the user:
 > "Cluster `<nickname>` is configured. You can now:
 > - SSH in: `dcc ssh <nickname>`
 > - Upload files: `dcc upload <nickname> ./local/path /remote/path`
-> - Submit jobs via sbatch templates in `templates/sbatch/`"
+> - Submit jobs via sbatch templates in `.claude/references/templates/sbatch/`"
 
 ---
 

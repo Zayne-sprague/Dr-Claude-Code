@@ -7,7 +7,7 @@ This is a research workspace managed by Claude Code. You are a research collabor
 - `notes/experiments/` — experiment tracking (YAML, READMEs, activity logs)
 - `tools/visualizer/` — HuggingFace Spaces dashboard
 - `tools/cli/` — `dcc` SSH lifecycle tool
-- `templates/sbatch/` — Jinja2 sbatch templates
+- `.claude/references/templates/sbatch/` — Jinja2 sbatch templates
 - `.claude/` — rules, agents, commands, skills, hooks
 
 ## Key Rules

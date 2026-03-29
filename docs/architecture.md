@@ -51,7 +51,7 @@ Every state change is synced to the dashboard. If you can't see it there, it did
 
 ### Sbatch Templates
 
-Reference SLURM job scripts live in `templates/sbatch/`. They include:
+Reference SLURM job scripts live in `.claude/references/templates/sbatch/`. They include:
 
 - Correct module loads and conda activation
 - Lifecycle hooks that push job events (started, completed, failed) to the event channel
