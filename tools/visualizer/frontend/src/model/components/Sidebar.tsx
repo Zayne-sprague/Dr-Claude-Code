@@ -36,9 +36,9 @@ export default function Sidebar({
 }: SidebarProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [repoInput, setRepoInput] = useState("");
-  const [columnInput, setColumnInput] = useState("model_responses");
+  const [columnInput, setColumnInput] = useState("");
   const [splitInput, setSplitInput] = useState("train");
-  const [promptColumnInput, setPromptColumnInput] = useState("formatted_prompt");
+  const [promptColumnInput, setPromptColumnInput] = useState("");
   const [presetSearch, setPresetSearch] = useState("");
   // Track which dataset is currently being saved as a preset (by dataset id)
   const [savingPresetForId, setSavingPresetForId] = useState<string | null>(null);
@@ -311,9 +311,9 @@ export default function Sidebar({
               setEditingDatasetId(null);
               setShowAddModal(true);
               setRepoInput("");
-              setColumnInput("model_responses");
+              setColumnInput("");
               setSplitInput("train");
-              setPromptColumnInput("formatted_prompt");
+              setPromptColumnInput("");
             }}
             className="w-full px-3 py-2 text-sm bg-blue-600 hover:bg-blue-500 rounded text-white font-medium transition-colors"
           >
@@ -335,7 +335,7 @@ export default function Sidebar({
                 type="text"
                 value={columnInput}
                 onChange={(e) => setColumnInput(e.target.value)}
-                placeholder="Column"
+                placeholder="Response col (auto-detect)"
                 className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-600 rounded text-gray-200 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
               />
               <input
@@ -351,7 +351,7 @@ export default function Sidebar({
                 type="text"
                 value={promptColumnInput}
                 onChange={(e) => setPromptColumnInput(e.target.value)}
-                placeholder="Prompt col"
+                placeholder="Prompt col (auto-detect)"
                 className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-600 rounded text-gray-200 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
               />
             </div>

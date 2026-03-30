@@ -214,7 +214,7 @@ export function useAppState() {
     const colList = params.get("cols")?.split(",") || [];
     const pcolList = params.get("pcols")?.split(",") || [];
     for (let i = 0; i < repoList.length; i++) {
-      addDataset(repoList[i], colList[i], undefined, pcolList[i]);
+      addDataset(repoList[i], colList[i] || undefined, undefined, pcolList[i] || undefined);
     }
   }, [addDataset]);
 

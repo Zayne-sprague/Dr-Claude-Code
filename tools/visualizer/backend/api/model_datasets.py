@@ -22,18 +22,19 @@ def _load_hf_dataset(repo: str, split: str) -> Dataset:
 
 
 def _detect_response_column(columns: list[str], preferred: str) -> str:
-    if preferred in columns:
+    if preferred and preferred in columns:
         return preferred
     for fallback in ["model_responses", "model_response", "response", "responses", "output", "outputs", "completion", "messages"]:
         if fallback in columns:
             return fallback
-    return preferred
+    # Last resort: return preferred if set, otherwise first column
+    return preferred if preferred else (columns[0] if columns else "")
 
 
 def _detect_prompt_column(columns: list[str], preferred: str) -> str | None:
-    if preferred in columns:
+    if preferred and preferred in columns:
         return preferred
-    for fallback in ["formatted_prompt", "prompt", "question", "input"]:
+    for fallback in ["formatted_prompt", "prompt", "question", "input", "instruction"]:
         if fallback in columns:
             return fallback
     return None
@@ -170,8 +171,8 @@ def load_dataset_endpoint():
         return jsonify({"error": "repo is required"}), 400
 
     split = data.get("split", "train")
-    preferred_column = data.get("column", "model_responses")
-    preferred_prompt_column = data.get("prompt_column", "formatted_prompt")
+    preferred_column = data.get("column") or ""
+    preferred_prompt_column = data.get("prompt_column") or ""
 
     try:
         ds = _load_hf_dataset(repo, split)
