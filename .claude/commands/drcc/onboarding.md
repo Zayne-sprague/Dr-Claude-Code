@@ -138,21 +138,20 @@ sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "NOT_MAC"
 sysctl -n hw.memsize 2>/dev/null | awk '{printf "%.0f\n", $1/1073741824}' 2>/dev/null || true
 ```
 
-Present options based on what you find:
+The core value of Dr Claude Code is running experiments on remote servers — clusters and cloud GPUs. The tutorial should demonstrate that. Local is a fallback only if they insist.
 
-> "Time to run the experiment! We need compute. [Describe what you detected about their machine]."
+> "Time to run the experiment! The real power of Dr Claude Code is managing jobs on remote compute — I handle SSH, job submission, monitoring, and collecting results for you."
 >
-> "Would you like to:"
-> 1. "**Run locally**" (if they have GPU or capable Apple Silicon)
-> 2. "**Set up a cluster you have access to** — this is our big advantage if you have HPC"
-> 3. "**Set up RunPod** (cloud GPUs)"
-> 4. "**Something else?**"
+> "Do you have access to:"
+> 1. "**A SLURM cluster** (university HPC) — highly recommended, this is where we really shine"
+> 2. "**RunPod** (cloud GPUs on demand) — easy to set up, pay per minute"
+> 3. "**I just want to run locally for now**"
 
-If they have Apple Silicon, encourage local for the tutorial but mention clusters:
-> "Your Mac can handle this small model locally, which is fastest for the tutorial. But if you have access to a SLURM cluster, I'd encourage setting that up too — that's where Dr Claude Code really shines for bigger experiments."
+**Push toward cluster or RunPod.** That's the whole point. Only fall back to local if they have no remote option and insist.
 
-For SLURM: load `setup-cluster` skill. For RunPod: load `setup-runpod` skill.
-For Apple Silicon: `brew install ollama && ollama serve & && ollama pull qwen2.5:1.5b`
+For SLURM: load `setup-cluster` skill.
+For RunPod: load `setup-runpod` skill.
+For local (last resort): Apple Silicon → Ollama, NVIDIA → vLLM.
 
 For 2FA clusters: "Open a **new terminal tab** and run `dcc auth <cluster>`"
 
