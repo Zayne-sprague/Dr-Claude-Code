@@ -26,7 +26,7 @@ The partition name in your job script doesn't match what the cluster reports. Ch
 dcc ssh <cluster> "sinfo -o '%P %G %l'"
 ```
 
-Update the partition name in `~/.dcc/clusters.yaml` and regenerate the job script.
+Update the partition name in `.drcc/clusters.yaml` and regenerate the job script.
 
 ## Dashboard not loading
 

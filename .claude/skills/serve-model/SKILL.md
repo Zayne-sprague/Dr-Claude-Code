@@ -34,7 +34,7 @@ Rule of thumb: `n_params_billion × 2.4 GB` for float16. AWQ reduces by ~4×.
 
 Ask:
 - **Model name or HF path** (e.g., `Qwen/Qwen3-8B`, `meta-llama/Llama-3.1-70B-Instruct`)
-- **Cluster nickname** (default: whatever is in `~/.dcc/clusters.yaml`)
+- **Cluster nickname** (default: whatever is in `.drcc/clusters.yaml`)
 - **Quantization?** (none / AWQ / GPTQ / FP8) — if user isn't sure, recommend none for < 32B, AWQ for 70B+
 - **Expected concurrent users?** (affects `max_concurrent_requests`)
 
@@ -60,7 +60,7 @@ Note: gated models (Llama, Gemma, etc.) require `HUGGINGFACE_TOKEN` to be set on
 dcc cluster info <nickname>
 ```
 
-Or read `~/.dcc/clusters.yaml` directly. Extract:
+Or read `.drcc/clusters.yaml` directly. Extract:
 - Available GPU types and VRAM
 - GRES format (typed vs generic)
 - Default partition and account

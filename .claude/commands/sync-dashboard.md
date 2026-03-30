@@ -17,7 +17,7 @@ cd tools/visualizer && python3 scripts/import_experiments.py
 curl -s -X POST https://$HF_ORG-dashboard.hf.space/api/experiments/sync
 ```
 
-Note: The dashboard URL is configured in `~/.dcc/config.yaml` under `dashboard.url`.
+Note: The dashboard URL is configured in `.drcc/config.yaml` under `dashboard.url`.
 
 ## When to run
 

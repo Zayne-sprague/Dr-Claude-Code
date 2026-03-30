@@ -2,7 +2,7 @@
 name: cluster-setup
 description: |
   Walk the user through connecting a new compute cluster (SLURM, RunPod, or local GPU)
-  to Dr. Claude Code. Writes config to ~/.dcc/clusters.yaml and verifies connectivity.
+  to Dr. Claude Code. Writes config to .drcc/clusters.yaml and verifies connectivity.
   Run this skill when the user says "add a cluster", "set up a cluster", "connect to HPC",
   or "configure RunPod".
 ---
@@ -77,9 +77,9 @@ Ask the user for (skip any you already found in SSH config):
 ### Step 1.2 — Write initial config and authenticate
 
 **CRITICAL: Write the config BEFORE attempting any dcc commands.**
-`dcc auth` and `dcc ssh` read from `~/.dcc/clusters.yaml` — they will error if the cluster isn't configured yet.
+`dcc auth` and `dcc ssh` read from `.drcc/clusters.yaml` — they will error if the cluster isn't configured yet.
 
-Write a minimal cluster entry to `~/.dcc/clusters.yaml` using the info gathered so far:
+Write a minimal cluster entry to `.drcc/clusters.yaml` using the info gathered so far:
 
 ```yaml
 clusters:
@@ -182,7 +182,7 @@ Check if CUDA modules are available via the module system. Record the CUDA versi
 
 ### Step 1.5 — Update cluster config with detected info
 
-Update the entry in `~/.dcc/clusters.yaml` with all detected details:
+Update the entry in `.drcc/clusters.yaml` with all detected details:
 
 ```yaml
 clusters:
@@ -246,7 +246,7 @@ If the response contains an `id` and `email`, the key is valid.
 
 ### Step 2.3 — Write config
 
-Append to `~/.dcc/clusters.yaml`:
+Append to `.drcc/clusters.yaml`:
 
 ```yaml
 clusters:
@@ -279,7 +279,7 @@ Found GPUs:
 
 ### Step 3.2 — Write config
 
-Append to `~/.dcc/clusters.yaml`:
+Append to `.drcc/clusters.yaml`:
 
 ```yaml
 clusters:

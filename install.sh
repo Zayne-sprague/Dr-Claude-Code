@@ -18,7 +18,8 @@ error()   { echo -e "${RED}[dcc] ERROR:${RESET} $*" >&2; }
 die()     { error "$*"; exit 1; }
 
 REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
-DCC_CONFIG_DIR="${HOME}/.dcc"
+# Config lives inside the workspace at .drcc/ (not ~/.dcc)
+# DCC_CONFIG_DIR is set after WORKSPACE is known
 
 # Cleanup temp dir on exit
 TMPDIR_DCC=""
@@ -60,6 +61,7 @@ echo ""
 read -rp "$(echo -e "${BLUE}>${RESET} Workspace location [$(pwd)]: ")" WORKSPACE
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 WORKSPACE="${WORKSPACE/#\~/$HOME}"
+DCC_CONFIG_DIR="${WORKSPACE}/.drcc"
 
 # ── Clone & Copy ──────────────────────────────────────────
 echo ""

@@ -1,6 +1,6 @@
 # HuggingFace Dataset Standards
 
-Org: `$HF_ORG` (set in `~/.dcc/config.yaml` or environment).
+Org: `$HF_ORG` (set in `.drcc/config.yaml` or environment).
 
 ## Hard Rules
 

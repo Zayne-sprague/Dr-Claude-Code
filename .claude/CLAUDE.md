@@ -74,7 +74,7 @@ For Python scripts, always use `.tools-venv/bin/python` since system Python does
 
 ## Cluster Access
 
-Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.
+Cluster configs are in `.drcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.
 You run commands on clusters via `dcc ssh <cluster> "command"`.
 You transfer files via `dcc upload` / `dcc download`.
 You set up port forwards via `dcc forward`.

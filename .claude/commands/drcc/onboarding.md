@@ -472,7 +472,7 @@ When onboarding is invoked and state exists with `completed: false`:
 
 1. Read the state file
 2. Check the filesystem to see what actually exists (cluster config, dashboard, model, etc.)
-3. Reconcile state with reality (e.g., if state says `cluster_connected: false` but `~/.dcc/clusters.yaml` has entries, update state)
+3. Reconcile state with reality (e.g., if state says `cluster_connected: false` but `.drcc/clusters.yaml` has entries, update state)
 4. Summarize what's done
 5. Jump to the appropriate phase
 

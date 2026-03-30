@@ -20,7 +20,7 @@ This skill installs Python packages on a cluster, always using tmux for persiste
 
 Ask the user:
 - **What package?** (vllm, verl, llama_factory, or a custom package/requirements.txt)
-- **What cluster?** (from `~/.dcc/clusters.yaml`)
+- **What cluster?** (from `.drcc/clusters.yaml`)
 - **Which conda env?** (existing env name, or should we create a new one?)
 
 If the user doesn't specify a conda env, ask: "Install into an existing env or create a new one?"

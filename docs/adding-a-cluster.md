@@ -1,6 +1,6 @@
 # Adding a Cluster
 
-Cluster details live in `~/.dcc/clusters.yaml`. Claude reads this file when generating job scripts, SSH commands, and environment setup steps. Add your cluster here once — you never need to specify it again.
+Cluster details live in `.drcc/clusters.yaml`. Claude reads this file when generating job scripts, SSH commands, and environment setup steps. Add your cluster here once — you never need to specify it again.
 
 ## SLURM Cluster
 

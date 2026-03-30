@@ -1,12 +1,28 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-DCC_DIR = Path.home() / ".dcc"
+
+def _find_drcc_dir() -> Path:
+    """Find .drcc/ by walking up from cwd, like git finds .git/.
+    Falls back to cwd/.drcc if nothing found."""
+    current = Path.cwd()
+    while current != current.parent:
+        candidate = current / ".drcc"
+        if candidate.is_dir():
+            return candidate
+        current = current.parent
+    # Fallback: use cwd
+    return Path.cwd() / ".drcc"
+
+
+DCC_DIR = _find_drcc_dir()
 CLUSTERS_FILE = DCC_DIR / "clusters.yaml"
+CONFIG_FILE = DCC_DIR / "config.yaml"
 
 
 def _ensure_dir() -> None:

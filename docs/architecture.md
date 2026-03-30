@@ -60,7 +60,7 @@ Reference SLURM job scripts live in `.claude/references/templates/sbatch/`. They
 
 Copy and adapt them for new jobs rather than writing from scratch.
 
-### Cluster Config (`~/.dcc/clusters.yaml`)
+### Cluster Config (`.drcc/clusters.yaml`)
 
 Single source of truth for all cluster details: hostnames, partitions, GPU specs, SLURM accounts, scratch paths, conda locations. Claude reads this file when generating job scripts and SSH commands. See [Adding a Cluster](adding-a-cluster.md) for the full schema.
 

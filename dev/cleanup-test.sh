@@ -3,7 +3,7 @@
 # Removes workspace contents (keeps install.sh + this script), deletes HF Space + test datasets, resets all state.
 #
 # Usage: bash dev/cleanup-test.sh [workspace_path]
-#        Default: reads from ~/.dcc/config.yaml or uses current dir
+#        Default: reads from .drcc/config.yaml or uses current dir
 
 set -uo pipefail
 # Note: no -e — we want cleanup to continue even if individual steps fail
@@ -19,17 +19,17 @@ done_() { echo -e "${GREEN}[cleanup]${RESET} $*"; }
 
 # Determine workspace
 WORKSPACE="${1:-}"
-if [ -z "$WORKSPACE" ] && [ -f ~/.dcc/config.yaml ]; then
-    WORKSPACE=$(grep '^workspace:' ~/.dcc/config.yaml 2>/dev/null | sed 's/workspace: *//' | tr -d '"' | tr -d ' ')
+if [ -z "$WORKSPACE" ] && [ -f .drcc/config.yaml ]; then
+    WORKSPACE=$(grep '^workspace:' .drcc/config.yaml 2>/dev/null | sed 's/workspace: *//' | tr -d '"' | tr -d ' ')
 fi
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 
 # Read HF info before we nuke config
 HF_ORG=""
 HF_USER=""
-if [ -f ~/.dcc/config.yaml ]; then
-    HF_ORG=$(grep '^hf_org:' ~/.dcc/config.yaml 2>/dev/null | sed 's/hf_org: *//' | tr -d '"' | tr -d ' ')
-    HF_USER=$(grep '^hf_user:' ~/.dcc/config.yaml 2>/dev/null | sed 's/hf_user: *//' | tr -d '"' | tr -d ' ')
+if [ -f .drcc/config.yaml ]; then
+    HF_ORG=$(grep '^hf_org:' .drcc/config.yaml 2>/dev/null | sed 's/hf_org: *//' | tr -d '"' | tr -d ' ')
+    HF_USER=$(grep '^hf_user:' .drcc/config.yaml 2>/dev/null | sed 's/hf_user: *//' | tr -d '"' | tr -d ' ')
 fi
 # Also try reading from onboarding state
 if [ -z "$HF_ORG" ] && [ -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
@@ -45,7 +45,7 @@ echo "Will remove:"
 echo "  - Everything in workspace EXCEPT install.sh and this cleanup script"
 echo "  - HF Space: ${HF_ORG:-?}/dr-claude-dashboard (if exists)"
 echo "  - HF test dataset: ${HF_ORG:-?}/drcc-onboarding-test (if exists)"
-echo "  - ~/.dcc/ (config + install state)"
+echo "  - .drcc/ (config + install state)"
 echo "  - SSH socket for this workspace's cluster only (won't touch other workspaces)"
 echo "  - HF login cache"
 echo ""
@@ -119,12 +119,7 @@ else
     info "Workspace not found: ${WORKSPACE}"
 fi
 
-# --- Remove ~/.dcc ---
-if [ -d ~/.dcc ]; then
-    info "Removing ~/.dcc/"
-    rm -rf ~/.dcc
-    done_ "~/.dcc removed"
-fi
+# .drcc/ is inside the workspace — already nuked above
 
 # --- Remove HF login cache ---
 HF_CACHE="${HOME}/.cache/huggingface/token"
