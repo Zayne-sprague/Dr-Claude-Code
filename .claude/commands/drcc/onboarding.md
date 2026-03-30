@@ -285,8 +285,3 @@ Update: `user_notes: "done"`, `completed: true`
 - **Don't reveal the step count.** Just flow naturally from one thing to the next.
 - **Let them drive.** If they want to skip or reorder, go with it.
 - **The red-team step is automatic.** Just do it, then explain what you did.
-- **Use `.tools-venv/bin/python`** for key_handler/HF operations.
-- **Use `dcc`** for cluster commands (on PATH).
-- **ALWAYS read countdown.md** before writing any Countdown code.
-- **NEVER git push --force to HF Spaces.** Use `HfApi.upload_folder()`.
-- **NEVER mention state tracking, phases, or internal mechanics.**

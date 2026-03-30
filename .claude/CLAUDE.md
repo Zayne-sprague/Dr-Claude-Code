@@ -89,9 +89,13 @@ Claude should invoke these commands automatically when the situation calls for i
 ## Critical Rules
 
 - NEVER hardcode API keys or tokens
+- NEVER git push --force to HuggingFace Spaces — use `HfApi.upload_folder()` only
+- NEVER mention internal state tracking, phases, or mechanics to the user
+- ALWAYS use `.tools-venv/bin/python` for key_handler and huggingface_hub operations (system Python doesn't have them)
+- ALWAYS use `dcc` for cluster commands (it's on PATH after install)
 - ALWAYS use the model's full supported max_tokens for generation — truncated output is FAILED output
 - ALWAYS upload artifacts to HF immediately after creation
-- ALWAYS read benchmark reference files before writing eval/generation code
+- ALWAYS read the benchmark/task reference file before writing ANY code that evaluates, generates data, or trains on that task
 - NO compute without red-team review (unless user overrides)
 - NO analysis before data validation
 - Use column name `model_response` (singular) for model outputs in datasets — this is the standard
