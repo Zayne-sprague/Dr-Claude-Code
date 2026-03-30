@@ -7,8 +7,10 @@ Automated research experiments with Claude Code.
 ## Install
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
+git clone https://github.com/Zayne-sprague/Dr-Claude-Code.git && cd Dr-Claude-Code && bash install.sh
 ```
+
+<!-- When repo is public, use: curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash -->
 
 ## Set Up Compute
 

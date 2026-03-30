@@ -68,9 +68,17 @@ DCC_CONFIG_DIR="${WORKSPACE}/.drcc"
 echo ""
 info "Setting up workspace..."
 
-TMPDIR_DCC=$(mktemp -d)
-git clone --depth=1 "$REPO_URL" "${TMPDIR_DCC}/Dr-Claude-Code" 2>&1 | sed "s/^/  /" || die "Failed to clone repo."
-REPO_DIR="${TMPDIR_DCC}/Dr-Claude-Code"
+# Detect if we're inside the repo already (user did git clone + bash install.sh)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
+    REPO_DIR="$SCRIPT_DIR"
+    info "  Using local repo at ${REPO_DIR}"
+else
+    TMPDIR_DCC=$(mktemp -d)
+    info "  Cloning Dr-Claude-Code..."
+    git clone --depth=1 "$REPO_URL" "${TMPDIR_DCC}/Dr-Claude-Code" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
+    REPO_DIR="${TMPDIR_DCC}/Dr-Claude-Code"
+fi
 
 mkdir -p "${WORKSPACE}/notes/experiments" "${WORKSPACE}/packages"
 
