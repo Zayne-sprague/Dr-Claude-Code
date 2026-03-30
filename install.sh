@@ -98,27 +98,6 @@ done
 if [ ! -d "${WORKSPACE}/.claude" ]; then
     info "  Installing .claude/ config"
     cp -r "${REPO_DIR}/.claude" "${WORKSPACE}/.claude"
-
-    # Hooks are optional
-    echo ""
-    info "Dr Claude Code includes two optional git hooks:"
-    info "  - git-push-safety: blocks force pushes and pushes to upstream"
-    info "  - python-lint: auto-runs ruff on edited Python files"
-    read -rp "$(echo -e "${BLUE}>${RESET} Enable hooks? (y/n) [y]: ")" ENABLE_HOOKS < /dev/tty
-    ENABLE_HOOKS="${ENABLE_HOOKS:-y}"
-    if [[ ! "$ENABLE_HOOKS" =~ ^[Yy] ]]; then
-        # Remove hooks from settings.local.json
-        "${TOOLS_VENV}/bin/python" -c "
-import json
-p = '${WORKSPACE}/.claude/settings.local.json'
-with open(p) as f: d = json.load(f)
-d.pop('hooks', None)
-with open(p, 'w') as f: json.dump(d, f, indent=2)
-" 2>/dev/null || true
-        info "  Hooks disabled"
-    else
-        success "  Hooks enabled"
-    fi
 else
     warn "  .claude/ exists — preserving your config"
 fi
@@ -182,6 +161,28 @@ if [ -n "$SHELL_RC" ]; then
     fi
 fi
 export PATH="${TOOLS_VENV}/bin:$PATH"
+
+# ── Hooks (optional) ─────────────────────────────────────
+if [ -f "${WORKSPACE}/.claude/settings.local.json" ]; then
+    echo ""
+    info "Dr Claude Code includes two optional hooks:"
+    info "  - git-push-safety: blocks force pushes and pushes to upstream"
+    info "  - python-lint: auto-runs ruff on edited Python files"
+    read -rp "$(echo -e "${BLUE}>${RESET} Enable hooks? (y/n) [y]: ")" ENABLE_HOOKS < /dev/tty
+    ENABLE_HOOKS="${ENABLE_HOOKS:-y}"
+    if [[ ! "$ENABLE_HOOKS" =~ ^[Yy] ]]; then
+        "${TOOLS_VENV}/bin/python" -c "
+import json
+p = '${WORKSPACE}/.claude/settings.local.json'
+with open(p) as f: d = json.load(f)
+d.pop('hooks', None)
+with open(p, 'w') as f: json.dump(d, f, indent=2)
+" 2>/dev/null || true
+        info "  Hooks disabled"
+    else
+        success "  Hooks enabled"
+    fi
+fi
 
 # ── HuggingFace token ─────────────────────────────────────
 echo ""
