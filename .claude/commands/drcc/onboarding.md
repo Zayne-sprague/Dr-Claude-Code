@@ -425,10 +425,15 @@ ds.push_to_hub(repo_name, token=HF_TOKEN)
 print(f"Uploaded to: https://huggingface.co/datasets/{repo_name}")
 ```
 
-After upload:
-> "Results uploaded! Open your dashboard and go to the **Model Trace** tab. Load the dataset `{org}/drcc-onboarding-test` and you'll see the model's responses."
+After upload, construct a direct link to the visualizer with the dataset pre-loaded:
+
+The URL format is: `{dashboard_url}/#/viz/model?repos={org}%2Fdrcc-onboarding-test&cols=model_response&pcols=prompt`
+
+> "Results uploaded! Click this link to see the model's reasoning traces in your dashboard:"
 >
-> "Dashboard: {dashboard_url}"
+> `{dashboard_url}/#/viz/model?repos={org}%2Fdrcc-onboarding-test&cols=model_response&pcols=prompt`
+>
+> "(The dashboard may take a moment to load the dataset.)"
 
 Update state: `test_data_uploaded: true`
 

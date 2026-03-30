@@ -25,7 +25,17 @@ Detailed instructions in `.claude/rules/`:
 
 @.claude/references/datasets_and_tasks/datasets_and_tasks_map.md
 
-Before setting up evaluation, data generation, or RL training for any benchmark/task, check the table above. If a reference file exists, read it — it contains evaluation method, prompt templates, known pitfalls, and setup checklists.
+<critical>
+Before writing ANY code that runs a benchmark, generates data, or evaluates a model on a task:
+1. Check the table above for a reference file
+2. If one exists, READ IT FIRST — it contains the correct prompt format, evaluation method, scoring, and known pitfalls
+3. Follow its Setup Checklists before writing code
+4. Use the EXACT prompt templates from the reference — do not improvise prompts
+5. Use the EXACT evaluation method — do not substitute string matching for equation evaluation, etc.
+6. Respect max_tokens requirements — truncated outputs are failed outputs
+
+If no reference file exists, create one first using `/drcc:handle_benchmark_reference <name>`.
+</critical>
 
 ## References (on-demand)
 
@@ -74,7 +84,9 @@ You set up port forwards via `.tools-venv/bin/dcc forward`.
 ## Critical Rules
 
 - NEVER hardcode API keys or tokens
-- ALWAYS use the model's full supported max_tokens for generation
+- ALWAYS use the model's full supported max_tokens for generation — truncated output is FAILED output
 - ALWAYS upload artifacts to HF immediately after creation
+- ALWAYS read benchmark reference files before writing eval/generation code
 - NO compute without red-team review (unless user overrides)
 - NO analysis before data validation
+- Use column name `model_response` (singular) for model outputs in datasets — this is the standard

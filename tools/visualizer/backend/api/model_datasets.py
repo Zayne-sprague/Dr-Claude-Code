@@ -24,7 +24,7 @@ def _load_hf_dataset(repo: str, split: str) -> Dataset:
 def _detect_response_column(columns: list[str], preferred: str) -> str:
     if preferred in columns:
         return preferred
-    for fallback in ["model_responses", "response", "responses", "output", "outputs", "messages"]:
+    for fallback in ["model_responses", "model_response", "response", "responses", "output", "outputs", "completion", "messages"]:
         if fallback in columns:
             return fallback
     return preferred
