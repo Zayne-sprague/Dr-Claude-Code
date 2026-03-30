@@ -34,7 +34,7 @@ Before writing ANY code that runs a benchmark, generates data, or evaluates a mo
 5. Use the EXACT evaluation method — do not substitute string matching for equation evaluation, etc.
 6. Respect max_tokens requirements — truncated outputs are failed outputs
 
-If no reference file exists, create one first using `/drcc:handle_benchmark_reference <name>`.
+If no reference file exists, create one first using `/drcc:benchmark-reference <name>`.
 </critical>
 
 ## References (on-demand)
@@ -78,6 +78,13 @@ Cluster configs are in `.drcc/clusters.yaml`. The user authenticates with `dcc a
 You run commands on clusters via `dcc ssh <cluster> "command"`.
 You transfer files via `dcc upload` / `dcc download`.
 You set up port forwards via `dcc forward`.
+
+## Command Routing
+
+Claude should invoke these commands automatically when the situation calls for it:
+- `/drcc:dashboard-sync` — after any artifact is produced or experiment state changes
+- `/drcc:find-compute` — when planning where to run a job
+- `/drcc:benchmark-reference` — when a benchmark is mentioned that has no reference file
 
 ## Critical Rules
 
