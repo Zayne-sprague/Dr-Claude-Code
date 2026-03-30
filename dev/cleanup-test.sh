@@ -100,9 +100,8 @@ if [ -d "$WORKSPACE" ]; then
     [ -L "${WORKSPACE}/install.sh" ] && INSTALL_LINK=$(readlink "${WORKSPACE}/install.sh")
     [ -L "${WORKSPACE}/dev" ] && DEV_LINK=$(readlink "${WORKSPACE}/dev")
 
-    # Nuke everything
-    rm -rf "${WORKSPACE:?}"/*
-    rm -rf "${WORKSPACE}"/.[!.]* 2>/dev/null || true
+    # Nuke everything (visible + hidden, except . and ..)
+    find "${WORKSPACE:?}" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null
 
     # Restore — symlinks if they were symlinks, copies otherwise
     if [ -n "$INSTALL_LINK" ]; then
