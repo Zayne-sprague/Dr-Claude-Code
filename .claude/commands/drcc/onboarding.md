@@ -318,44 +318,49 @@ Edit `packages/key_handler/key_handler/key_handler.py` — replace the `hf_key =
 
 **If HF token available:**
 
-Introduce the dashboard before asking for the org:
+Introduce the dashboard:
 
-> "Let me tell you about the **experiment dashboard**. It's a website — hosted free on HuggingFace Spaces — that gives you a live overview of all your research experiments. You'll see your hypotheses, which jobs are running, results as they come in, and you can visualize model outputs like reasoning traces."
+> "Let me tell you about the **experiment dashboard**. It's a website that gives you a live overview of all your research experiments — hypotheses, running jobs, results, and model output visualizations."
 >
-> "It's your control panel. Whenever Claude finishes a job, it uploads results to HuggingFace and syncs them to your dashboard automatically. No manual work."
->
-> "To set it up, I need to know: what HuggingFace org or username should I deploy it under?"
+> "Let's start it locally so you can see it right away. Later you can deploy it to HuggingFace Spaces so it's always online."
 
-Then deploy. **Always read the token from key_handler for every HF operation:**
+### Step 1: Run dashboard locally
 
+Build the frontend and start the backend:
 ```bash
-# Get token from key_handler (the ONLY source of truth) — MUST use .tools-venv/bin/python
-HF_TOKEN=$(.tools-venv/bin/python -c "from key_handler import KeyHandler; print(KeyHandler.hf_key)")
+cd tools/visualizer/frontend && npm install --silent && npm run build
 ```
 
-Steps:
-1. Build frontend: `cd tools/visualizer/frontend && npm install --silent && npm run build`
-2. Write README with YAML frontmatter (sdk: docker, app_port: 7860)
-3. Fix `.gitignore` and `.dockerignore` — remove `frontend/dist` entries
-4. Create HF Space via REST API using `$HF_TOKEN` from above
-   ```bash
-   curl -s -X POST "https://huggingface.co/api/repos/create" \
-     -H "Authorization: Bearer ${HF_TOKEN}" \
-     -H "Content-Type: application/json" \
-     -d '{"type":"space","name":"dr-claude-dashboard","organization":"'${HF_ORG}'","sdk":"docker","private":false}'
-   ```
-5. Fresh git init, add all (including dist/), push to Space using token in git remote URL. Leave the `.git` — it's useful for future re-deploys:
-   ```bash
-   cd tools/visualizer && rm -rf .git && git init -q && git remote add space "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_ORG}/dr-claude-dashboard" && git add -A && git commit -q -m "deploy" && git push space HEAD:main --force -q
-   ```
-6. Save dashboard URL: `https://${HF_ORG}-dr-claude-dashboard.hf.space`
+Then start the local server:
+```bash
+cd tools/visualizer && .tools-venv/bin/pip install -q -r backend/requirements.txt 2>/dev/null
+cd tools/visualizer && .tools-venv/bin/python -c "from backend.app import app; app.run(host='127.0.0.1', port=7860, debug=False)" &
+```
 
-> "Dashboard is deploying — Docker build takes 3-5 minutes on HF. The direct URL is:"
-> `https://{org}-dr-claude-dashboard.hf.space`
+> "Dashboard running at **http://localhost:7860** — open it in your browser!"
 
-Update state: `visualizer_deployed: true`, `dashboard_url`, `hf_org`
+Update state: `visualizer_deployed: true`, `dashboard_url: "http://localhost:7860"`
 
-**Don't wait/poll.** Tell the user the URL and move on.
+### Step 2 (optional, offer later): Deploy to HuggingFace Spaces
+
+If the user wants a permanent online dashboard, offer to deploy to HF Spaces. Ask for HF org.
+
+**CRITICAL: NEVER use `git push --force` to deploy to HF Spaces.** This corrupts HF's internal metadata permanently. Always use `HfApi.upload_folder()`:
+
+```python
+.tools-venv/bin/python -c "
+from huggingface_hub import HfApi
+from key_handler import KeyHandler
+api = HfApi(token=KeyHandler.hf_key)
+api.create_repo('${HF_ORG}/drcc-dashboard', repo_type='space', space_sdk='docker', exist_ok=True, private=False)
+api.upload_folder(folder_path='tools/visualizer', repo_id='${HF_ORG}/drcc-dashboard', repo_type='space')
+print('Deployed!')
+"
+```
+
+Dashboard URL: `https://${HF_ORG}-drcc-dashboard.hf.space`
+
+Note: HF Docker build takes 3-5 min. Local dashboard works instantly.
 
 ---
 
@@ -368,7 +373,19 @@ If `model_serving` is true (or the queued job has since started):
 > 2. "Upload the results to HuggingFace"
 > 3. "Load them in your dashboard's Model Trace viewer"
 
-Write and run a small test script:
+**CRITICAL: Before writing ANY test code, you MUST read the Countdown reference file:**
+
+```bash
+cat .claude/references/datasets_and_tasks/countdown.md
+```
+
+**Follow the prompt format, evaluation method, and scoring from that file EXACTLY.** Do not improvise prompts. Do not truncate outputs. Use the model's full max_tokens.
+
+After reading the reference, write and run a test script. The script MUST:
+- Use the prompt format from the reference file (not made-up prompts)
+- Set `max_tokens` to at least 2048 (reasoning models need space to think)
+- Include accuracy scoring as described in the reference
+- Use column name `model_response` (singular) for the output
 
 ```python
 """Quick end-to-end test: query model → save results → upload to HF."""
@@ -380,12 +397,10 @@ from datasets import Dataset
 MODEL_URL = "<model_url>/v1/completions"
 MODEL_NAME = "<model_name>"
 
-# Simple Countdown-style prompts
+# Countdown prompts — USE THE FORMAT FROM .claude/references/datasets_and_tasks/countdown.md
+# Example (adapt based on what the reference says):
 prompts = [
-    "Using the numbers 2, 5, 8, find a way to make 10. Show your work.",
-    "Using the numbers 3, 7, 1, 4, find a way to make 24. Show your work.",
-    "Using the numbers 6, 2, 9, find a way to make 3. Show your work.",
-]
+    # These are EXAMPLES — read the reference file for the actual format!
 
 results = []
 for prompt in prompts:

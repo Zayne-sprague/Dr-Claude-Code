@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type { DatasetInfo, QuestionData, Preset, FilterMode } from "./types";
 import { api } from "./api";
 import { parseHash, replaceRoute } from "../hashRouter";
@@ -9,6 +9,9 @@ interface GroupIndices {
 }
 
 export function useAppState() {
+  // Capture URL params at init BEFORE any effects can wipe them
+  const initialParams = useRef(parseHash().params);
+
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [filter, setFilter] = useState<FilterMode>("all");
@@ -208,8 +211,9 @@ export function useAppState() {
   }, []);
 
   // Auto-load repos from URL (must be after addDataset declaration)
+  // Auto-load from URL — uses initialParams captured before any effect could wipe them
   useEffect(() => {
-    const { params } = parseHash();
+    const params = initialParams.current;
     const repoList = params.get("repos")?.split(",").filter(Boolean) || [];
     const colList = params.get("cols")?.split(",") || [];
     const pcolList = params.get("pcols")?.split(",") || [];
