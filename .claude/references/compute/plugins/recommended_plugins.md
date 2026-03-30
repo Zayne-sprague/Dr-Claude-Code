@@ -25,10 +25,14 @@ Run multiple Claude Code sessions in parallel. Essential for:
 - Running experiments while doing other work
 - Managing long-running jobs in background sessions
 
-**Install (inside Claude Code):**
+**Install (from terminal):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/asheshgoplani/agent-deck/main/install.sh | bash
 ```
-/plugin marketplace add asheshgoplani/agent-deck
-/plugin install agent-deck@agent-deck
+
+Or use the helper script (also creates a session):
+```bash
+bash tools/setup-agent-deck.sh
 ```
 
 **Start Agent Deck:**
