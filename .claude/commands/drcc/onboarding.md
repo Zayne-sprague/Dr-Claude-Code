@@ -31,10 +31,12 @@ Onboarding state lives at `.drcc/onboarding_state.json`. Read it on start. Updat
 }
 ```
 
-**On every start:** Read the state file. If it exists and `completed` is false, assess what's done and resume from where they left off. Don't re-ask questions you already know the answer to. If the state file doesn't exist, create it and start from the beginning.
+**On every start:** Read the state file silently. If it exists and `completed` is false, assess what's done and resume from where they left off. Don't re-ask questions you already know the answer to. If the state file doesn't exist, create it and start from the beginning.
+
+**NEVER tell the user what phase you're on, what the state file says, or any internal details.** Just act naturally. The state tracking is invisible to the user.
 
 **Resume logic:** When resuming, briefly summarize what's already done:
-> "Welcome back! Last time we got [X] set up. Ready to continue with [next phase]?"
+> "Welcome back! Last time we got [X] set up. Ready to continue?"
 
 ---
 
