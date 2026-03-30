@@ -57,8 +57,9 @@ fi
 success "All prerequisites met."
 
 # ── Workspace ──────────────────────────────────────────────
+# When running via curl|bash, stdin is the pipe — read from /dev/tty instead
 echo ""
-read -rp "$(echo -e "${BLUE}>${RESET} Workspace location [$(pwd)]: ")" WORKSPACE
+read -rp "$(echo -e "${BLUE}>${RESET} Workspace location [$(pwd)]: ")" WORKSPACE < /dev/tty
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 WORKSPACE="${WORKSPACE/#\~/$HOME}"
 DCC_CONFIG_DIR="${WORKSPACE}/.drcc"
@@ -77,8 +78,11 @@ mkdir -p "${WORKSPACE}/notes/experiments" "${WORKSPACE}/packages"
 for d in tools packages docs; do
     [ -d "${REPO_DIR}/${d}" ] && {
         info "  Syncing ${d}/"
-        rsync -a --exclude='node_modules' --exclude='__pycache__' --exclude='.venv' --exclude='dist' \
-            "${REPO_DIR}/${d}/" "${WORKSPACE}/${d}/"
+        # Use cp instead of rsync — rsync misinterprets paths with colons as remote hosts
+        mkdir -p "${WORKSPACE}/${d}"
+        cp -R "${REPO_DIR}/${d}/." "${WORKSPACE}/${d}/" 2>/dev/null || true
+        # Clean up unwanted dirs that cp copies
+        find "${WORKSPACE}/${d}" -type d \( -name node_modules -o -name __pycache__ -o -name .venv -o -name dist \) -exec rm -rf {} + 2>/dev/null || true
     }
 done
 
@@ -92,7 +96,7 @@ if [ ! -d "${WORKSPACE}/.claude" ]; then
     info "Dr Claude Code includes two optional git hooks:"
     info "  - git-push-safety: blocks force pushes and pushes to upstream"
     info "  - python-lint: auto-runs ruff on edited Python files"
-    read -rp "$(echo -e "${BLUE}>${RESET} Enable hooks? (y/n) [y]: ")" ENABLE_HOOKS
+    read -rp "$(echo -e "${BLUE}>${RESET} Enable hooks? (y/n) [y]: ")" ENABLE_HOOKS < /dev/tty
     ENABLE_HOOKS="${ENABLE_HOOKS:-y}"
     if [[ ! "$ENABLE_HOOKS" =~ ^[Yy] ]]; then
         # Remove hooks from settings.local.json
@@ -176,7 +180,7 @@ echo ""
 info "A HuggingFace token lets Claude deploy your dashboard and upload datasets."
 info "Get one at: ${BOLD}https://huggingface.co/settings/tokens${RESET} (write access)"
 echo ""
-read -rsp "$(echo -e "${BLUE}>${RESET} HuggingFace token (paste, hidden — or Enter to skip): ")" HF_TOKEN
+read -rsp "$(echo -e "${BLUE}>${RESET} HuggingFace token (paste, hidden — or Enter to skip): ")" HF_TOKEN < /dev/tty
 echo ""
 HF_TOKEN=$(echo "$HF_TOKEN" | tr -d '[:space:]')
 
