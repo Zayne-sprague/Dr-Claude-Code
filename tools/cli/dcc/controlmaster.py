@@ -44,7 +44,7 @@ class SSHSessionManager:
 
     def _base_ssh_args(self, cluster: str) -> list[str]:
         cfg = self._cluster_cfg(cluster)
-        host = cfg.get("host", cluster)
+        host = cfg.get("host") or cfg.get("hostname") or cluster
         user = cfg.get("user")
         port = cfg.get("port", 22)
         socket = str(self._socket_path(cluster))
@@ -90,7 +90,7 @@ class SSHSessionManager:
             return False, "no socket"
 
         cfg = self._cluster_cfg(cluster)
-        host = cfg.get("host", cluster)
+        host = cfg.get("host") or cfg.get("hostname") or cluster
         user = cfg.get("user")
         port = cfg.get("port", 22)
 
@@ -165,7 +165,7 @@ class SSHSessionManager:
     def disconnect(self, cluster: str) -> RemoteResult:
         socket = self._socket_path(cluster)
         cfg = self._cluster_cfg(cluster)
-        host = cfg.get("host", cluster)
+        host = cfg.get("host") or cfg.get("hostname") or cluster
         user = cfg.get("user")
         port = cfg.get("port", 22)
 
@@ -228,7 +228,7 @@ class SSHSessionManager:
     def upload(self, cluster: str, local_path: str, remote_path: str) -> RemoteResult:
         socket = str(self._socket_path(cluster))
         cfg = self._cluster_cfg(cluster)
-        host = cfg.get("host", cluster)
+        host = cfg.get("host") or cfg.get("hostname") or cluster
         user = cfg.get("user")
         port = cfg.get("port", 22)
 
@@ -260,7 +260,7 @@ class SSHSessionManager:
     def download(self, cluster: str, remote_path: str, local_path: str) -> RemoteResult:
         socket = str(self._socket_path(cluster))
         cfg = self._cluster_cfg(cluster)
-        host = cfg.get("host", cluster)
+        host = cfg.get("host") or cfg.get("hostname") or cluster
         user = cfg.get("user")
         port = cfg.get("port", 22)
 

@@ -85,7 +85,7 @@ Write a minimal cluster entry to `.drcc/clusters.yaml` using the info gathered s
 clusters:
   <nickname>:
     type: slurm
-    hostname: <hostname>
+    host: <hostname>
     user: <username>
     vpn_required: <true|false>
     uses_2fa: <true|false>
