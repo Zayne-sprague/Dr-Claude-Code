@@ -224,7 +224,7 @@ Invoke the **cluster-setup skill** to walk them through connecting.
 > "You'll need to authenticate with 2FA. Open a **new terminal tab**, `cd` to your workspace, and run:"
 > ```bash
 > cd <workspace_path>
-> .tools-venv/bin/dcc auth <cluster_name>
+> dcc auth <cluster_name>
 > ```
 > "Complete the 2FA there, then come back here and tell me when you're connected."
 

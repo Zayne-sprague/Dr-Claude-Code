@@ -128,6 +128,25 @@ info "Installing tools..."
 # Verify
 "${TOOLS_VENV}/bin/dcc" --version &>/dev/null && success "dcc CLI installed" || warn "dcc install issue"
 
+# Add dcc to PATH via shell profile
+SHELL_RC=""
+if [ -f "$HOME/.zshrc" ]; then
+    SHELL_RC="$HOME/.zshrc"
+elif [ -f "$HOME/.bashrc" ]; then
+    SHELL_RC="$HOME/.bashrc"
+fi
+
+PATH_LINE="export PATH=\"${TOOLS_VENV}/bin:\$PATH\""
+if [ -n "$SHELL_RC" ]; then
+    if ! grep -q ".tools-venv/bin" "$SHELL_RC" 2>/dev/null; then
+        echo "" >> "$SHELL_RC"
+        echo "# Dr Claude Code tools" >> "$SHELL_RC"
+        echo "$PATH_LINE" >> "$SHELL_RC"
+        success "Added dcc to PATH in $(basename "$SHELL_RC")"
+    fi
+fi
+export PATH="${TOOLS_VENV}/bin:$PATH"
+
 # ── HuggingFace token ─────────────────────────────────────
 echo ""
 info "A HuggingFace token lets Claude deploy your dashboard and upload datasets."

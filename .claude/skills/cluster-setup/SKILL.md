@@ -103,7 +103,7 @@ Then tell the user to authenticate:
 > "I've written the cluster config. Now connect to it — open a **new terminal tab** and run:"
 > ```bash
 > cd <workspace_path>
-> .tools-venv/bin/dcc auth <nickname>
+> dcc auth <nickname>
 > ```
 > "(Make sure VPN is connected if required. You'll need to complete 2FA.)"
 > "Come back here once you're connected."

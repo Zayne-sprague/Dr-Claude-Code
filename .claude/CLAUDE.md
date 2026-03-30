@@ -64,22 +64,20 @@ Use `key_handler.KeyHandler` for all API key management. Never hardcode keys.
 
 ## Tools Venv
 
-All CLI tools (`dcc`, `key_handler`) are installed in `.tools-venv/`. Always use the full path:
-- `.tools-venv/bin/dcc` — not bare `dcc` (it may not be on the user's PATH)
-- `.tools-venv/bin/python` — for any Python that needs `key_handler` or `huggingface_hub`
+CLI tools (`dcc`, `key_handler`) are installed in `.tools-venv/bin/` and added to the user's PATH by the installer.
 
-When telling the user to run `dcc` in their terminal, remind them:
-```
-.tools-venv/bin/dcc auth <cluster>
-```
-Or tell them to add it to PATH: `export PATH="$(pwd)/.tools-venv/bin:$PATH"`
+- `dcc` — SSH lifecycle tool (auth, ssh, upload, download, forward)
+- `.tools-venv/bin/python` — use this for any Python that needs `key_handler` or `huggingface_hub` (NOT system `python3`)
+
+When telling the user to run `dcc`, just say `dcc auth <cluster>` — it's on their PATH.
+For Python scripts, always use `.tools-venv/bin/python` since system Python doesn't have the packages.
 
 ## Cluster Access
 
-Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `.tools-venv/bin/dcc auth <cluster>`.
-You run commands on clusters via `.tools-venv/bin/dcc ssh <cluster> "command"`.
-You transfer files via `.tools-venv/bin/dcc upload` / `.tools-venv/bin/dcc download`.
-You set up port forwards via `.tools-venv/bin/dcc forward`.
+Cluster configs are in `~/.dcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.
+You run commands on clusters via `dcc ssh <cluster> "command"`.
+You transfer files via `dcc upload` / `dcc download`.
+You set up port forwards via `dcc forward`.
 
 ## Critical Rules
 
