@@ -83,46 +83,49 @@ Update: `plugins: "done"`
 
 ---
 
-## Step 2: Design the Tutorial Experiment
+## Step 2: Propose the Tutorial Experiment
 
-> "For the tutorial, we're going to run **Qwen3-1.7B** on the **Countdown** task — that's basic arithmetic reasoning. Small model, quick task, perfect for learning the pipeline."
+**First, explain what you're about to do — then ask if they're ready.**
+
+> "For the tutorial, here's what I'd like to do:"
 >
-> "In the future, you can ask me to help you design experiments on anything — but this is a nice starter."
+> "We'll run **Qwen3-1.7B** on the **Countdown** task — that's basic arithmetic reasoning. Given some numbers and a target, can the model find an equation that works? Small model, quick task, perfect for learning the pipeline."
+>
+> "Normally, you'd tell me what you want to investigate and we'd **design the experiment together**. Then I'd do a **red-team review** — checking for flaws and constraints — before anything runs. Both steps create files in `notes/experiments/` that document the full design."
+>
+> "For this tutorial, I'll handle the design and red-team to show you how it works. Ready to go?"
 
-The experiment is pre-scaffolded at `notes/experiments/onboarding/`. Walk through the key files briefly:
-
-> "I've set up the experiment folder at `notes/experiments/onboarding/`. Here's what's in it:"
-> - **`experiment.yaml`** — hypothesis, model, task config
-> - **`EXPERIMENT_README.md`** — what this experiment is and what you'll learn
-> - **`questions.md`** — the research questions (read-only reference)
-> - **`flow_state.json`** — tracks where we are in the lifecycle
-
-**CRITICAL: Read `.claude/references/datasets_and_tasks/countdown.md` NOW.** You need it for the red-team and the run.
-
-Update: `experiment_designed: "done"`
+Wait for the user to confirm before proceeding.
 
 ---
 
-## Step 3: Red-team (automatic — just do it, then explain)
+## Step 3: Scaffold + Red-team
 
-Don't ask the user. Just run the red-team review quickly, then explain what you did.
+Once they confirm:
 
-1. Read the countdown reference file
-2. Check the experiment.yaml config
-3. Verify: prompt format correct? max_tokens adequate (≥4096)? Evaluation method correct (equation eval, not string match)?
-4. Write a brief `red_team_brief.md` to `notes/experiments/onboarding/`
-5. Update `flow_state.json`: `redteam_status: "pass"`, `phase: "canary"`
+1. **Read** `.claude/references/datasets_and_tasks/countdown.md` — CRITICAL, need this for the design and red-team.
+2. Walk through the pre-scaffolded experiment at `notes/experiments/onboarding/`:
+   > "I've created the experiment folder at `notes/experiments/onboarding/`. Quick tour:"
+   > - **`experiment.yaml`** — hypothesis, model, task config
+   > - **`EXPERIMENT_README.md`** — what this experiment is and what you'll learn
+   > - **`questions.md`** — the research questions
+   > - **`flow_state.json`** — tracks where we are in the lifecycle
 
-Then explain:
+3. **Run the red-team review** (automatic, then explain):
+   - Check experiment.yaml config against the Countdown reference
+   - Verify: prompt format, max_tokens (≥4096), evaluation method (equation eval, not string match)
+   - Write `red_team_brief.md` to `notes/experiments/onboarding/`
+   - Update `flow_state.json`: `redteam_status: "pass"`, `phase: "canary"`
 
-> "I just ran a quick **red-team review** — this happens automatically before every experiment. It caught a few things to watch for:"
-> - "Max tokens needs to be high enough for the model to finish reasoning (set to 4096)"
-> - "Evaluation uses equation checking, not string matching"
-> - "Prompt format follows the Countdown reference specification"
->
-> "Red-teaming catches small issues like these before they waste compute. It happens after every experiment design."
+4. **Explain what you did:**
+   > "I just ran a **red-team review** — this happens automatically before every experiment. It checks things like:"
+   > - "Is max_tokens high enough for the model to finish reasoning?"
+   > - "Is the evaluation method correct? (equation checking, not string matching)"
+   > - "Does the prompt format match the task specification?"
+   >
+   > "Red-teaming catches issues like these before they waste compute. You can see the full brief at `notes/experiments/onboarding/red_team_brief.md`."
 
-Update: `redteam: "done"`
+Update: `experiment_designed: "done"`, `redteam: "done"`
 
 ---
 
