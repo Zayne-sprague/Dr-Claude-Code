@@ -86,6 +86,27 @@ done
 if [ ! -d "${WORKSPACE}/.claude" ]; then
     info "  Installing .claude/ config"
     cp -r "${REPO_DIR}/.claude" "${WORKSPACE}/.claude"
+
+    # Hooks are optional
+    echo ""
+    info "Dr Claude Code includes two optional git hooks:"
+    info "  - git-push-safety: blocks force pushes and pushes to upstream"
+    info "  - python-lint: auto-runs ruff on edited Python files"
+    read -rp "$(echo -e "${BLUE}>${RESET} Enable hooks? (y/n) [y]: ")" ENABLE_HOOKS
+    ENABLE_HOOKS="${ENABLE_HOOKS:-y}"
+    if [[ ! "$ENABLE_HOOKS" =~ ^[Yy] ]]; then
+        # Remove hooks from settings.local.json
+        "${TOOLS_VENV}/bin/python" -c "
+import json
+p = '${WORKSPACE}/.claude/settings.local.json'
+with open(p) as f: d = json.load(f)
+d.pop('hooks', None)
+with open(p, 'w') as f: json.dump(d, f, indent=2)
+" 2>/dev/null || true
+        info "  Hooks disabled"
+    else
+        success "  Hooks enabled"
+    fi
 else
     warn "  .claude/ exists — preserving your config"
 fi
@@ -95,21 +116,22 @@ mkdir -p "${WORKSPACE}/.drcc"
 if [ ! -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
     cat > "${WORKSPACE}/.drcc/onboarding_state.json" <<'STATEJSON'
 {
-  "phase": "welcome",
-  "plugins_installed": false,
-  "plugins_skipped": false,
-  "compute_type": null,
+  "step": "welcome",
+  "plugins": "pending",
+  "compute": "pending",
+  "experiment_setup": "pending",
+  "dashboard_local": "pending",
+  "dashboard_hf": "pending",
+  "redteam": "pending",
+  "model_hosted": "pending",
+  "job_ran": "pending",
+  "results_reviewed": "pending",
+  "user_notes": "pending",
+  "completed": false,
   "cluster_name": null,
-  "cluster_connected": false,
-  "model_serving": false,
-  "model_job_id": null,
   "model_url": null,
-  "visualizer_deployed": false,
   "dashboard_url": null,
   "hf_org": null,
-  "test_data_uploaded": false,
-  "completed": false,
-  "skipped_to": null,
   "updated_at": null
 }
 STATEJSON

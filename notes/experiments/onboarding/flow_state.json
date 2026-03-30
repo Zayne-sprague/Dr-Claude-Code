@@ -1,0 +1,8 @@
+{
+  "phase": "design",
+  "hypothesis": "Qwen3-1.7B can solve basic Countdown arithmetic problems",
+  "next_action": "Complete experiment design, then red-team review",
+  "redteam_status": "pending",
+  "last_validated_artifact": null,
+  "updated": null
+}

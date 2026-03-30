@@ -1,0 +1,31 @@
+name: onboarding
+hypothesis:
+  statement: "Qwen3-1.7B can solve basic Countdown arithmetic problems"
+  type: exploratory
+  status: active
+  success_criteria: "Model produces valid arithmetic expressions that reach the target number on >50% of problems"
+
+config:
+  models:
+    - Qwen/Qwen3-1.7B
+  evaluation:
+    task: countdown
+    n_samples: 10
+    max_tokens: 4096
+  conditions:
+    - name: baseline
+      description: "Standard Countdown prompting per reference file"
+
+observability:
+  tags: [countdown, reasoning, onboarding, tutorial]
+  wandb_project: ""
+
+notes: |
+  This is the onboarding experiment — a guided walkthrough of the full Dr. Claude Code pipeline.
+  It uses a small model (1.7B) on a simple task (Countdown) to demonstrate:
+  - Experiment design and folder structure
+  - Red-team review
+  - Job submission and monitoring
+  - Artifact upload and validation
+  - Dashboard visualization
+  - Results analysis and documentation
