@@ -99,8 +99,8 @@ What happens is that the agent produces a red-team brief, a markdown file with a
 
 > **How rules work:** Claude Code lets you define rules in `.claude/rules/` that guide behavior. They're more like strong suggestions than hard constraints (Claude doesn't always follow them), but they can encode a pipeline. I never have to ask for red-teaming; the rule says to do it before any compute gets scheduled for a new experiment.
  
-![Canary Job finding compute](images/find-compute.jpeg)
-_Example of how Claude can talk to your compute clusters to find available GPUs that you need for your experiment. It doesn't just find compute though, you can use Claude Code locally to handle the installation, monitoring, submission, etc. of your jobs on your SLURM cluster, third-party providers (RunPod, etc.), or your local machines. It makes it so that you don't have to manage multiple sessions on multiple machines, just use ssh and claude code._
+[//]: # (![Canary Job finding compute]&#40;images/find-compute.jpeg&#41;)
+[//]: # (_Example of how Claude can talk to your compute clusters to find available GPUs that you need for your experiment. It doesn't just find compute though, you can use Claude Code locally to handle the installation, monitoring, submission, etc. of your jobs on your SLURM cluster, third-party providers &#40;RunPod, etc.&#41;, or your local machines. It makes it so that you don't have to manage multiple sessions on multiple machines, just use ssh and claude code._)
 
 For this experiment, the canary surfaced a calibration issue:
 

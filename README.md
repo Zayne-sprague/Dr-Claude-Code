@@ -9,7 +9,7 @@ curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/in
 ```
 
 
-![Intro](images/intro.jpeg)
+![Intro](images/intro.png)
 
 Turn your experimental pipeline into a conversation. RACA connects Claude Code with your compute (SLURM, RunPod, local GPUs) and a visualization dashboard (HuggingFace Spaces) so you can design, run, and review experiments without writing sbatch scripts or doing devops.
 
@@ -24,36 +24,13 @@ The script sets up your workspace, installs the tools, then launches Claude Code
 
 ## What You Get
 
-![Finding Compute](images/find-compute.jpeg)
+![Checking Jobs](images/checking-jobs.gif)
 *Claude connects to your clusters over SSH, finds available GPUs, installs dependencies, and schedules jobs. You authenticate once with `raca auth <cluster>` and talk to Claude from there.*
 
 ![Dashboard](images/dashboard.png)
 *The Research Dashboard tracks all your experiments, artifacts, and findings in one place. Claude uploads results to HuggingFace and builds custom visualizations for each experiment.*
 
-## Commands
-
-Commands Claude invokes automatically at the right points in the experiment lifecycle. You can also call them directly.
-
-| Command | Description |
-|---------|-------------|
-| `/raca:onboarding` | First-run setup: workspace, clusters, dashboard, first experiment |
-| `/raca:experiment-preflight` | Red-team review, dry-run, adversarial check, canary job before real compute |
-| `/raca:harvest-and-report` | Post-run: download results, validate data, upload to HF, sync dashboard |
-| `/raca:dashboard-sync` | Push experiment state and artifacts to the live dashboard |
-| `/raca:find-compute` | Check all clusters for GPU availability, queue wait, and cost |
-| `/raca:benchmark-reference` | Create or update a reference doc for a dataset/task (prompt format, eval method, pitfalls) |
-
-## Skills
-
-Skills activate automatically when the conversation matches their purpose.
-
-| Skill | Description |
-|-------|-------------|
-| `experiment-management` | Creates experiment folders, tracks lifecycle state, enforces the design/red-team/canary/run/harvest flow |
-| `run-job` | Writes sbatch scripts, submits jobs, monitors progress, handles failures and checkpointing |
-| `setup-cluster` | Walks you through connecting a new SLURM cluster to RACA |
-| `setup-runpod` | Walks you through connecting RunPod as a compute provider |
-| `dashboard-visualizer` | Knows the visualization website: what viewers exist, how to add new ones, how to check artifact compatibility |
+If you want to know more about how Claude talks to your clusters, manages experiments, builds visualizations, etc., see [Commands and Skills](docs/commands-and-skills.md).
 
 ## The Pipeline
 
