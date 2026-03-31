@@ -4,7 +4,7 @@
 
 ![Intro Diagram](images/intro.png)
 
-> Talk to Claude Code through experimental design, Slurm management, and visualization (the AI Ph.D. student's experiment life-cycle)
+Design an experiment, run on your compute, and analyze the results all without leaving your Claude Code session.
 
 The workflow of a PhD student involves turning high-level directions into concrete experiments. Claude Code knows how to help turn:
 
