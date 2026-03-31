@@ -1,16 +1,10 @@
 # How Claude Code Changed the Way I Think About Research
 
-Talk to Claude Code through experimental design, Slurm management, and visualization (the AI Ph.D. students experiments life-cycle)
 
-### Install
-
-```shell
-curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
-```
 
 ![Intro Diagram](images/intro.jpeg)
 
-
+> Talk to Claude Code through experimental design, Slurm management, and visualization (the AI Ph.D. students experiments life-cycle)
 
 The workflow of a PhD student involves turning high-level directions into concrete experiments. Claude Code knows how to help turn:
 
