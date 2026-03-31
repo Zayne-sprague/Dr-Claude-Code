@@ -1,4 +1,4 @@
-# RACA: Research Assistant Coding Agents
+# RACA: Research Assistant Coding Agent
 
 Talk to Claude Code through **experimental design**, **Slurm management**, and **visualization** (the AI Ph.D. students experiments life-cycle)
  
