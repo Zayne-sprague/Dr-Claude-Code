@@ -1,8 +1,10 @@
 # How Claude Code Changed the Way I Think About Research
 
 
+
 ![Intro Diagram](images/intro.jpeg)
 
+> Talk to Claude Code through experimental design, Slurm management, and visualization (the AI Ph.D. students experiments life-cycle)
 
 The workflow of a PhD student involves turning high-level directions into concrete experiments. Claude Code knows how to help turn:
 
@@ -47,6 +49,9 @@ With Claude, I find I can manage about 3x more parallel threads of research than
 This post is about how I've been using Claude Code to run experiments as a Ph.D. student, what it looks like in practice, and the new ways things break (and what the fixes actually look like). I'm releasing the GitHub repo for people who want to try it themselves. It's genuinely helped my productivity. But more than that, working this way has started to change how I think about research itself: what kind of knowledge is worth building up, where the bottlenecks actually are now, and what it means to "fix" something when the code is disposable but the understanding isn't.
 
 ## What It Looks Like
+
+![Dashboard Image](images/dashboard.png)
+_RACA tracks your experiments constantly syncing up the jobs that produce artifacts (huggingface datasets / models etc.) with your experiments along with custom visualizations._
 
 I was interested in the Multiplex Thinking paper (arxiv 2601.08808). Instead of generating one token at a time during chain-of-thought, you sample K candidate tokens at each position and merge their embeddings before feeding them to the next layer. The paper claims this lets the model explore multiple reasoning branches in parallel.
 
