@@ -13,7 +13,7 @@ curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/in
 
 ![Intro](images/intro.png)
 
-The common Ph.D. students research cycle is to: Design experiments, manage compute, then analyze results. RACA puts all of this into your Claude Code sessions, making research process a tight loop between you and Claude.
+The common PhD student's research cycle is to design experiments, manage compute, analyze results, then iterate. RACA puts all of this into your Claude Code sessions, making the research process a tight loop between you and Claude.
 
 [//]: # (RACA puts your compute &#40;Slurm, RunPod, local GPUs&#41;, data analysis &#40;visualization, Huggingface, etc.&#41;, and experimental design in one conversation with Claude Code. The idea is to have the cycle of experiment, compute, and analysis without every leaving your terminal.)
 [//]: # (RACA connects Claude Code with your compute &#40;SLURM, RunPod, local GPUs&#41; and a visualization dashboard &#40;HuggingFace Spaces&#41; so you can design, run, and review experiments without writing sbatch scripts or doing devops.)
@@ -36,14 +36,7 @@ The script sets up your workspace, installs the tools, then launches Claude Code
 
 If you want to know more about how Claude talks to your clusters, manages experiments, builds visualizations, etc., see [Commands and Skills](docs/commands-and-skills.md).
 
-## The Pipeline
-
-```
-Talk to Claude → Design → Red-Team → Canary → Run → Harvest → Dashboard
-```
-
-No compute without review. No results without validation. Short resumable jobs with frequent artifact uploads. Claude drives the pipeline; you review results and ask questions.
-
+With this flow, you can talk to Claude, design, red-team, "canary" your job, run it, get results, and populate a dashboard.
 ## Optional Tools
 
 RACA works on its own, but these make it better:
