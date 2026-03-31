@@ -1,6 +1,8 @@
 # RACA: Research Assistant Coding Agent
 
-Talk to Claude Code through **experimental design**, **Slurm management**, and **visualization** (the AI Ph.D. students experiments life-cycle)
+Design an experiment, run on your compute, and analyze the results all without leaving your Claude Code session.
+
+[//]: # (Talk to Claude Code through **experimental design**, **Slurm management**, and **visualization** &#40;the AI Ph.D. students experiments life-cycle&#41;)
  
 #### Install
 
@@ -11,8 +13,10 @@ curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/in
 
 ![Intro](images/intro.png)
 
-Turn your experimental pipeline into a conversation. RACA connects Claude Code with your compute (SLURM, RunPod, local GPUs) and a visualization dashboard (HuggingFace Spaces) so you can design, run, and review experiments without writing sbatch scripts or doing devops.
+The common Ph.D. students research cycle is to: Design experiments, manage compute, then analyze results. RACA puts all of this into your Claude Code sessions, making research process a tight loop between you and Claude.
 
+[//]: # (RACA puts your compute &#40;Slurm, RunPod, local GPUs&#41;, data analysis &#40;visualization, Huggingface, etc.&#41;, and experimental design in one conversation with Claude Code. The idea is to have the cycle of experiment, compute, and analysis without every leaving your terminal.)
+[//]: # (RACA connects Claude Code with your compute &#40;SLURM, RunPod, local GPUs&#41; and a visualization dashboard &#40;HuggingFace Spaces&#41; so you can design, run, and review experiments without writing sbatch scripts or doing devops.)
 
 ## Install
 
