@@ -21,10 +21,6 @@ REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
 # Config lives inside the workspace at .raca/ (not ~/.raca)
 # RACA_CONFIG_DIR is set after WORKSPACE is known
 
-# Cleanup temp dir on exit
-TMPDIR_RACA=""
-cleanup() { [ -n "$TMPDIR_RACA" ] && [ -d "$TMPDIR_RACA" ] && rm -rf "$TMPDIR_RACA"; }
-trap cleanup EXIT
 
 # ── Preflight ──────────────────────────────────────────────
 echo ""
@@ -74,32 +70,44 @@ if [ -n "$SCRIPT_DIR" ] && [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
     REPO_DIR="$SCRIPT_DIR"
     info "  Using local repo at ${REPO_DIR}"
 else
-    TMPDIR_RACA=$(mktemp -d)
-    info "  Cloning RACA..."
-    git clone --depth=1 "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
-    REPO_DIR="${TMPDIR_RACA}/RACA"
+    if [ -d "${WORKSPACE}/.git" ]; then
+        info "  Workspace already has a git repo — pulling latest"
+        git -C "${WORKSPACE}" pull --ff-only 2>&1 | sed "s/^/    /" || true
+        REPO_DIR="${WORKSPACE}"
+    elif [ -d "${WORKSPACE}" ] && [ "$(ls -A "${WORKSPACE}" 2>/dev/null)" ]; then
+        info "  Workspace exists and is not empty — cloning beside it"
+        git clone --depth=1 "$REPO_URL" "${WORKSPACE}/.raca-repo" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
+        REPO_DIR="${WORKSPACE}/.raca-repo"
+    else
+        info "  Cloning RACA into workspace..."
+        mkdir -p "$(dirname "${WORKSPACE}")"
+        git clone --depth=1 "$REPO_URL" "${WORKSPACE}" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
+        REPO_DIR="${WORKSPACE}"
+    fi
 fi
 
 mkdir -p "${WORKSPACE}/notes/experiments" "${WORKSPACE}/packages"
 
-# Copy tools, packages, docs
-for d in tools packages docs; do
-    [ -d "${REPO_DIR}/${d}" ] && {
-        info "  Syncing ${d}/"
-        # Use cp instead of rsync — rsync misinterprets paths with colons as remote hosts
-        mkdir -p "${WORKSPACE}/${d}"
-        cp -R "${REPO_DIR}/${d}/." "${WORKSPACE}/${d}/" 2>/dev/null || true
-        # Clean up unwanted dirs that cp copies
-        find "${WORKSPACE}/${d}" -type d \( -name node_modules -o -name __pycache__ -o -name .venv -o -name dist \) -exec rm -rf {} + 2>/dev/null || true
-    }
-done
+# Copy files from repo into workspace (skip if repo was cloned directly into workspace)
+if [ "$REPO_DIR" != "$WORKSPACE" ]; then
+    for d in tools packages docs; do
+        [ -d "${REPO_DIR}/${d}" ] && {
+            info "  Syncing ${d}/"
+            mkdir -p "${WORKSPACE}/${d}"
+            cp -R "${REPO_DIR}/${d}/." "${WORKSPACE}/${d}/" 2>/dev/null || true
+            find "${WORKSPACE}/${d}" -type d \( -name node_modules -o -name __pycache__ -o -name .venv -o -name dist \) -exec rm -rf {} + 2>/dev/null || true
+        }
+    done
 
-# .claude/ — don't overwrite existing
-if [ ! -d "${WORKSPACE}/.claude" ]; then
-    info "  Installing .claude/ config"
-    cp -r "${REPO_DIR}/.claude" "${WORKSPACE}/.claude"
-else
-    warn "  .claude/ exists — preserving your config"
+    if [ ! -d "${WORKSPACE}/.claude" ]; then
+        info "  Installing .claude/ config"
+        cp -r "${REPO_DIR}/.claude" "${WORKSPACE}/.claude"
+    else
+        warn "  .claude/ exists — preserving your config"
+    fi
+
+    # Clean up temp clone if we used .raca-repo
+    [ -d "${WORKSPACE}/.raca-repo" ] && rm -rf "${WORKSPACE}/.raca-repo"
 fi
 
 # .raca/ — workspace state (onboarding, etc.) — Claude has full read/write here
