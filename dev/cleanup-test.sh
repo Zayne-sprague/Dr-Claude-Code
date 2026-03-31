@@ -3,7 +3,7 @@
 # Removes workspace contents (keeps install.sh + this script), deletes HF Space + test datasets, resets all state.
 #
 # Usage: bash dev/cleanup-test.sh [workspace_path]
-#        Default: reads from .drcc/config.yaml or uses current dir
+#        Default: reads from .raca/config.yaml or uses current dir
 
 set -uo pipefail
 # Note: no -e — we want cleanup to continue even if individual steps fail
@@ -19,21 +19,21 @@ done_() { echo -e "${GREEN}[cleanup]${RESET} $*"; }
 
 # Determine workspace
 WORKSPACE="${1:-}"
-if [ -z "$WORKSPACE" ] && [ -f .drcc/config.yaml ]; then
-    WORKSPACE=$(grep '^workspace:' .drcc/config.yaml 2>/dev/null | sed 's/workspace: *//' | tr -d '"' | tr -d ' ')
+if [ -z "$WORKSPACE" ] && [ -f .raca/config.yaml ]; then
+    WORKSPACE=$(grep '^workspace:' .raca/config.yaml 2>/dev/null | sed 's/workspace: *//' | tr -d '"' | tr -d ' ')
 fi
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 
 # Read HF info before we nuke config
 HF_ORG=""
 HF_USER=""
-if [ -f .drcc/config.yaml ]; then
-    HF_ORG=$(grep '^hf_org:' .drcc/config.yaml 2>/dev/null | sed 's/hf_org: *//' | tr -d '"' | tr -d ' ')
-    HF_USER=$(grep '^hf_user:' .drcc/config.yaml 2>/dev/null | sed 's/hf_user: *//' | tr -d '"' | tr -d ' ')
+if [ -f .raca/config.yaml ]; then
+    HF_ORG=$(grep '^hf_org:' .raca/config.yaml 2>/dev/null | sed 's/hf_org: *//' | tr -d '"' | tr -d ' ')
+    HF_USER=$(grep '^hf_user:' .raca/config.yaml 2>/dev/null | sed 's/hf_user: *//' | tr -d '"' | tr -d ' ')
 fi
 # Also try reading from onboarding state
-if [ -z "$HF_ORG" ] && [ -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
-    HF_ORG=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.drcc/onboarding_state.json')); print(d.get('hf_org',''))" 2>/dev/null || echo "")
+if [ -z "$HF_ORG" ] && [ -f "${WORKSPACE}/.raca/onboarding_state.json" ]; then
+    HF_ORG=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.raca/onboarding_state.json')); print(d.get('hf_org',''))" 2>/dev/null || echo "")
 fi
 
 echo -e "${BOLD}${RED}=== Dr-Claude-Code Test Cleanup ===${RESET}"
@@ -44,8 +44,8 @@ echo ""
 echo "Will remove:"
 echo "  - Everything in workspace EXCEPT install.sh and this cleanup script"
 echo "  - HF Space: ${HF_ORG:-?}/dr-claude-dashboard (if exists)"
-echo "  - HF test dataset: ${HF_ORG:-?}/drcc-onboarding-test (if exists)"
-echo "  - .drcc/ (config + install state)"
+echo "  - HF test dataset: ${HF_ORG:-?}/raca-onboarding-test (if exists)"
+echo "  - .raca/ (config + install state)"
 echo "  - SSH socket for this workspace's cluster only (won't touch other workspaces)"
 echo "  - HF login cache"
 echo ""
@@ -72,17 +72,17 @@ except Exception as e:
 
 # Delete test dataset
 try:
-    api.delete_repo("${HF_ORG}/drcc-onboarding-test", repo_type="dataset")
-    print("  Deleted dataset: ${HF_ORG}/drcc-onboarding-test")
+    api.delete_repo("${HF_ORG}/raca-onboarding-test", repo_type="dataset")
+    print("  Deleted dataset: ${HF_ORG}/raca-onboarding-test")
 except Exception as e:
     print(f"  Dataset skip: {e}")
 PYEOF
 fi
 
-# --- Kill dcc SSH sessions (only clusters from this workspace's config) ---
+# --- Kill raca SSH sessions (only clusters from this workspace's config) ---
 # We do NOT touch all sockets — that would break other workspaces (e.g., ~/Research)
-if [ -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
-    CLUSTER=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.drcc/onboarding_state.json')); print(d.get('cluster_name',''))" 2>/dev/null || echo "")
+if [ -f "${WORKSPACE}/.raca/onboarding_state.json" ]; then
+    CLUSTER=$(python3 -c "import json; d=json.load(open('${WORKSPACE}/.raca/onboarding_state.json')); print(d.get('cluster_name',''))" 2>/dev/null || echo "")
     if [ -n "$CLUSTER" ] && [ -S ~/.ssh/sockets/*"@${CLUSTER}" ] 2>/dev/null; then
         info "Disconnecting cluster: ${CLUSTER}"
         ssh -O exit -S ~/.ssh/sockets/*"@${CLUSTER}" dummy 2>/dev/null || true
@@ -119,7 +119,7 @@ else
     info "Workspace not found: ${WORKSPACE}"
 fi
 
-# .drcc/ is inside the workspace — already nuked above
+# .raca/ is inside the workspace — already nuked above
 
 # --- Remove HF login cache ---
 HF_CACHE="${HOME}/.cache/huggingface/token"
@@ -129,12 +129,12 @@ if [ -f "$HF_CACHE" ]; then
     done_ "HF token cache removed"
 fi
 
-# --- Remove dcc from global pip if present ---
-if command -v dcc &>/dev/null; then
-    DCC_PATH=$(command -v dcc)
+# --- Remove raca from global pip if present ---
+if command -v raca &>/dev/null; then
+    DCC_PATH=$(command -v raca)
     if [[ "$DCC_PATH" != *".tools-venv"* ]]; then
-        info "Uninstalling global dcc..."
-        pip uninstall -y dcc 2>/dev/null || python3 -m pip uninstall -y dcc 2>/dev/null || true
+        info "Uninstalling global raca..."
+        pip uninstall -y raca 2>/dev/null || python3 -m pip uninstall -y raca 2>/dev/null || true
     fi
 fi
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Setup Agent Deck + create a Dr Claude Code session
+# Setup Agent Deck + create a RACA session
 # Called by onboarding — user just runs this and they're ready.
 set -uo pipefail
 
@@ -8,9 +8,9 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 RESET='\033[0m'
 
-info()    { echo -e "${BLUE}[dcc]${RESET} $*"; }
-success() { echo -e "${GREEN}[dcc]${RESET} $*"; }
-error()   { echo -e "${RED}[dcc]${RESET} $*" >&2; }
+info()    { echo -e "${BLUE}[raca]${RESET} $*"; }
+success() { echo -e "${GREEN}[raca]${RESET} $*"; }
+error()   { echo -e "${RED}[raca]${RESET} $*" >&2; }
 
 WORKSPACE="${1:-$(pwd)}"
 
@@ -31,8 +31,8 @@ else
 fi
 
 # ── Create session ────────────────────────────────────
-info "Creating Dr Claude Code session..."
-agent-deck add -t "Dr Claude Code" -c claude "${WORKSPACE}" -g "research" 2>/dev/null \
+info "Creating RACA session..."
+agent-deck add -t "RACA" -c claude "${WORKSPACE}" -g "research" 2>/dev/null \
     && success "Session created in 'research' group" \
     || info "Session may already exist"
 
@@ -41,6 +41,6 @@ success "Ready! Run:"
 echo ""
 echo "  agent-deck"
 echo ""
-echo "  Then select 'Dr Claude Code' and press Enter."
+echo "  Then select 'RACA' and press Enter."
 echo "  Say 'resume onboarding' to pick up where you left off."
 echo ""

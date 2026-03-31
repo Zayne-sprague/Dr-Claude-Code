@@ -6,9 +6,9 @@ from . import __version__
 
 
 @click.group()
-@click.version_option(__version__, prog_name="dcc")
+@click.version_option(__version__, prog_name="raca")
 def main() -> None:
-    """Dr Claude Code — SSH lifecycle for research clusters."""
+    """RACA — SSH lifecycle for research clusters."""
 
 
 # Register subcommands

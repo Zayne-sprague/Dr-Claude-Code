@@ -1,17 +1,17 @@
 ---
-description: "Find the best compute option for a job across all configured clusters. Reads .drcc/clusters.yaml, checks queue status, estimates cost, and presents a ranked comparison."
+description: "Find the best compute option for a job across all configured clusters. Reads .raca/clusters.yaml, checks queue status, estimates cost, and presents a ranked comparison."
 allowed-tools: ["Bash", "Read", "Edit", "Glob", "Grep"]
 argument-hint: "[--gpus N] [--time Xh] [--job-type training|inference|eval]"
 ---
 
 # Find Compute
 
-Find the best place to run a job across all configured compute in `.drcc/clusters.yaml`.
+Find the best place to run a job across all configured compute in `.raca/clusters.yaml`.
 
 ## Step 1: Read the cluster config
 
 ```bash
-cat .drcc/clusters.yaml
+cat .raca/clusters.yaml
 ```
 
 Extract all configured clusters. For each, note:
@@ -30,20 +30,20 @@ From the command arguments, extract:
 
 ### For SLURM clusters
 
-For each configured SLURM cluster, run these checks via `dcc ssh`:
+For each configured SLURM cluster, run these checks via `raca ssh`:
 
 ```bash
 # Check queue status — what's running and pending
-dcc ssh <cluster> "squeue --format='%P %T %G %M %l' --noheader | head -30"
+raca ssh <cluster> "squeue --format='%P %T %G %M %l' --noheader | head -30"
 
 # Check partition availability
-dcc ssh <cluster> "sinfo --format='%P %G %D %a %t' --noheader"
+raca ssh <cluster> "sinfo --format='%P %G %D %a %t' --noheader"
 
 # Verify actual access with sbatch --test-only
-dcc ssh <cluster> "sbatch --test-only --partition=<partition> <gpu_directive> --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
+raca ssh <cluster> "sbatch --test-only --partition=<partition> <gpu_directive> --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
 ```
 
-If `dcc ssh` fails (VPN, auth), note the cluster as "unreachable" — do not skip it silently.
+If `raca ssh` fails (VPN, auth), note the cluster as "unreachable" — do not skip it silently.
 
 From the queue output, estimate wait time:
 - 0 jobs in partition → **idle** (minutes)
@@ -60,7 +60,7 @@ echo ${RUNPOD_API_KEY:+set}
 
 If set, estimate cost:
 ```
-hourly_cost = GPU_cost_per_hour (from .drcc/clusters.yaml or reference table)
+hourly_cost = GPU_cost_per_hour (from .raca/clusters.yaml or reference table)
 total_cost = hourly_cost × estimated_hours × gpu_count
 ```
 
@@ -116,7 +116,7 @@ torch/h200    | H200       | 141 GB | days      | 24h+        | $0       | Conge
 After the user picks a cluster, confirm access one more time:
 
 ```bash
-dcc ssh <cluster> "echo 'Ready: $(hostname)'"
+raca ssh <cluster> "echo 'Ready: $(hostname)'"
 ```
 
 Then hand off to the run-job skill or proceed with job setup.

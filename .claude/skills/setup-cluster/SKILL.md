@@ -2,7 +2,7 @@
 name: cluster-setup
 description: |
   Walk the user through connecting a new compute cluster (SLURM, RunPod, or local GPU)
-  to Dr. Claude Code. Writes config to .drcc/clusters.yaml and verifies connectivity.
+  to RACA. Writes config to .raca/clusters.yaml and verifies connectivity.
   Run this skill when the user says "add a cluster", "set up a cluster", "connect to HPC",
   or "configure RunPod".
 ---
@@ -68,7 +68,7 @@ If the user's cluster name already appears as a `Host` entry in their SSH config
 If the user gives just a short name like `torch` and it's NOT in `~/.ssh/config`, ask: "Is `torch` a hostname or an alias? I need the full hostname like `login.torch.hpc.nyu.edu`."
 
 Ask the user for (skip any you already found in SSH config):
-- **Cluster nickname** (e.g., `torch`, `vista`, `empire`) — short identifier used in `dcc` commands
+- **Cluster nickname** (e.g., `torch`, `vista`, `empire`) — short identifier used in `raca` commands
 - **Hostname** (e.g., `greene.hpc.nyu.edu`) — the SSH target. If user gives `user@host`, parse both.
 - **Username**
 - **VPN required?** (yes/no) — if yes, remind user to connect VPN before each auth
@@ -76,10 +76,10 @@ Ask the user for (skip any you already found in SSH config):
 
 ### Step 1.2 — Write initial config and authenticate
 
-**CRITICAL: Write the config BEFORE attempting any dcc commands.**
-`dcc auth` and `dcc ssh` read from `.drcc/clusters.yaml` — they will error if the cluster isn't configured yet.
+**CRITICAL: Write the config BEFORE attempting any raca commands.**
+`raca auth` and `raca ssh` read from `.raca/clusters.yaml` — they will error if the cluster isn't configured yet.
 
-Write a minimal cluster entry to `.drcc/clusters.yaml` using the info gathered so far:
+Write a minimal cluster entry to `.raca/clusters.yaml` using the info gathered so far:
 
 ```yaml
 clusters:
@@ -103,7 +103,7 @@ Then tell the user to authenticate:
 > "I've written the cluster config. Now connect to it — open a **new terminal tab** and run:"
 > ```bash
 > cd <workspace_path>
-> dcc auth <nickname>
+> raca auth <nickname>
 > ```
 > "(Make sure VPN is connected if required. You'll need to complete 2FA.)"
 > "Come back here once you're connected."
@@ -111,12 +111,12 @@ Then tell the user to authenticate:
 Wait for the user to confirm they're connected. Then verify:
 
 ```bash
-dcc ssh <nickname> "echo 'SSH OK' && hostname"
+raca ssh <nickname> "echo 'SSH OK' && hostname"
 ```
 
 If this fails:
 - Check if user is on VPN (if required)
-- Check if `dcc auth <nickname>` succeeded
+- Check if `raca auth <nickname>` succeeded
 - If still failing, ask for the full SSH config and debug manually
 
 ### Step 1.3 — Detect accounts, partitions, and access
@@ -129,14 +129,14 @@ Ask: "Do you know which SLURM account and partitions you have access to, or woul
 
 ```bash
 # Step A: Get user's SLURM accounts
-dcc ssh <nickname> "sacctmgr show associations where user=\$USER format=Account%30 --noheader --parsable2 2>/dev/null | sort -u"
+raca ssh <nickname> "sacctmgr show associations where user=\$USER format=Account%30 --noheader --parsable2 2>/dev/null | sort -u"
 ```
 
 Record the accounts (e.g., `torch_pr_219_courant`, `users`).
 
 ```bash
 # Step B: Get all GPU partitions and their GRES format
-dcc ssh <nickname> "sinfo --format='%P %G %D %a' --noheader"
+raca ssh <nickname> "sinfo --format='%P %G %D %a' --noheader"
 ```
 
 Parse partitions and GRES. Determine if the cluster uses typed GRES (e.g., `gpu:h100:8`) or generic (`gpu:8`).
@@ -150,10 +150,10 @@ For each GPU partition found, test access using the correct GRES format:
 
 ```bash
 # If typed GRES (gpu:h100:8):
-dcc ssh <nickname> "sbatch --test-only --partition=<partition> --gres=gpu:<type>:1 --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
+raca ssh <nickname> "sbatch --test-only --partition=<partition> --gres=gpu:<type>:1 --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
 
 # If generic GRES (gpu:8):
-dcc ssh <nickname> "sbatch --test-only --partition=<partition> --gpus=1 --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
+raca ssh <nickname> "sbatch --test-only --partition=<partition> --gpus=1 --account=<account> --time=00:05:00 --wrap='hostname' 2>&1"
 ```
 
 - If it returns a simulated start time → **access confirmed**
@@ -174,7 +174,7 @@ I'll use h200_courant as the default. Sound good?
 ### Step 1.4 — Detect scratch path and modules
 
 ```bash
-dcc ssh <nickname> "echo SCRATCH=\$SCRATCH; echo WORK=\$WORK; echo HOME=\$HOME; echo CONDA=\$CONDA_PREFIX; module avail cuda 2>&1 | head -10"
+raca ssh <nickname> "echo SCRATCH=\$SCRATCH; echo WORK=\$WORK; echo HOME=\$HOME; echo CONDA=\$CONDA_PREFIX; module avail cuda 2>&1 | head -10"
 ```
 
 Note the scratch path (e.g., `/scratch/$USER`, `/scratch1/$USER`).
@@ -182,7 +182,7 @@ Check if CUDA modules are available via the module system. Record the CUDA versi
 
 ### Step 1.5 — Update cluster config with detected info
 
-Update the entry in `.drcc/clusters.yaml` with all detected details:
+Update the entry in `.raca/clusters.yaml` with all detected details:
 
 ```yaml
 clusters:
@@ -206,18 +206,18 @@ clusters:
     notes: ""
 ```
 
-### Step 1.6 — Verify with dcc
+### Step 1.6 — Verify with raca
 
 ```bash
-dcc cluster list
-dcc ssh <nickname> "squeue -u $USER | head -5"
+raca cluster list
+raca ssh <nickname> "squeue -u $USER | head -5"
 ```
 
 If both succeed, tell the user:
 
 > "Cluster `<nickname>` is configured. You can now:
-> - SSH in: `dcc ssh <nickname>`
-> - Upload files: `dcc upload <nickname> ./local/path /remote/path`
+> - SSH in: `raca ssh <nickname>`
+> - Upload files: `raca upload <nickname> ./local/path /remote/path`
 > - Submit jobs via sbatch templates in `.claude/references/templates/sbatch/`"
 
 ---
@@ -246,7 +246,7 @@ If the response contains an `id` and `email`, the key is valid.
 
 ### Step 2.3 — Write config
 
-Append to `.drcc/clusters.yaml`:
+Append to `.raca/clusters.yaml`:
 
 ```yaml
 clusters:
@@ -257,7 +257,7 @@ clusters:
     notes: "API key loaded from RUNPOD_API_KEY env var"
 ```
 
-Tell the user: "RunPod is configured. Use `dcc runpod launch --gpu H100 --image <image>` to start a pod."
+Tell the user: "RunPod is configured. Use `raca runpod launch --gpu H100 --image <image>` to start a pod."
 
 ---
 
@@ -279,7 +279,7 @@ Found GPUs:
 
 ### Step 3.2 — Write config
 
-Append to `.drcc/clusters.yaml`:
+Append to `.raca/clusters.yaml`:
 
 ```yaml
 clusters:
@@ -302,7 +302,7 @@ clusters:
 python3 -c "import torch; print(torch.cuda.is_available(), torch.cuda.device_count())"
 ```
 
-Tell the user: "Local cluster configured. Use `dcc ssh local` to run commands or submit via the local backend."
+Tell the user: "Local cluster configured. Use `raca ssh local` to run commands or submit via the local backend."
 
 ---
 
@@ -310,6 +310,6 @@ Tell the user: "Local cluster configured. Use `dcc ssh local` to run commands or
 
 After any cluster type is configured:
 
-1. Run `dcc cluster list` to confirm it appears
+1. Run `raca cluster list` to confirm it appears
 2. Tell the user the cluster nickname and the commands they can use
-3. Remind them to run `dcc auth <nickname>` if it's a SLURM cluster requiring 2FA or ControlMaster setup
+3. Remind them to run `raca auth <nickname>` if it's a SLURM cluster requiring 2FA or ControlMaster setup

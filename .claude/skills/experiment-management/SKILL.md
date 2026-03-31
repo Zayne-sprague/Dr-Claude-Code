@@ -176,21 +176,30 @@ The `user/` directory is for the researcher's personal notes. Claude helps scaff
 
 ## When the User Mentions Experiments
 
-Whenever the user talks about experiments, check:
+Whenever the user talks about experiments (designing, running, reviewing, or even casually
+asking "what if we tried..."), act immediately:
 
-1. **Does the experiment folder exist?** If not, offer to create it.
-2. **Read `flow_state.json`** — what phase are we in?
-3. **Read the benchmark reference** for the task (`.claude/references/datasets_and_tasks/`)
-4. **Enforce the lifecycle** — don't skip phases.
-5. **Update state** on every phase transition.
-6. **Invoke `/drcc:dashboard-sync`** after any artifact or state change.
+1. **Does the experiment folder exist?** If not, **create it now**. Do not ask. Do not wait
+   for the design to be "complete." The folder is where everything accumulates. Create it
+   with the full structure above (experiment.yaml, EXPERIMENT_README.md, flow_state.json,
+   activity_log.jsonl, HUGGINGFACE_REPOS.md, user/ directory).
+2. **Sync the dashboard** via `/raca:dashboard-sync` so the experiment is visible immediately.
+3. **Read `flow_state.json`** — what phase are we in? Resume from there.
+4. **Read the benchmark reference** for the task (`.claude/references/datasets_and_tasks/`)
+5. **Enforce the lifecycle** — don't skip phases.
+6. **Update state** on every phase transition.
+
+This skill works alongside any design or planning tools (brainstorming plugins, planning
+skills, or freeform conversation). Those tools handle the *how* of designing. This skill
+handles the *where* (folder structure, dashboard, state tracking). Both can be active at
+the same time.
 
 ## Artifact Chain (mandatory after every output)
 
 1. Upload to HF
 2. Verify (load back, check row count, sample rows)
 3. Validate (dispatch data-validator agent)
-4. Sync dashboard (`/drcc:dashboard-sync`)
+4. Sync dashboard (`/raca:dashboard-sync`)
 5. Log to activity_log.jsonl
 
 If you produced an artifact and didn't run this chain, go back and do it.

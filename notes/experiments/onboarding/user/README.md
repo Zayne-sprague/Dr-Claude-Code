@@ -2,7 +2,7 @@
 
 ## What I'm investigating
 
-This is the tutorial experiment — testing Qwen3-1.7B on Countdown to learn the Dr. Claude Code pipeline.
+This is the tutorial experiment — testing Qwen3-1.7B on Countdown to learn the RACA pipeline.
 
 ## Key observations
 

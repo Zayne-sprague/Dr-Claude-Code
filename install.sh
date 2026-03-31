@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Dr-Claude-Code installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
+# RACA installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
 # Or:    bash install.sh
 set -euo pipefail
 
@@ -11,19 +11,19 @@ YELLOW='\033[1;33m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
-info()    { echo -e "${BLUE}[dcc]${RESET} $*"; }
-success() { echo -e "${GREEN}[dcc]${RESET} $*"; }
-warn()    { echo -e "${YELLOW}[dcc]${RESET} $*"; }
-error()   { echo -e "${RED}[dcc] ERROR:${RESET} $*" >&2; }
+info()    { echo -e "${BLUE}[raca]${RESET} $*"; }
+success() { echo -e "${GREEN}[raca]${RESET} $*"; }
+warn()    { echo -e "${YELLOW}[raca]${RESET} $*"; }
+error()   { echo -e "${RED}[raca] ERROR:${RESET} $*" >&2; }
 die()     { error "$*"; exit 1; }
 
-REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
-# Config lives inside the workspace at .drcc/ (not ~/.dcc)
-# DCC_CONFIG_DIR is set after WORKSPACE is known
+REPO_URL="https://github.com/Zayne-sprague/RACA.git"
+# Config lives inside the workspace at .raca/ (not ~/.raca)
+# RACA_CONFIG_DIR is set after WORKSPACE is known
 
 # Cleanup temp dir on exit
-TMPDIR_DCC=""
-cleanup() { [ -n "$TMPDIR_DCC" ] && [ -d "$TMPDIR_DCC" ] && rm -rf "$TMPDIR_DCC"; }
+TMPDIR_RACA=""
+cleanup() { [ -n "$TMPDIR_RACA" ] && [ -d "$TMPDIR_RACA" ] && rm -rf "$TMPDIR_RACA"; }
 trap cleanup EXIT
 
 # ── Preflight ──────────────────────────────────────────────
@@ -62,7 +62,7 @@ echo ""
 read -rp "$(echo -e "${BLUE}>${RESET} Workspace location [$(pwd)]: ")" WORKSPACE < /dev/tty
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 WORKSPACE="${WORKSPACE/#\~/$HOME}"
-DCC_CONFIG_DIR="${WORKSPACE}/.drcc"
+RACA_CONFIG_DIR="${WORKSPACE}/.raca"
 
 # ── Clone & Copy ──────────────────────────────────────────
 echo ""
@@ -74,10 +74,10 @@ if [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
     REPO_DIR="$SCRIPT_DIR"
     info "  Using local repo at ${REPO_DIR}"
 else
-    TMPDIR_DCC=$(mktemp -d)
-    info "  Cloning Dr-Claude-Code..."
-    git clone --depth=1 "$REPO_URL" "${TMPDIR_DCC}/Dr-Claude-Code" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
-    REPO_DIR="${TMPDIR_DCC}/Dr-Claude-Code"
+    TMPDIR_RACA=$(mktemp -d)
+    info "  Cloning RACA..."
+    git clone --depth=1 "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
+    REPO_DIR="${TMPDIR_RACA}/RACA"
 fi
 
 mkdir -p "${WORKSPACE}/notes/experiments" "${WORKSPACE}/packages"
@@ -102,10 +102,10 @@ else
     warn "  .claude/ exists — preserving your config"
 fi
 
-# .drcc/ — workspace state (onboarding, etc.) — Claude has full read/write here
-mkdir -p "${WORKSPACE}/.drcc"
-if [ ! -f "${WORKSPACE}/.drcc/onboarding_state.json" ]; then
-    cat > "${WORKSPACE}/.drcc/onboarding_state.json" <<'STATEJSON'
+# .raca/ — workspace state (onboarding, etc.) — Claude has full read/write here
+mkdir -p "${WORKSPACE}/.raca"
+if [ ! -f "${WORKSPACE}/.raca/onboarding_state.json" ]; then
+    cat > "${WORKSPACE}/.raca/onboarding_state.json" <<'STATEJSON'
 {
   "step": "welcome",
   "plugins": "pending",
@@ -141,9 +141,9 @@ info "Installing tools..."
     "${TOOLS_VENV}/bin/pip" install --quiet -e "${WORKSPACE}/packages/key_handler/"
 
 # Verify
-"${TOOLS_VENV}/bin/dcc" --version &>/dev/null && success "dcc CLI installed" || warn "dcc install issue"
+"${TOOLS_VENV}/bin/raca" --version &>/dev/null && success "raca CLI installed" || warn "raca install issue"
 
-# Add dcc to PATH via shell profile
+# Add raca to PATH via shell profile
 SHELL_RC=""
 if [ -f "$HOME/.zshrc" ]; then
     SHELL_RC="$HOME/.zshrc"
@@ -155,9 +155,9 @@ PATH_LINE="export PATH=\"${TOOLS_VENV}/bin:\$PATH\""
 if [ -n "$SHELL_RC" ]; then
     if ! grep -q ".tools-venv/bin" "$SHELL_RC" 2>/dev/null; then
         echo "" >> "$SHELL_RC"
-        echo "# Dr Claude Code tools" >> "$SHELL_RC"
+        echo "# RACA tools" >> "$SHELL_RC"
         echo "$PATH_LINE" >> "$SHELL_RC"
-        success "Added dcc to PATH in $(basename "$SHELL_RC")"
+        success "Added raca to PATH in $(basename "$SHELL_RC")"
     fi
 fi
 export PATH="${TOOLS_VENV}/bin:$PATH"
@@ -165,7 +165,7 @@ export PATH="${TOOLS_VENV}/bin:$PATH"
 # ── Hooks (optional) ─────────────────────────────────────
 if [ -f "${WORKSPACE}/.claude/settings.local.json" ]; then
     echo ""
-    info "Dr Claude Code includes two optional hooks:"
+    info "RACA includes two optional hooks:"
     info "  - git-push-safety: blocks force pushes and pushes to upstream"
     info "  - python-lint: auto-runs ruff on edited Python files"
     read -rp "$(echo -e "${BLUE}>${RESET} Enable hooks? (y/n) [y]: ")" ENABLE_HOOKS < /dev/tty
@@ -204,19 +204,19 @@ if [ -n "$HF_TOKEN" ]; then
     fi
 
     # HF login
-    DCC_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" - <<'PYEOF' 2>/dev/null || true
+    RACA_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" - <<'PYEOF' 2>/dev/null || true
 import os
 from huggingface_hub import login
-login(token=os.environ["DCC_HF_TOKEN"], add_to_git_credential=False)
+login(token=os.environ["RACA_HF_TOKEN"], add_to_git_credential=False)
 PYEOF
 
     # Get username for config
-    HF_USER=$(DCC_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" -c "
+    HF_USER=$(RACA_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" -c "
 import os, sys, io, warnings
 warnings.filterwarnings('ignore')
 sys.stderr = io.StringIO()
 from huggingface_hub import HfApi
-api = HfApi(token=os.environ['DCC_HF_TOKEN'])
+api = HfApi(token=os.environ['RACA_HF_TOKEN'])
 sys.stderr = sys.__stderr__
 print(api.whoami()['name'])
 " 2>/dev/null || echo "")
@@ -224,8 +224,8 @@ print(api.whoami()['name'])
 fi
 
 # ── Save config ───────────────────────────────────────────
-mkdir -p "$DCC_CONFIG_DIR"
-cat > "${DCC_CONFIG_DIR}/config.yaml" <<YAML
+mkdir -p "$RACA_CONFIG_DIR"
+cat > "${RACA_CONFIG_DIR}/config.yaml" <<YAML
 workspace: ${WORKSPACE}
 hf_token_set: $([ -n "${HF_TOKEN}" ] && echo "true" || echo "false")
 hf_user: ${HF_USER:-""}
@@ -245,4 +245,4 @@ info "Claude will deploy your dashboard, help you connect a cluster, and walk yo
 echo ""
 
 cd "$WORKSPACE"
-exec claude "/drcc:onboarding"
+exec claude "/raca:onboarding"

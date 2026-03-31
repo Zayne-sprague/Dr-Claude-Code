@@ -48,8 +48,8 @@ Capture the output. If it reports errors (missing files, HF auth failure), repor
 Tell the live HF Space to re-download the updated data:
 
 ```bash
-# Dashboard URL is in .drcc/config.yaml
-DASHBOARD_URL=$(python3 -c "import yaml; print(yaml.safe_load(open('.drcc/config.yaml'))['dashboard']['url'])" 2>/dev/null)
+# Dashboard URL is in .raca/config.yaml
+DASHBOARD_URL=$(python3 -c "import yaml; print(yaml.safe_load(open('.raca/config.yaml'))['dashboard']['url'])" 2>/dev/null)
 
 if [ -n "$DASHBOARD_URL" ]; then
     curl -s -X POST "${DASHBOARD_URL}/api/experiments/sync"

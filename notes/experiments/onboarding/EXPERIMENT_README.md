@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is your first experiment with Dr. Claude Code. It walks you through the entire pipeline:
+This is your first experiment with RACA. It walks you through the entire pipeline:
 
 1. **Design** — define a hypothesis and success criteria
 2. **Red-team** — review the experiment for potential issues before burning compute

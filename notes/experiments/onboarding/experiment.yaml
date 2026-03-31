@@ -21,7 +21,7 @@ observability:
   wandb_project: ""
 
 notes: |
-  This is the onboarding experiment — a guided walkthrough of the full Dr. Claude Code pipeline.
+  This is the onboarding experiment — a guided walkthrough of the full RACA pipeline.
   It uses a small model (1.7B) on a simple task (Countdown) to demonstrate:
   - Experiment design and folder structure
   - Red-team review

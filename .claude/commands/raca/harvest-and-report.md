@@ -15,7 +15,7 @@ The experiment name is provided as the argument. Job ID is optional (auto-detect
 ## Step 1: Identify completed job
 
 ```bash
-dcc ssh <cluster> "squeue -u $USER --format='%i %j %T %M' | grep <experiment>"
+raca ssh <cluster> "squeue -u $USER --format='%i %j %T %M' | grep <experiment>"
 ```
 
 Find the most recent COMPLETED job for this experiment. If `--job-id` was provided, use that specific job.
@@ -27,8 +27,8 @@ If no completed job found, STOP. Tell the user.
 Download results from the cluster:
 
 ```bash
-dcc ssh <cluster> "ls <working_dir>/results/"
-dcc download <cluster> <working_dir>/results/ ./local_results/<experiment>/
+raca ssh <cluster> "ls <working_dir>/results/"
+raca download <cluster> <working_dir>/results/ ./local_results/<experiment>/
 ```
 
 Store downloaded artifacts at a known local path for subsequent steps.

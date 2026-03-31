@@ -23,7 +23,7 @@ def ssh(cluster: str, command: str, timeout: int) -> None:
     if not healthy:
         click.echo(
             click.style("ERROR:", fg="red", bold=True)
-            + f" Not connected to {cluster}. Run: dcc auth {cluster}",
+            + f" Not connected to {cluster}. Run: raca auth {cluster}",
             err=True,
         )
         sys.exit(1)

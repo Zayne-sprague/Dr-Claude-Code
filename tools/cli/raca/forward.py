@@ -57,10 +57,10 @@ def forward(
 
     \b
     Examples:
-      dcc forward torch 8888 localhost:8888    # Jupyter tunnel
-      dcc forward torch 6006 localhost:6006    # TensorBoard tunnel
-      dcc forward --list                       # Show all active forwards
-      dcc forward --kill torch:8888:localhost:8888
+      raca forward torch 8888 localhost:8888    # Jupyter tunnel
+      raca forward torch 6006 localhost:6006    # TensorBoard tunnel
+      raca forward --list                       # Show all active forwards
+      raca forward --kill torch:8888:localhost:8888
     """
     if list_forwards:
         data = _load_forwards()
@@ -159,4 +159,4 @@ def forward(
         + (f" (pid {pid})" if pid else "")
     )
     click.echo(f"  Key: {key}")
-    click.echo(f"  Kill with: dcc forward --kill {key}")
+    click.echo(f"  Kill with: raca forward --kill {key}")

@@ -25,7 +25,7 @@ def cluster_list() -> None:
     """List all configured clusters."""
     names = list_cluster_names()
     if not names:
-        click.echo("No clusters configured. Add one with: dcc cluster add <name> --host <host> --user <user>")
+        click.echo("No clusters configured. Add one with: raca cluster add <name> --host <host> --user <user>")
         return
     clusters = load_clusters()
     click.echo(f"{'NAME':<20} {'HOST':<30} {'USER':<15} {'PORT'}")

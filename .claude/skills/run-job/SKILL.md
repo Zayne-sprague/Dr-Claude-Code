@@ -32,12 +32,12 @@ If the benchmark appears in the index, read its reference file before continuing
 - Prompt format and few-shot count
 - Setup checklist for eval / RL training
 
-If the benchmark is NOT in the index and the job is non-trivial, invoke `/drcc:benchmark-reference` to create a reference before proceeding.
+If the benchmark is NOT in the index and the job is non-trivial, invoke `/raca:benchmark-reference` to create a reference before proceeding.
 
 ### 0.2 — Read the cluster config
 
 ```bash
-cat .drcc/clusters.yaml
+cat .raca/clusters.yaml
 ```
 
 Identify the target cluster. Extract:
@@ -51,7 +51,7 @@ Identify the target cluster. Extract:
 
 For SLURM clusters:
 ```bash
-dcc ssh <cluster> "echo 'SSH OK' && whoami && squeue -u \$USER | head -5"
+raca ssh <cluster> "echo 'SSH OK' && whoami && squeue -u \$USER | head -5"
 ```
 
 For RunPod: confirm `$RUNPOD_API_KEY` is set.
@@ -159,10 +159,10 @@ Upload the script to the cluster, then submit:
 
 ```bash
 # Upload script
-dcc upload <cluster> ./jobs/<job_name>/run.sh <scratch>/jobs/<job_name>/run.sh
+raca upload <cluster> ./jobs/<job_name>/run.sh <scratch>/jobs/<job_name>/run.sh
 
 # Submit
-dcc ssh <cluster> "mkdir -p <scratch>/logs && sbatch <scratch>/jobs/<job_name>/run.sh"
+raca ssh <cluster> "mkdir -p <scratch>/logs && sbatch <scratch>/jobs/<job_name>/run.sh"
 ```
 
 Capture the job ID from the output (e.g., `Submitted batch job 12345`).
@@ -192,13 +192,13 @@ After submitting, enter a monitoring loop. Check every 5-10 minutes:
 
 ```bash
 # Job status
-dcc ssh <cluster> "squeue -j <job_id> --format='%i %T %R %M %l'"
+raca ssh <cluster> "squeue -j <job_id> --format='%i %T %R %M %l'"
 
 # Tail the log
-dcc ssh <cluster> "tail -50 <scratch>/logs/<job_id>.out"
+raca ssh <cluster> "tail -50 <scratch>/logs/<job_id>.out"
 
 # Check for errors
-dcc ssh <cluster> "grep -i 'error\|traceback\|exception\|nan\|killed' <scratch>/logs/<job_id>.out | tail -20"
+raca ssh <cluster> "grep -i 'error\|traceback\|exception\|nan\|killed' <scratch>/logs/<job_id>.out | tail -20"
 ```
 
 ### Health checks to run on each loop iteration:
@@ -225,7 +225,7 @@ When artifacts are produced (canary, partial, or final):
 ### 4.1 — Download results
 
 ```bash
-dcc download <cluster> <scratch>/results/<job_name>/ ./results/<job_name>/
+raca download <cluster> <scratch>/results/<job_name>/ ./results/<job_name>/
 ```
 
 ### 4.2 — Run the artifact chain (no exceptions)
@@ -235,7 +235,7 @@ Every artifact, every time:
 1. **Upload to HF** via `hf_utility.push_dataset_to_hub()` with full metadata and column docs
 2. **Verify** — load back from HF, check row count, sample 3-5 rows, inspect content
 3. **Validate** — dispatch `data-validator` agent to check for truncation, missing fields, score distribution issues
-4. **Sync dashboard** — invoke `/drcc:dashboard-sync`
+4. **Sync dashboard** — invoke `/raca:dashboard-sync`
 5. **Log** — write an activity log entry with: artifact name, row count, token length range, score range
 
 ### 4.3 — Health validation
@@ -256,11 +256,11 @@ If the job timed out or failed partway through:
 ### 5.1 — Check for checkpoints
 
 ```bash
-dcc ssh <cluster> "ls -la <scratch>/results/<job_name>/checkpoints/"
+raca ssh <cluster> "ls -la <scratch>/results/<job_name>/checkpoints/"
 ```
 
 If checkpoints exist:
-- Download them: `dcc download <cluster> <scratch>/results/<job_name>/checkpoints/ ./checkpoints/`
+- Download them: `raca download <cluster> <scratch>/results/<job_name>/checkpoints/ ./checkpoints/`
 - Verify the latest checkpoint is valid (not corrupted mid-write)
 
 ### 5.2 — Resubmit with resume flag
@@ -268,7 +268,7 @@ If checkpoints exist:
 If the script supports resuming (it should — see Phase 1 hard rules):
 
 ```bash
-dcc ssh <cluster> "sbatch <scratch>/jobs/<job_name>/run.sh --resume"
+raca ssh <cluster> "sbatch <scratch>/jobs/<job_name>/run.sh --resume"
 ```
 
 Or set a `RESUME_FROM_CHECKPOINT` environment variable in the script.

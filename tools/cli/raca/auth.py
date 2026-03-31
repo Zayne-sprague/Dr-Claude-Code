@@ -47,15 +47,15 @@ def _keepalive_daemon(cluster: str, manager: SSHSessionManager, stop_event: thre
     while not stop_event.wait(30):
         healthy, msg = manager.health_check(cluster)
         if not healthy:
-            click.echo(f"[dcc daemon] {cluster}: socket unhealthy ({msg}), reconnecting…")
+            click.echo(f"[raca daemon] {cluster}: socket unhealthy ({msg}), reconnecting…")
             try:
                 result = manager.connect(cluster)
                 if result.ok:
-                    click.echo(f"[dcc daemon] {cluster}: reconnected")
+                    click.echo(f"[raca daemon] {cluster}: reconnected")
                 else:
-                    click.echo(f"[dcc daemon] {cluster}: reconnect failed — {result.stderr.strip()}")
+                    click.echo(f"[raca daemon] {cluster}: reconnect failed — {result.stderr.strip()}")
             except Exception as exc:
-                click.echo(f"[dcc daemon] {cluster}: reconnect error — {exc}")
+                click.echo(f"[raca daemon] {cluster}: reconnect error — {exc}")
 
 
 @click.command()
@@ -73,7 +73,7 @@ def auth(cluster: str | None, daemon: bool, status: bool) -> None:
     if status:
         names = list_cluster_names()
         if not names:
-            click.echo("No clusters configured. Add one with: dcc cluster add <name> --host <host> --user <user>")
+            click.echo("No clusters configured. Add one with: raca cluster add <name> --host <host> --user <user>")
             return
         click.echo(f"{'CLUSTER':<20} {'STATUS':<12} {'DETAIL'}")
         click.echo("-" * 50)

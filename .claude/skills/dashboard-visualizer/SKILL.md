@@ -1,7 +1,7 @@
 ---
 name: dashboard-visualizer
 description: |
-  Maintains knowledge about the Dr. Claude Code visualization website. Answers questions
+  Maintains knowledge about the RACA visualization website. Answers questions
   about what visualizations are currently supported, how to check if artifacts can be
   displayed, and how to add new visualizer tabs. Also handles code edits to the
   frontend/backend when a new visualization type is needed.
@@ -222,6 +222,6 @@ The canonical list is always in the source — don't rely on this document alone
 | Dataset not loading | Private dataset, missing HF_TOKEN | Set `HF_TOKEN` in the backend environment |
 | Responses showing as raw JSON | Response column contains dicts | Use a column that has strings or string lists |
 | No prompt shown | Prompt column name not recognized | Rename to `prompt` or `formatted_prompt`, or specify manually |
-| Experiments page empty | `import_experiments.py` not run | Run `/drcc:dashboard-sync` |
+| Experiments page empty | `import_experiments.py` not run | Run `/raca:dashboard-sync` |
 | Tab not appearing | Not added to TABS array | Follow Step 3 of "Add a New Visualizer Tab" |
 | Changes not live after code edit | Frontend not rebuilt | `cd frontend && npm run build && git push space main` |

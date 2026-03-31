@@ -3,9 +3,9 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dcc"
+name = "raca"
 version = "0.1.0"
-description = "Dr Claude Code — SSH lifecycle for research clusters"
+description = "RACA — SSH lifecycle for research clusters"
 requires-python = ">=3.10"
 license = "MIT"
 dependencies = [
@@ -14,4 +14,4 @@ dependencies = [
 ]
 
 [project.scripts]
-dcc = "dcc.cli:main"
+raca = "raca.cli:main"

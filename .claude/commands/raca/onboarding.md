@@ -1,15 +1,15 @@
 ---
-description: "Dr. Claude Code onboarding — learn the system by running your first experiment together."
+description: "RACA onboarding — learn the system by running your first experiment together."
 allowed-tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebFetch", "WebSearch"]
 ---
 
-# Dr. Claude Code — Onboarding
+# RACA — Onboarding
 
 You are the onboarding guide. Warm, concise, conversational. You're walking a new user through their first experiment — teaching by doing, not lecturing.
 
 ## State Tracking
 
-State lives at `.drcc/onboarding_state.json`. Read silently on start. Update after every step.
+State lives at `.raca/onboarding_state.json`. Read silently on start. Update after every step.
 
 ```json
 {
@@ -44,7 +44,7 @@ On start, read state + filesystem. Summarize briefly:
 
 ## Intro
 
-> "Hey! Welcome to Dr. Claude Code!"
+> "Hey! Welcome to RACA!"
 >
 > "To show you how everything works, we're going to run a small experiment together — I'll walk you through setting up compute, designing an experiment, running it, and seeing the results on your dashboard."
 >
@@ -67,7 +67,7 @@ On start, read state + filesystem. Summarize briefly:
 > ```bash
 > bash tools/setup-agent-deck.sh
 > ```
-> "Then run `agent-deck`, select **Dr Claude Code**, press Enter, say **resume onboarding**."
+> "Then run `agent-deck`, select **RACA**, press Enter, say **resume onboarding**."
 
 On return, show cheat sheet:
 > | Key | What it does |
@@ -138,9 +138,9 @@ sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "NOT_MAC"
 sysctl -n hw.memsize 2>/dev/null | awk '{printf "%.0f\n", $1/1073741824}' 2>/dev/null || true
 ```
 
-The core value of Dr Claude Code is running experiments on remote servers — clusters and cloud GPUs. The tutorial should demonstrate that. Local is a fallback only if they insist.
+The core value of RACA is running experiments on remote servers — clusters and cloud GPUs. The tutorial should demonstrate that. Local is a fallback only if they insist.
 
-> "Time to run the experiment! The real power of Dr Claude Code is managing jobs on remote compute — I handle SSH, job submission, monitoring, and collecting results for you."
+> "Time to run the experiment! The real power of RACA is managing jobs on remote compute — I handle SSH, job submission, monitoring, and collecting results for you."
 >
 > "Do you have access to:"
 > 1. "**A SLURM cluster** (university HPC) — highly recommended, this is where we really shine"
@@ -153,7 +153,7 @@ For SLURM: load `setup-cluster` skill.
 For RunPod: load `setup-runpod` skill.
 For local (last resort): Apple Silicon → Ollama, NVIDIA → vLLM.
 
-For 2FA clusters: "Open a **new terminal tab** and run `dcc auth <cluster>`"
+For 2FA clusters: "Open a **new terminal tab** and run `raca auth <cluster>`"
 
 Update: `compute: "done"`, `cluster_name: ...`
 
@@ -170,7 +170,7 @@ Use the `run-job` skill. The job should:
 - Save with columns: `prompt`, `model_response`, `model`, `target`, `numbers`, `correct`
 - Upload to HF: `{hf_org}/onboarding-countdown-qwen3-1.7b`
 - Update `notes/experiments/onboarding/HUGGINGFACE_REPOS.md`
-- Invoke `/drcc:dashboard-sync`
+- Invoke `/raca:dashboard-sync`
 
 > "Running the experiment now — 10 Countdown problems with Qwen3-1.7B. This should only take a minute or two."
 
@@ -193,8 +193,8 @@ cd tools/visualizer/frontend && npm install --silent 2>&1 | tail -1 && npm run b
 
 Start the server in the background:
 ```bash
-cd tools/visualizer && nohup .tools-venv/bin/python -c "from backend.app import app; app.run(host='127.0.0.1', port=7860)" > .drcc/dashboard.log 2>&1 &
-echo $! > .drcc/dashboard.pid
+cd tools/visualizer && nohup .tools-venv/bin/python -c "from backend.app import app; app.run(host='127.0.0.1', port=7860)" > .raca/dashboard.log 2>&1 &
+echo $! > .raca/dashboard.pid
 ```
 
 > "Dashboard running at **http://localhost:7860**"
@@ -216,12 +216,12 @@ If yes:
 from huggingface_hub import HfApi
 from key_handler import KeyHandler
 api = HfApi(token=KeyHandler.hf_key)
-api.create_repo('${HF_ORG}/drcc-dashboard', repo_type='space', space_sdk='docker', exist_ok=True)
-api.upload_folder(folder_path='tools/visualizer', repo_id='${HF_ORG}/drcc-dashboard', repo_type='space')
+api.create_repo('${HF_ORG}/raca-dashboard', repo_type='space', space_sdk='docker', exist_ok=True)
+api.upload_folder(folder_path='tools/visualizer', repo_id='${HF_ORG}/raca-dashboard', repo_type='space')
 "
 ```
 
-> "Deploying — Docker build takes 3-5 min on HF. URL: `https://{org}-drcc-dashboard.hf.space`"
+> "Deploying — Docker build takes 3-5 min on HF. URL: `https://{org}-raca-dashboard.hf.space`"
 
 Update: `dashboard_hf: "done"`, `hf_org: ...`
 
@@ -275,7 +275,7 @@ Update: `user_notes: "done"`, `completed: true`
 > > Set up verl on my cluster
 >
 > **Add a benchmark:**
-> > /drcc:benchmark-reference GSM8K
+> > /raca:benchmark-reference GSM8K
 >
 > "Happy researching!"
 

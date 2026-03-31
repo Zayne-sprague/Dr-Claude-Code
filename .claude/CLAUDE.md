@@ -1,15 +1,15 @@
-# Dr. Claude Code — Workspace Instructions
+# RACA — Workspace Instructions
 
-This is a research workspace managed by Claude Code. You are a research collaborator.
+This is a research workspace managed by RACA (Research Assistant Coding Agents). You are a research collaborator.
 
 ## Workspace Structure
 
 - `notes/experiments/` — experiment tracking (YAML, READMEs, activity logs)
 - `tools/visualizer/` — HuggingFace Spaces dashboard
-- `tools/cli/` — `dcc` SSH lifecycle tool
+- `tools/cli/` — `raca` SSH lifecycle tool
 - `.claude/references/templates/sbatch/` — Jinja2 sbatch templates
 - `.claude/` — rules, agents, commands, skills, hooks (read-only config)
-- `.drcc/` — workspace runtime state (onboarding, job tracking — Claude reads/writes freely here)
+- `.raca/` — workspace runtime state (onboarding, job tracking — Claude reads/writes freely here)
 
 ## Key Rules
 
@@ -34,7 +34,7 @@ Before writing ANY code that runs a benchmark, generates data, or evaluates a mo
 5. Use the EXACT evaluation method — do not substitute string matching for equation evaluation, etc.
 6. Respect max_tokens requirements — truncated outputs are failed outputs
 
-If no reference file exists, create one first using `/drcc:benchmark-reference <name>`.
+If no reference file exists, create one first using `/raca:benchmark-reference <name>`.
 </critical>
 
 ## References (on-demand)
@@ -64,27 +64,42 @@ Use `key_handler.KeyHandler` for all API key management. Never hardcode keys.
 
 ## Tools Venv
 
-CLI tools (`dcc`, `key_handler`) are installed in `.tools-venv/bin/` and added to the user's PATH by the installer.
+CLI tools (`raca`, `key_handler`) are installed in `.tools-venv/bin/` and added to the user's PATH by the installer.
 
-- `dcc` — SSH lifecycle tool (auth, ssh, upload, download, forward)
+- `raca` — SSH lifecycle tool (auth, ssh, upload, download, forward)
 - `.tools-venv/bin/python` — use this for any Python that needs `key_handler` or `huggingface_hub` (NOT system `python3`)
 
-When telling the user to run `dcc`, just say `dcc auth <cluster>` — it's on their PATH.
+When telling the user to run `raca`, just say `raca auth <cluster>` — it's on their PATH.
 For Python scripts, always use `.tools-venv/bin/python` since system Python doesn't have the packages.
 
 ## Cluster Access
 
-Cluster configs are in `.drcc/clusters.yaml`. The user authenticates with `dcc auth <cluster>`.
-You run commands on clusters via `dcc ssh <cluster> "command"`.
-You transfer files via `dcc upload` / `dcc download`.
-You set up port forwards via `dcc forward`.
+Cluster configs are in `.raca/clusters.yaml`. The user authenticates with `raca auth <cluster>`.
+You run commands on clusters via `raca ssh <cluster> "command"`.
+You transfer files via `raca upload` / `raca download`.
+You set up port forwards via `raca forward`.
 
 ## Command Routing
 
-Claude should invoke these commands automatically when the situation calls for it:
-- `/drcc:dashboard-sync` — after any artifact is produced or experiment state changes
-- `/drcc:find-compute` — when planning where to run a job
-- `/drcc:benchmark-reference` — when a benchmark is mentioned that has no reference file
+### Experiment Pipeline
+
+These commands fire at lifecycle transitions regardless of how the experiment was designed
+(freeform conversation, brainstorming plugins, planning tools, or anything else):
+
+1. **After experimental design is complete** → `/raca:experiment-preflight` (red-team + canary)
+2. **When preflight passes** → submit jobs, `/loop` to monitor
+3. **When jobs complete** → `/raca:harvest-and-report` (download, validate, upload)
+4. **After any artifact upload or state change** → `/raca:dashboard-sync`
+
+Do not wait for the user to request these. If an experimental design exists and the next
+step in the lifecycle is one of these commands, invoke it.
+
+### Auto-Invoke Commands
+
+Claude should also invoke these automatically when the situation calls for it:
+- `/raca:dashboard-sync` — after any artifact is produced or experiment state changes
+- `/raca:find-compute` — when planning where to run a job
+- `/raca:benchmark-reference` — when a benchmark is mentioned that has no reference file
 
 ## Critical Rules
 
@@ -92,7 +107,7 @@ Claude should invoke these commands automatically when the situation calls for i
 - NEVER git push --force to HuggingFace Spaces — use `HfApi.upload_folder()` only
 - NEVER mention internal state tracking, phases, or mechanics to the user
 - ALWAYS use `.tools-venv/bin/python` for key_handler and huggingface_hub operations (system Python doesn't have them)
-- ALWAYS use `dcc` for cluster commands (it's on PATH after install)
+- ALWAYS use `raca` for cluster commands (it's on PATH after install)
 - ALWAYS use the model's full supported max_tokens for generation — truncated output is FAILED output
 - ALWAYS upload artifacts to HF immediately after creation
 - ALWAYS read the benchmark/task reference file before writing ANY code that evaluates, generates data, or trains on that task

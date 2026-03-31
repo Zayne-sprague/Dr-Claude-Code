@@ -1,9 +1,9 @@
 ---
 name: setup-runpod
 description: |
-  Walk the user through setting up RunPod as a compute provider for Dr. Claude Code.
+  Walk the user through setting up RunPod as a compute provider for RACA.
   Covers account creation, API key, GPU selection, pricing, pod vs serverless, known
-  issues, and writing the RunPod entry in .drcc/clusters.yaml.
+  issues, and writing the RunPod entry in .raca/clusters.yaml.
   Run this skill when the user says "set up RunPod", "add RunPod", "configure RunPod",
   or "I want to use RunPod".
 ---
@@ -19,7 +19,7 @@ This is a RIGID workflow. Follow every step in order. Do not skip phases.
 Before anything else, check if RunPod is already configured:
 
 ```bash
-cat .drcc/clusters.yaml 2>/dev/null | grep -A5 "type: runpod"
+cat .raca/clusters.yaml 2>/dev/null | grep -A5 "type: runpod"
 ```
 
 If a RunPod entry already exists, tell the user what's there and ask: "Would you like to reconfigure RunPod, or just verify the existing setup?"
@@ -104,7 +104,7 @@ Ask the user which they want to set up:
 >
 > Which do you need? (Most research workflows use **Pods**.)"
 
-For the rest of this skill, we focus on **Pods** — which is what `dcc` and the job runner use.
+For the rest of this skill, we focus on **Pods** — which is what `raca` and the job runner use.
 
 ---
 
@@ -163,7 +163,7 @@ Building flash_attn from source on RunPod takes 40+ minutes and consumes so much
 
 Ask the user: "What GPU type do you want as the default for RunPod pods?"
 
-Write (or append) the RunPod entry to `.drcc/clusters.yaml`:
+Write (or append) the RunPod entry to `.raca/clusters.yaml`:
 
 ```yaml
 clusters:
@@ -175,7 +175,7 @@ clusters:
     notes: "API key loaded from RUNPOD_API_KEY env var. Multi-GPU L40S: known CUDA bug — use RTX 4090/A100/H100 instead."
 ```
 
-If `.drcc/clusters.yaml` doesn't exist yet, create it with a `clusters:` root.
+If `.raca/clusters.yaml` doesn't exist yet, create it with a `clusters:` root.
 
 ---
 
@@ -193,7 +193,7 @@ curl -s -H "Authorization: Bearer $RUNPOD_API_KEY" \
 
 Tell the user:
 
-> "RunPod is configured. To launch a pod, use `/drcc:run-job` and select `runpod` as the cluster, or run `dcc runpod launch --gpu <type>` directly."
+> "RunPod is configured. To launch a pod, use `/raca:run-job` and select `runpod` as the cluster, or run `raca runpod launch --gpu <type>` directly."
 
 Remind them about cost awareness:
 

@@ -7,26 +7,26 @@ from typing import Any
 import yaml
 
 
-def _find_drcc_dir() -> Path:
-    """Find .drcc/ by walking up from cwd, like git finds .git/.
-    Falls back to cwd/.drcc if nothing found."""
+def _find_raca_dir() -> Path:
+    """Find .raca/ by walking up from cwd, like git finds .git/.
+    Falls back to cwd/.raca if nothing found."""
     current = Path.cwd()
     while current != current.parent:
-        candidate = current / ".drcc"
+        candidate = current / ".raca"
         if candidate.is_dir():
             return candidate
         current = current.parent
     # Fallback: use cwd
-    return Path.cwd() / ".drcc"
+    return Path.cwd() / ".raca"
 
 
-DCC_DIR = _find_drcc_dir()
-CLUSTERS_FILE = DCC_DIR / "clusters.yaml"
-CONFIG_FILE = DCC_DIR / "config.yaml"
+RACA_DIR = _find_raca_dir()
+CLUSTERS_FILE = RACA_DIR / "clusters.yaml"
+CONFIG_FILE = RACA_DIR / "config.yaml"
 
 
 def _ensure_dir() -> None:
-    DCC_DIR.mkdir(parents=True, exist_ok=True)
+    RACA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _read_raw() -> dict[str, Any]:
@@ -59,7 +59,7 @@ def get_cluster(name: str) -> dict[str, Any]:
         raise KeyError(
             f"Cluster '{name}' not found. "
             f"Available clusters: {available}. "
-            f"Add one with: dcc cluster add {name} --host <host> --user <user>"
+            f"Add one with: raca cluster add {name} --host <host> --user <user>"
         )
     return clusters[name]
 

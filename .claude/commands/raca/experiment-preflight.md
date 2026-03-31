@@ -88,8 +88,8 @@ Read the Red Team Brief's "Canary Shard" section.
 If it says "skip", proceed to Step 5.
 
 If it says "required":
-1. Submit a small job (50 samples) to the target cluster via `dcc ssh <cluster> "<submit command>"`
-2. Wait for completion (poll via `dcc ssh <cluster> "squeue -u $USER -j <id>"` every 5 minutes, max 2 hours)
+1. Submit a small job (50 samples) to the target cluster via `raca ssh <cluster> "<submit command>"`
+2. Wait for completion (poll via `raca ssh <cluster> "squeue -u $USER -j <id>"` every 5 minutes, max 2 hours)
 3. If queue wait exceeds 2 hours, log "Canary timed out — proceeding without canary" and skip to Step 5
 4. When complete, download results and validate against the Red Team Brief's "How do I know the results are real?" criteria
 5. Save canary results to `notes/experiments/<experiment>/canary_<date>/`

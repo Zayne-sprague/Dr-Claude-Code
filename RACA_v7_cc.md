@@ -1,7 +1,7 @@
 # How Claude Code Changed the Way I Think About Research
 
 
-![Intro Diagram](images/intro.png)
+![Intro Diagram](images/intro.jpeg)
 
 
 The workflow of a PhD student involves turning high-level directions into concrete experiments. Claude Code knows how to help turn:
@@ -20,7 +20,7 @@ into a solid experiment with me, implements it on an HPC cluster with Slurm, run
 You can use it here. It glues Claude Code with SLURM/RunPod and HuggingFace, creating a loop of you (the researcher) with compute (HPC/RunPod/local servers) and visualizations + raw data (HuggingFace) in a way that's been very effective for me.
 
 ```shell
-curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
 ```
 
 It will set you up with:
@@ -33,8 +33,10 @@ Most of the install is helped by with Claude, it will walk you through everythin
 
 If you want to stick around and read about how it works, how it doesn't, and how it's changing how I think about conducting experiments, keep reading.
 
-![Dashboard](images/dashboard.png)
-_The Experiments Dashboard where Claude Code keeps track of my experiments for me. They are tracked on the experiment dashboard. Claude Code builds the scripts for the experiment, handles the uploads to huggingface, writes the code to visualize them on the site, and manages the updates for each experiment so I can have everything in one spot._
+[//]: # (![Dashboard]&#40;images/dashboard.png&#41;)
+[//]: # (_The Experiments Dashboard where Claude Code keeps track of my experiments for me. They are tracked on the experiment dashboard. Claude Code builds the scripts for the experiment, handles the uploads to huggingface, writes the code to visualize them on the site, and manages the updates for each experiment so I can have everything in one spot._)
+![Example](images/checking-jobs.gif)
+_Example of the Research Dashboard that keeps track of all the experiments and its related outputs, files, etc. Along with an example of how you can talk to Claude Code normally, ask about your job scheduled on your slurm clusters, and have it respond. A key motivation of RACA is keeping Claude Code local and connecting it with compute via ssh._
 
 ## Intro
 
@@ -68,7 +70,7 @@ I've read through their code. A few questions:
 
 This flow benefits from having all of the work you're currently doing in a single repo rather than across separate Claude Code projects. It reused my code from an older experiment, one that I trusted to work right.
 
-As a result, Dr. Claude Code expects the following structure:
+As a result, RACA expects the following structure:
 
 > **Workspace:** I keep everything in `~/Research`. Projects, notes, tools, repos. Not always context-friendly (you have to organize so Claude can find things), but it lets conversations span my whole research history. There's a `notes/experiments/` folder where Claude writes plans, timelines, and artifact registries, and where I put my own notes. If you install, the first thing it asks is where you want your workspace.
 
@@ -92,7 +94,7 @@ What happens is that the agent produces a red-team brief, a markdown file with a
 
 > **How rules work:** Claude Code lets you define rules in `.claude/rules/` that guide behavior. They're more like strong suggestions than hard constraints (Claude doesn't always follow them), but they can encode a pipeline. I never have to ask for red-teaming; the rule says to do it before any compute gets scheduled for a new experiment.
  
-![Canary Job finding compute](images/find-compute.png)
+![Canary Job finding compute](images/find-compute.jpeg)
 _Example of how Claude can talk to your compute clusters to find available GPUs that you need for your experiment. It doesn't just find compute though, you can use Claude Code locally to handle the installation, monitoring, submission, etc. of your jobs on your SLURM cluster, third-party providers (RunPod, etc.), or your local machines. It makes it so that you don't have to manage multiple sessions on multiple machines, just use ssh and claude code._
 
 For this experiment, the canary surfaced a calibration issue:
@@ -122,7 +124,7 @@ Sure! Load them up here: http://<visualizer link>
 
 **> These look good. Let's run the real thing.**
 
-The first canary actually failed before any of this (Hydra config issue, needed `+` prefixes). Claude caught it in the logs, fixed the config, and resubmitted. No sbatch scripts from me, no SSH beyond the initial `dcc auth empire`. It fixed this automatically, but the one above did prompt me because it changes an invariant in the red team briefing (the number of digits we test for in Countdown).
+The first canary actually failed before any of this (Hydra config issue, needed `+` prefixes). Claude caught it in the logs, fixed the config, and resubmitted. No sbatch scripts from me, no SSH beyond the initial `raca auth empire`. It fixed this automatically, but the one above did prompt me because it changes an invariant in the red team briefing (the number of digits we test for in Countdown).
 
 > **Finding compute:** In this stage, Claude connects to your cluster via SSH, installs the code, and schedules the canary job. You may have to tell it a bit about how SLURM jobs work on your cluster, but by and large, it just does what it needs to. This is the biggest advantage of using Claude Code in my opinion. After spending weeks trying to install packages on complex architectures, Claude Code is a game changer.
 
@@ -187,7 +189,7 @@ If you have suggestions, tooling, ideas, critiques, reach out!
 Try out the repo too! Tell me what you think
 
 ```shell
-curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
 ```
 
-[DrCC GitHub](link-to-repo) | [Example Dashboard](link-to-space)
+[RACA GitHub](link-to-repo) | [Example Dashboard](link-to-space)
