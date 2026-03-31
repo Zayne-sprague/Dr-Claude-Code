@@ -7,7 +7,7 @@ Turn your experimental pipeline into a conversation. RACA connects Claude Code w
 ## Install
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
 ```
 
 The script sets up your workspace, installs the tools, then launches Claude Code automatically. Claude walks you through the rest: connecting your clusters, deploying the dashboard, and running your first experiment. If you ever need to re-run the setup, use `/raca:onboarding`.

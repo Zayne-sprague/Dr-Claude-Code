@@ -20,7 +20,7 @@ into a solid experiment with me, implements it on an HPC cluster with Slurm, run
 You can use it here. It glues Claude Code with SLURM/RunPod and HuggingFace, creating a loop of you (the researcher) with compute (HPC/RunPod/local servers) and visualizations + raw data (HuggingFace) in a way that's been very effective for me.
 
 ```shell
-curl -sSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
 ```
 
 It will set you up with:
@@ -189,7 +189,7 @@ If you have suggestions, tooling, ideas, critiques, reach out!
 Try out the repo too! Tell me what you think
 
 ```shell
-curl -sSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
 ```
 
 [RACA GitHub](link-to-repo) | [Example Dashboard](link-to-space)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # RACA installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
 # Or:    bash install.sh
 set -euo pipefail
 
@@ -17,7 +17,7 @@ warn()    { echo -e "${YELLOW}[raca]${RESET} $*"; }
 error()   { echo -e "${RED}[raca] ERROR:${RESET} $*" >&2; }
 die()     { error "$*"; exit 1; }
 
-REPO_URL="https://github.com/Zayne-sprague/RACA.git"
+REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
 # Config lives inside the workspace at .raca/ (not ~/.raca)
 # RACA_CONFIG_DIR is set after WORKSPACE is known
 
@@ -69,8 +69,8 @@ echo ""
 info "Setting up workspace..."
 
 # Detect if we're inside the repo already (user did git clone + bash install.sh)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-/dev/null}")" 2>/dev/null && pwd || echo "")"
+if [ -n "$SCRIPT_DIR" ] && [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
     REPO_DIR="$SCRIPT_DIR"
     info "  Using local repo at ${REPO_DIR}"
 else
