@@ -2,9 +2,9 @@
 
 
 
-![Intro Diagram](images/intro.jpeg)
+![Intro Diagram](images/intro.png)
 
-> Talk to Claude Code through experimental design, Slurm management, and visualization (the AI Ph.D. students experiments life-cycle)
+> Talk to Claude Code through experimental design, Slurm management, and visualization (the AI Ph.D. student's experiment life-cycle)
 
 The workflow of a PhD student involves turning high-level directions into concrete experiments. Claude Code knows how to help turn:
 
@@ -42,9 +42,9 @@ _Example of the Research Dashboard that keeps track of all the experiments and i
 
 ## Intro
 
-Autoresearch has been all the rage in the past few months. But the reality is that most of us doing research aren't trying to fully automate science. We're trying to stop spending our days on devops. I've found that one of the hardest things a Ph.D. teaches you is designing experiments that actually answer your question. Obvious in principle, hard in practice. This is still hard even with the best Claude Code setup, but for a completely different reason than it was 2-3 years ago. Before, it was all tedious infrastructure and finding/fighting for compute. Claude Code has shifted the difficulty entirely from devops to control.
+Autoresearch has been all the rage in the past few months. But the reality is that most of us doing research aren't trying to fully automate science. We're trying to design better experiments, which is genuinely hard, and we want to focus on that rather than spending our days on devops. This is still hard even with the best Claude Code setup, but for a completely different reason than it was 2-3 years ago. Before, it was all tedious infrastructure and finding/fighting for compute. Claude Code has shifted the difficulty entirely from devops to control, letting me spend more time on the part that actually matters.
 
-With Claude, I find I can manage about 3x more parallel threads of research than before, letting me explore ideas that I previously would have triaged away. But this doesn't necessarily translate into 3x's more papers, and there are some serious hangups...
+With Claude, I find I can manage about 3x more parallel threads of research than before, letting me explore ideas that I previously would have triaged away. This doesn't mean 3x more papers, but the exploration it allows gives me room to think through my ideas more thoroughly and pursue questions I would have otherwise dropped.
 
 This post is about how I've been using Claude Code to run experiments as a Ph.D. student, what it looks like in practice, and the new ways things break (and what the fixes actually look like). I'm releasing the GitHub repo for people who want to try it themselves. It's genuinely helped my productivity. But more than that, working this way has started to change how I think about research itself: what kind of knowledge is worth building up, where the bottlenecks actually are now, and what it means to "fix" something when the code is disposable but the understanding isn't.
 
