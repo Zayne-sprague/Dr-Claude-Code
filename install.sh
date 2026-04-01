@@ -2,7 +2,11 @@
 # RACA installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
 # Or:    bash install.sh
+#
+# Cache busting: if running via curl|bash and hitting stale CDN cache,
+# use: curl -fsSL "https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh?$(date +%s)" | bash
 set -euo pipefail
+RACA_INSTALLER_VERSION="2026.04.01"
 
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
@@ -28,6 +32,7 @@ trap cleanup EXIT
 
 # ── Preflight ──────────────────────────────────────────────
 echo ""
+info "RACA installer v${RACA_INSTALLER_VERSION}"
 info "Checking prerequisites..."
 
 PREFLIGHT_OK=true
@@ -75,8 +80,10 @@ if [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
     info "  Using local repo at ${REPO_DIR}"
 else
     TMPDIR_RACA=$(mktemp -d)
-    info "  Cloning RACA..."
-    git clone --depth=1 "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
+    info "  Cloning RACA (fresh, no cache)..."
+    git clone --depth=1 --no-single-branch "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" \
+        || git clone --depth=1 "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" \
+        || die "Failed to clone repo."
     REPO_DIR="${TMPDIR_RACA}/RACA"
 fi
 
@@ -128,6 +135,21 @@ else
     fi
     # settings.local.json — don't overwrite, user's permissions are sacred
     success "  RACA config merged (your existing files preserved)"
+fi
+
+# ── Migrate from old Dr. Claude Code install ─────────────
+# Clean up stale .drcc/ and commands/drcc/ from pre-rename installs
+if [ -d "${WORKSPACE}/.drcc" ]; then
+    warn "  Found old .drcc/ from previous install — migrating to .raca/"
+    # Copy config if .raca/ doesn't exist yet
+    if [ ! -d "${WORKSPACE}/.raca" ]; then
+        cp -r "${WORKSPACE}/.drcc" "${WORKSPACE}/.raca"
+    fi
+    rm -rf "${WORKSPACE}/.drcc"
+fi
+if [ -d "${WORKSPACE}/.claude/commands/drcc" ]; then
+    warn "  Found old commands/drcc/ — removing (replaced by commands/raca/)"
+    rm -rf "${WORKSPACE}/.claude/commands/drcc"
 fi
 
 # .raca/ — workspace state (onboarding, etc.) — Claude has full read/write here
