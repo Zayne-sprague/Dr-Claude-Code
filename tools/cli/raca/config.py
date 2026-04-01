@@ -7,7 +7,7 @@ from typing import Any
 import yaml
 
 
-def _find_raca_dir() -> Path:
+def _find_drcc_dir() -> Path:
     """Find .raca/ by walking up from cwd, like git finds .git/.
     Falls back to cwd/.raca if nothing found."""
     current = Path.cwd()
@@ -20,13 +20,13 @@ def _find_raca_dir() -> Path:
     return Path.cwd() / ".raca"
 
 
-RACA_DIR = _find_raca_dir()
-CLUSTERS_FILE = RACA_DIR / "clusters.yaml"
-CONFIG_FILE = RACA_DIR / "config.yaml"
+DCC_DIR = _find_drcc_dir()
+CLUSTERS_FILE = DCC_DIR / "clusters.yaml"
+CONFIG_FILE = DCC_DIR / "config.yaml"
 
 
 def _ensure_dir() -> None:
-    RACA_DIR.mkdir(parents=True, exist_ok=True)
+    DCC_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _read_raw() -> dict[str, Any]:

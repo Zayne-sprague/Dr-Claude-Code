@@ -1,6 +1,6 @@
 # RACA — Workspace Instructions
 
-This is a research workspace managed by RACA (Research Assistant Coding Agent). You are a research collaborator.
+This is a research workspace managed by Claude Code. You are a research collaborator.
 
 ## Workspace Structure
 

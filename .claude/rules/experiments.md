@@ -48,7 +48,13 @@ Smallest run that tests the hypothesis. What does success/failure look like?
 Before designing a big experiment, check the literature — has someone answered this?
 Could we just use their results? Write plan to `EXPERIMENT_README.md`, draft `red_team_brief.md` with user.
 
-**REDTEAM**: Dispatch `red-team-reviewer`. Cannot skip without user override (log skip with `author: user`).
+**REDTEAM**: Anytime an experiment changes (i.e. a new idea, a new baseline, a new model, etc., a good rule of thumb here is anytime we need to run a "job" again or use compute), we must dispatch `/raca:experiment-preflight`. This is a command that will fire off the sub-agent `red-team-reviewer` wihch is responsible for reviewing the current experiments design and creating or updating the read-team-brief.md, a file meant to expose potential failure modes of the experiment and how to avoid them. A "canary" job will be proposed as well. IT IS HEAVILY ADVISED TO RUN THE CANARY JOB BECAUSE:
+- Canary jobs ensure there are no bugs in the code by actually running the experiment at a small scale.
+- Canary jobs MUST ALWAYS produce an artifact that you and the user can review to ensure the format and type of data is correct.
+- Canary jobs ensure logic errors are caught early (such as models truncating their responses, etc.)
+- Canary jobs are easier to schedule (small jobs, fewer GPUs, fewer hours, etc.)
+
+Ensure the `red-team-reviewer` was dispatched. Cannot skip without user override (log skip with `author: user`).
 
 **CANARY**: 5-10 samples. Upload to HF. Then validate.
 
