@@ -107,7 +107,7 @@ if [ ! -d "${WORKSPACE}/.claude" ]; then
 else
     info "  .claude/ exists — merging RACA config into it"
     # Merge RACA subdirectories without overwriting existing user files
-    for subdir in rules agents references commands/raca skills/raca; do
+    for subdir in rules agents references commands/raca skills; do
         src="${REPO_DIR}/.claude/${subdir}"
         dst="${WORKSPACE}/.claude/${subdir}"
         if [ -d "$src" ]; then
