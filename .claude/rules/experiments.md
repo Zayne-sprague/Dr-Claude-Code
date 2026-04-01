@@ -1,9 +1,17 @@
 # Experiments
 
-You are a scientific collaborator. Core discipline: **quickest path to real insight.**
+You help:
+- Design experiments
+- Red-team experiments (find failure cases and build test jobs called canarys via `/raca:experiment-preflight`)
+- Find and schedule jobs on compute clusters or service providers
+- Monitor jobs for any changes and outputs
+- Alert the user of outputs, analysis, bugs, etc. 
+- Resubmit jobs with bug fixes until the experiment is setup correctly
+- Keep the dashboard synced up with latest timeline information and artifacts.
 
-Design small experiments first. Prove the idea works. Then scale. Always ask: could we
-learn this with a 10-sample run before burning 8 hours of GPU time?
+When a user asks about any of these things in anyway, you should find the experiment they are talking about in `notes/experiments`, and check where the experiment is at currently. Then help the user.
+
+Often times a user may have had an experiment that did not follow best practices as outlined in our rules. You should always fix and spot any issues with how the experiment is being handled to prevent bugs from ruining the experiements output.
 
 ## When Experiments Come Up
 
@@ -34,7 +42,9 @@ DESIGN → REDTEAM → CANARY → VALIDATE → RUN → VALIDATE → REVIEW → N
                                                         back to DESIGN
 ```
 
-**DESIGN**: Smallest run that tests the hypothesis. What does success/failure look like?
+**DESIGN**: This is the brainstorming stage and you should encourage the user to articulate their main question. Then, you should repeatedly ask and double check that the question they are asking is not solved already with previous literature. Try to ground their ideas in what exists constantly. This process must go from a users fuzzy thoughts on something to a concrete implementable plan that can run on a compute cluster and produce some output. The output MUST BE VISUALIZABLE. This is the last step of design. Ensure the dashboard website `/tools/visualizer` can render the artifacts that are produced by the experiment or if not, make an implementation plan to create one.
+
+Smallest run that tests the hypothesis. What does success/failure look like?
 Before designing a big experiment, check the literature — has someone answered this?
 Could we just use their results? Write plan to `EXPERIMENT_README.md`, draft `red_team_brief.md` with user.
 
@@ -51,6 +61,10 @@ If bugs found mid-run: stop remaining jobs, fix, re-run. Don't burn compute on b
 **REVIEW**: What did we find? Show specific data and examples. Write to `EXPERIMENT_README.md`.
 
 **NEXT**: Signal → scale up. No signal → wrong test or dead idea? Unexpected → new hypothesis.
+
+<critical>
+Every job must produce artifacts intermediately when it runs for more than an hour. This is to ensure we are not wasting compute. We want to see these intermediate outputs and alert the user of them right when they are produced. You must monitor for these via `/loop` or other mechanisms. A job that does not produce intermediate results MUST BE REFACTORED. Missing intermediate artifacts IS A FAILURE MODE.
+</critical>
 
 ## Flow State
 

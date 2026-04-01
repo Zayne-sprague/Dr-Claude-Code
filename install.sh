@@ -94,12 +94,40 @@ for d in tools packages docs; do
     }
 done
 
-# .claude/ — don't overwrite existing
 if [ ! -d "${WORKSPACE}/.claude" ]; then
     info "  Installing .claude/ config"
     cp -r "${REPO_DIR}/.claude" "${WORKSPACE}/.claude"
 else
-    warn "  .claude/ exists — preserving your config"
+    info "  .claude/ exists — merging RACA config into it"
+    # Merge RACA subdirectories without overwriting existing user files
+    for subdir in rules agents references commands/raca skills/raca; do
+        src="${REPO_DIR}/.claude/${subdir}"
+        dst="${WORKSPACE}/.claude/${subdir}"
+        if [ -d "$src" ]; then
+            mkdir -p "$dst"
+            # Copy files, skip ones the user already has
+            find "$src" -type f | while read -r f; do
+                rel="${f#$src/}"
+                target="${dst}/${rel}"
+                mkdir -p "$(dirname "$target")"
+                if [ ! -f "$target" ]; then
+                    cp "$f" "$target"
+                fi
+            done
+        fi
+    done
+    # CLAUDE.md — append RACA section if not already present
+    if [ -f "${WORKSPACE}/.claude/CLAUDE.md" ]; then
+        if ! grep -q "RACA" "${WORKSPACE}/.claude/CLAUDE.md" 2>/dev/null; then
+            info "  Appending RACA instructions to existing CLAUDE.md"
+            echo "" >> "${WORKSPACE}/.claude/CLAUDE.md"
+            cat "${REPO_DIR}/.claude/CLAUDE.md" >> "${WORKSPACE}/.claude/CLAUDE.md"
+        fi
+    else
+        cp "${REPO_DIR}/.claude/CLAUDE.md" "${WORKSPACE}/.claude/CLAUDE.md"
+    fi
+    # settings.local.json — don't overwrite, user's permissions are sacred
+    success "  RACA config merged (your existing files preserved)"
 fi
 
 # .raca/ — workspace state (onboarding, etc.) — Claude has full read/write here

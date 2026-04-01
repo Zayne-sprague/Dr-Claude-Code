@@ -4,22 +4,22 @@ This is a research workspace managed by RACA (Research Assistant Coding Agents).
 
 ## Workspace Structure
 
-- `notes/experiments/` — experiment tracking (YAML, READMEs, activity logs)
-- `tools/visualizer/` — HuggingFace Spaces dashboard
-- `tools/cli/` — `raca` SSH lifecycle tool
-- `.claude/references/templates/sbatch/` — Jinja2 sbatch templates
-- `.claude/` — rules, agents, commands, skills, hooks (read-only config)
-- `.raca/` — workspace runtime state (onboarding, job tracking — Claude reads/writes freely here)
+When locating experiments, projects, notes, share-able code, documentation, etc. be sure to 
+see `.claude/codemap.md` for full folder map with descriptions.
+
+<critical>
+Maintain the .claude/codemap.md as the folder structure changes.
+</critical>
 
 ## Key Rules
 
 Detailed instructions in `.claude/rules/`:
-- `experiments.md` — experiment lifecycle: design → red-team → canary → validate → run → harvest → review
-- `workspace.md` — folder conventions
+- `experiments.md` — read anytime users are asking about experiments, artifacts / results, etc.
+- `workspace.md` — read anytime you are editing, removing, or creating any files. Related: new experiments almost always result in creating a new folder.
+- `huggingface-datasets.md` — HF upload standards. Read this when designing experiments, you must follow these conventions when uploading artifacts.
 - `python-patterns.md` — Python style (3.10+, ruff, type hints)
 - `git-safety.md` — push safety
 - `security.md` — never hardcode API keys
-- `huggingface-datasets.md` — HF upload standards
 
 ## Benchmark & Task References
 
@@ -27,6 +27,7 @@ Detailed instructions in `.claude/rules/`:
 
 <critical>
 Before writing ANY code that runs a benchmark, generates data, or evaluates a model on a task:
+
 1. Check the table above for a reference file
 2. If one exists, READ IT FIRST — it contains the correct prompt format, evaluation method, scoring, and known pitfalls
 3. Follow its Setup Checklists before writing code
@@ -37,23 +38,6 @@ Before writing ANY code that runs a benchmark, generates data, or evaluates a mo
 If no reference file exists, create one first using `/raca:benchmark-reference <name>`.
 </critical>
 
-## References (on-demand)
-
-Detailed references in `.claude/references/` (loaded when needed):
-- `experiments.md` — full experiment lifecycle detail
-- `workspace.md` — folder structure, session startup
-- `tool-decision-guide.md` — when to use which tool
-- `huggingface-datasets.md` — HF upload examples and patterns
-- `datasets_and_tasks/` — benchmark reference files
-
-## Compute Setup References
-
-Setup guides for compute backends in `.claude/references/compute/`:
-- `slurm/` — SLURM HPC cluster setup
-- `runpod/` — RunPod cloud GPU setup
-- `local/` — Local GPU setup
-- `wandb/` — Weights & Biases setup
-- `huggingface/` — HuggingFace setup
 
 ## API Keys
 
@@ -74,32 +58,34 @@ For Python scripts, always use `.tools-venv/bin/python` since system Python does
 
 ## Cluster Access
 
-Cluster configs are in `.raca/clusters.yaml`. The user authenticates with `raca auth <cluster>`.
-You run commands on clusters via `raca ssh <cluster> "command"`.
-You transfer files via `raca upload` / `raca download`.
-You set up port forwards via `raca forward`.
+- Cluster configs are in `.raca/clusters.yaml`. The user authenticates with `raca auth <cluster>`.
+- You run commands on clusters via `raca ssh <cluster> "command"`.
+- You transfer files via `raca upload` / `raca download`.
+- You set up port forwards via `raca forward`.
+
 
 ## Command Routing
 
 ### Experiment Pipeline
 
+Always read the `rules/experiments.md` file before engaging with experiments.
+
 These commands fire at lifecycle transitions regardless of how the experiment was designed
 (freeform conversation, brainstorming plugins, planning tools, or anything else):
 
-1. **After experimental design is complete** → `/raca:experiment-preflight` (red-team + canary)
-2. **When preflight passes** → submit jobs, `/loop` to monitor
-3. **When jobs complete** → `/raca:harvest-and-report` (download, validate, upload)
-4. **After any artifact upload or state change** → `/raca:dashboard-sync`
+- **When an experiment is designed, changed, added onto, etc.** → `/raca:experiment-preflight` this setups up the red-teaming agent which will review the experiment for flaws, it will also setup a canary job -- a minimal test to ensure the experiment will run when scaled up.
+- **Create and Use Reference Files for Benchmarks** → When a benchmark (such as GSM8k, Countdown, TerminalBench, etc.) are being included into the experiments design, use `/raca:benchmark-reference` to either refer to the existing benchmark file or to create one if it is missing.
+- **Finding Compute for an Experiment (Job)** → Always try to find the best spot for where to run a job based on the compute and time it requires by using `/raca:find-compute`. Ask the user if the compute clusters / services are okay to run on before choosing one.
+- **Handling | Scheduling | Monitoring Jobs** → whether it be a canary job or a larger job, you should `/loop` to ensure you monitor the job and keep track of its status (if it fails, disappears, begins to run, is still running, pending, etc. you want to track all of this).
+- **When the Job Produces Output** → A job may produce output intermittently and at the end. You should use `/raca:harvest-and-report` when you notice an artifact has been produced (publish it to huggingface, update the experiments markdown files and sync the dashboard. Notify the user as well that a new output is ready for review)
+- **Remove bad data** → sometimes experiments may produce outputs that we no longer want to keep around (they are stale), you should actively remove them and stop tracking them then use `raca:dashboard-sync` to ensure that the website reflects this.
+- **Anytime the experiment changes** → This means the user changed the design, or added to it, or created it, or a job started after pending, or a job produced outputs, or a job completed and we did some analysis, anytime the experiment has changed in a meaningful way (ESPECIALLY ON THE CREATION OF NEW ARTIFACTS) update the activity_log file and any other necessary files, then run `/raca:dashboard-sync` (this updates the website to be in-sync).
 
-Do not wait for the user to request these. If an experimental design exists and the next
-step in the lifecycle is one of these commands, invoke it.
+Do not wait for the user to request these. When working on an experiment you should be proactive. If an experimental design exists and the next step in the lifecycle is one of these commands, invoke it.
 
-### Auto-Invoke Commands
-
-Claude should also invoke these automatically when the situation calls for it:
-- `/raca:dashboard-sync` — after any artifact is produced or experiment state changes
-- `/raca:find-compute` — when planning where to run a job
-- `/raca:benchmark-reference` — when a benchmark is mentioned that has no reference file
+<critical>
+Pay close attention to artifacts that are produced by jobs. Users will want to have access to these and to visualize them as quickly as possible.
+</critical>
 
 ## Critical Rules
 
