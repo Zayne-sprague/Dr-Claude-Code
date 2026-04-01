@@ -74,8 +74,8 @@ echo ""
 info "Setting up workspace..."
 
 # Detect if we're inside the repo already (user did git clone + bash install.sh)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-/dev/null}")" 2>/dev/null && pwd || echo "")"
+if [ -n "$SCRIPT_DIR" ] && [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
     REPO_DIR="$SCRIPT_DIR"
     info "  Using local repo at ${REPO_DIR}"
 else
