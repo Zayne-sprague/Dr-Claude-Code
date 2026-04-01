@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # RACA installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
 # Or:    bash install.sh
 #
 # Cache busting: if running via curl|bash and hitting stale CDN cache,
-# use: curl -fsSL "https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh?$(date +%s)" | bash
+# use: curl -fsSL "https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh?$(date +%s)" | bash
 set -euo pipefail
 RACA_INSTALLER_VERSION="2026.04.01"
 
@@ -21,7 +21,7 @@ warn()    { echo -e "${YELLOW}[raca]${RESET} $*"; }
 error()   { echo -e "${RED}[raca] ERROR:${RESET} $*" >&2; }
 die()     { error "$*"; exit 1; }
 
-REPO_URL="https://github.com/Zayne-sprague/RACA.git"
+REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
 # Config lives inside the workspace at .raca/ (not ~/.raca)
 # RACA_CONFIG_DIR is set after WORKSPACE is known
 
