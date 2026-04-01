@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # RACA installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh | bash
 # Or:    bash install.sh
+#
+# Cache busting: if running via curl|bash and hitting stale CDN cache,
+# use: curl -fsSL "https://raw.githubusercontent.com/Zayne-sprague/RACA/main/install.sh?$(date +%s)" | bash
 set -euo pipefail
+RACA_INSTALLER_VERSION="2026.04.01"
 
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
@@ -17,13 +21,18 @@ warn()    { echo -e "${YELLOW}[raca]${RESET} $*"; }
 error()   { echo -e "${RED}[raca] ERROR:${RESET} $*" >&2; }
 die()     { error "$*"; exit 1; }
 
-REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
+REPO_URL="https://github.com/Zayne-sprague/RACA.git"
 # Config lives inside the workspace at .raca/ (not ~/.raca)
 # RACA_CONFIG_DIR is set after WORKSPACE is known
 
+# Cleanup temp dir on exit
+TMPDIR_RACA=""
+cleanup() { [ -n "$TMPDIR_RACA" ] && [ -d "$TMPDIR_RACA" ] && rm -rf "$TMPDIR_RACA"; }
+trap cleanup EXIT
 
 # ── Preflight ──────────────────────────────────────────────
 echo ""
+info "RACA installer v${RACA_INSTALLER_VERSION}"
 info "Checking prerequisites..."
 
 PREFLIGHT_OK=true
@@ -65,49 +74,82 @@ echo ""
 info "Setting up workspace..."
 
 # Detect if we're inside the repo already (user did git clone + bash install.sh)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-/dev/null}")" 2>/dev/null && pwd || echo "")"
-if [ -n "$SCRIPT_DIR" ] && [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
     REPO_DIR="$SCRIPT_DIR"
     info "  Using local repo at ${REPO_DIR}"
 else
-    if [ -d "${WORKSPACE}/.git" ]; then
-        info "  Workspace already has a git repo — pulling latest"
-        git -C "${WORKSPACE}" pull --ff-only 2>&1 | sed "s/^/    /" || true
-        REPO_DIR="${WORKSPACE}"
-    elif [ -d "${WORKSPACE}" ] && [ "$(ls -A "${WORKSPACE}" 2>/dev/null)" ]; then
-        info "  Workspace exists and is not empty — cloning beside it"
-        git clone --depth=1 "$REPO_URL" "${WORKSPACE}/.raca-repo" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
-        REPO_DIR="${WORKSPACE}/.raca-repo"
-    else
-        info "  Cloning RACA into workspace..."
-        mkdir -p "$(dirname "${WORKSPACE}")"
-        git clone --depth=1 "$REPO_URL" "${WORKSPACE}" 2>&1 | sed "s/^/    /" || die "Failed to clone repo."
-        REPO_DIR="${WORKSPACE}"
-    fi
+    TMPDIR_RACA=$(mktemp -d)
+    info "  Cloning RACA (fresh, no cache)..."
+    git clone --depth=1 --no-single-branch "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" \
+        || git clone --depth=1 "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" \
+        || die "Failed to clone repo."
+    REPO_DIR="${TMPDIR_RACA}/RACA"
 fi
 
 mkdir -p "${WORKSPACE}/notes/experiments" "${WORKSPACE}/packages"
 
-# Copy files from repo into workspace (skip if repo was cloned directly into workspace)
-if [ "$REPO_DIR" != "$WORKSPACE" ]; then
-    for d in tools packages docs; do
-        [ -d "${REPO_DIR}/${d}" ] && {
-            info "  Syncing ${d}/"
-            mkdir -p "${WORKSPACE}/${d}"
-            cp -R "${REPO_DIR}/${d}/." "${WORKSPACE}/${d}/" 2>/dev/null || true
-            find "${WORKSPACE}/${d}" -type d \( -name node_modules -o -name __pycache__ -o -name .venv -o -name dist \) -exec rm -rf {} + 2>/dev/null || true
-        }
+# Copy tools, packages, docs
+for d in tools packages docs; do
+    [ -d "${REPO_DIR}/${d}" ] && {
+        info "  Syncing ${d}/"
+        # Use cp instead of rsync — rsync misinterprets paths with colons as remote hosts
+        mkdir -p "${WORKSPACE}/${d}"
+        cp -R "${REPO_DIR}/${d}/." "${WORKSPACE}/${d}/" 2>/dev/null || true
+        # Clean up unwanted dirs that cp copies
+        find "${WORKSPACE}/${d}" -type d \( -name node_modules -o -name __pycache__ -o -name .venv -o -name dist \) -exec rm -rf {} + 2>/dev/null || true
+    }
+done
+
+if [ ! -d "${WORKSPACE}/.claude" ]; then
+    info "  Installing .claude/ config"
+    cp -r "${REPO_DIR}/.claude" "${WORKSPACE}/.claude"
+else
+    info "  .claude/ exists — merging RACA config into it"
+    # Merge RACA subdirectories without overwriting existing user files
+    for subdir in rules agents references commands/raca skills/raca; do
+        src="${REPO_DIR}/.claude/${subdir}"
+        dst="${WORKSPACE}/.claude/${subdir}"
+        if [ -d "$src" ]; then
+            mkdir -p "$dst"
+            # Copy files, skip ones the user already has
+            find "$src" -type f | while read -r f; do
+                rel="${f#$src/}"
+                target="${dst}/${rel}"
+                mkdir -p "$(dirname "$target")"
+                if [ ! -f "$target" ]; then
+                    cp "$f" "$target"
+                fi
+            done
+        fi
     done
-
-    if [ ! -d "${WORKSPACE}/.claude" ]; then
-        info "  Installing .claude/ config"
-        cp -r "${REPO_DIR}/.claude" "${WORKSPACE}/.claude"
+    # CLAUDE.md — append RACA section if not already present
+    if [ -f "${WORKSPACE}/.claude/CLAUDE.md" ]; then
+        if ! grep -q "RACA" "${WORKSPACE}/.claude/CLAUDE.md" 2>/dev/null; then
+            info "  Appending RACA instructions to existing CLAUDE.md"
+            echo "" >> "${WORKSPACE}/.claude/CLAUDE.md"
+            cat "${REPO_DIR}/.claude/CLAUDE.md" >> "${WORKSPACE}/.claude/CLAUDE.md"
+        fi
     else
-        warn "  .claude/ exists — preserving your config"
+        cp "${REPO_DIR}/.claude/CLAUDE.md" "${WORKSPACE}/.claude/CLAUDE.md"
     fi
+    # settings.local.json — don't overwrite, user's permissions are sacred
+    success "  RACA config merged (your existing files preserved)"
+fi
 
-    # Clean up temp clone if we used .raca-repo
-    [ -d "${WORKSPACE}/.raca-repo" ] && rm -rf "${WORKSPACE}/.raca-repo"
+# ── Migrate from old Dr. Claude Code install ─────────────
+# Clean up stale .drcc/ and commands/drcc/ from pre-rename installs
+if [ -d "${WORKSPACE}/.drcc" ]; then
+    warn "  Found old .drcc/ from previous install — migrating to .raca/"
+    # Copy config if .raca/ doesn't exist yet
+    if [ ! -d "${WORKSPACE}/.raca" ]; then
+        cp -r "${WORKSPACE}/.drcc" "${WORKSPACE}/.raca"
+    fi
+    rm -rf "${WORKSPACE}/.drcc"
+fi
+if [ -d "${WORKSPACE}/.claude/commands/drcc" ]; then
+    warn "  Found old commands/drcc/ — removing (replaced by commands/raca/)"
+    rm -rf "${WORKSPACE}/.claude/commands/drcc"
 fi
 
 # .raca/ — workspace state (onboarding, etc.) — Claude has full read/write here
