@@ -171,7 +171,7 @@ I tested your access on each partition:
 I'll use h200_courant as the default. Sound good?
 ```
 
-### Step 1.4 — Detect scratch path and modules
+### Step 1.4 — Detect scratch path, modules, and SLURM environment
 
 ```bash
 raca ssh <nickname> "echo SCRATCH=\$SCRATCH; echo WORK=\$WORK; echo HOME=\$HOME; echo CONDA=\$CONDA_PREFIX; module avail cuda 2>&1 | head -10"
@@ -179,6 +179,20 @@ raca ssh <nickname> "echo SCRATCH=\$SCRATCH; echo WORK=\$WORK; echo HOME=\$HOME;
 
 Note the scratch path (e.g., `/scratch/$USER`, `/scratch1/$USER`).
 Check if CUDA modules are available via the module system. Record the CUDA version.
+
+**SLURM library path check:** Some clusters require `LD_LIBRARY_PATH` to be set for SLURM commands to work in non-interactive SSH sessions (modules aren't loaded automatically). Test this:
+
+```bash
+raca ssh <nickname> "which sinfo && sinfo --version"
+```
+
+If `sinfo` is not found or returns "No such file or directory" despite being on PATH, the cluster likely needs a `slurm_prefix`. Try:
+
+```bash
+raca ssh <nickname> "module show slurm 2>&1 | grep LD_LIBRARY_PATH"
+```
+
+If that reveals library paths, record them as a `slurm_prefix` that must be sourced before any SLURM command on this cluster.
 
 ### Step 1.5 — Update cluster config with detected info
 
@@ -203,6 +217,9 @@ clusters:
         nodes: <count>
     modules:
       cuda: <cuda version if available>
+    # slurm_prefix: only needed if SLURM commands fail in non-interactive SSH
+    # Example: "export LD_LIBRARY_PATH=/cm/shared/apps/slurm/current/lib64:$LD_LIBRARY_PATH"
+    slurm_prefix: ""
     notes: ""
 ```
 

@@ -195,19 +195,29 @@ cd $WS/tools/visualizer/frontend && npm run build
 $WS/.tools-venv/bin/python $WS/tools/visualizer/scripts/import_experiments.py
 
 # Deploy to HF Space (use upload_folder — NEVER git push)
+# MUST also set HF_ORG as a Space variable so the backend can resolve it
 $WS/.tools-venv/bin/python -c "
 from huggingface_hub import HfApi
 from key_handler import KeyHandler
 KeyHandler.set_env_key()
-import os
+import os, yaml
 api = HfApi(token=os.environ['HF_TOKEN'])
+
+# Read org from .raca/config.yaml
+with open('$WS/.raca/config.yaml') as f:
+    hf_org = yaml.safe_load(f).get('hf_org', '')
+space_id = f'{hf_org}/research-dashboard'
+
+api.create_repo(space_id, repo_type='space', space_sdk='docker', exist_ok=True)
 api.upload_folder(
     folder_path='$WS/tools/visualizer',
-    repo_id='<HF_ORG>/research-dashboard',
+    repo_id=space_id,
     repo_type='space',
     ignore_patterns=['node_modules', '__pycache__', '.venv', '*.pyc'],
 )
-print('Deployed!')
+# Set HF_ORG so the Space's backend can find the RESEARCH_DASHBOARD dataset
+api.add_space_variable(space_id, 'HF_ORG', hf_org)
+print(f'Deployed to {space_id} with HF_ORG={hf_org}')
 "
 ```
 

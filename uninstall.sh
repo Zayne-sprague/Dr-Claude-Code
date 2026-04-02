@@ -102,9 +102,19 @@ _rm "${WORKSPACE}/.tools-venv"
 
 # ── Shell profile — remove RACA entries ──────────────────
 for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
-    if [ -f "$rc" ] && grep -q "# RACA tools" "$rc" 2>/dev/null; then
-        sed -i.bak '/# RACA tools/,+2d' "$rc" && rm -f "${rc}.bak"
-        info "Removed RACA entries from $(basename "$rc")"
+    if [ -f "$rc" ]; then
+        changed=false
+        # Remove marker-based block (new installs)
+        if grep -q "# RACA-BEGIN" "$rc" 2>/dev/null; then
+            sed -i.bak '/# RACA-BEGIN/,/# RACA-END/d' "$rc" && rm -f "${rc}.bak"
+            changed=true
+        fi
+        # Remove old-style entries (pre-marker installs)
+        if grep -q "# RACA tools" "$rc" 2>/dev/null; then
+            sed -i.bak '/# RACA tools/,+2d' "$rc" && rm -f "${rc}.bak"
+            changed=true
+        fi
+        [ "$changed" = true ] && info "Removed RACA entries from $(basename "$rc")"
     fi
 done
 

@@ -205,7 +205,11 @@ TOOLS_VENV="${WORKSPACE}/.tools-venv"
 
 info "Installing tools..."
 "${TOOLS_VENV}/bin/pip" install --quiet --upgrade pip 2>/dev/null
-"${TOOLS_VENV}/bin/pip" install --quiet huggingface_hub 2>/dev/null || true
+"${TOOLS_VENV}/bin/pip" install --quiet huggingface_hub pyyaml 2>/dev/null || true
+# Dashboard backend deps
+[ -f "${WORKSPACE}/tools/visualizer/backend/requirements.txt" ] && \
+    "${TOOLS_VENV}/bin/pip" install --quiet -r "${WORKSPACE}/tools/visualizer/backend/requirements.txt" 2>/dev/null || \
+    "${TOOLS_VENV}/bin/pip" install --quiet flask flask-cors gunicorn 2>/dev/null || true
 [ -f "${WORKSPACE}/tools/cli/pyproject.toml" ] && \
     "${TOOLS_VENV}/bin/pip" install --quiet -e "${WORKSPACE}/tools/cli/"
 [ -f "${WORKSPACE}/packages/key_handler/pyproject.toml" ] && \
@@ -227,13 +231,21 @@ fi
 PATH_LINE="export PATH=\"${TOOLS_VENV}/bin:\$PATH\""
 WS_LINE="export RACA_WORKSPACE=\"${WORKSPACE}\""
 if [ -n "$SHELL_RC" ]; then
-    if ! grep -q "RACA_WORKSPACE" "$SHELL_RC" 2>/dev/null; then
-        echo "" >> "$SHELL_RC"
-        echo "# RACA tools" >> "$SHELL_RC"
-        echo "$WS_LINE" >> "$SHELL_RC"
-        echo "$PATH_LINE" >> "$SHELL_RC"
-        success "Added RACA_WORKSPACE and raca to PATH in $(basename "$SHELL_RC")"
+    # Remove any existing RACA block (idempotent — safe to re-run)
+    if grep -q "# RACA-BEGIN" "$SHELL_RC" 2>/dev/null; then
+        sed -i.bak '/# RACA-BEGIN/,/# RACA-END/d' "$SHELL_RC" && rm -f "${SHELL_RC}.bak"
     fi
+    # Also clean up old-style entries (pre-marker installs)
+    if grep -q "# RACA tools" "$SHELL_RC" 2>/dev/null; then
+        sed -i.bak '/# RACA tools/,+2d' "$SHELL_RC" && rm -f "${SHELL_RC}.bak"
+    fi
+    # Write fresh block with markers
+    echo "" >> "$SHELL_RC"
+    echo "# RACA-BEGIN" >> "$SHELL_RC"
+    echo "$WS_LINE" >> "$SHELL_RC"
+    echo "$PATH_LINE" >> "$SHELL_RC"
+    echo "# RACA-END" >> "$SHELL_RC"
+    success "Updated RACA_WORKSPACE and PATH in $(basename "$SHELL_RC")"
 fi
 export PATH="${TOOLS_VENV}/bin:$PATH"
 export RACA_WORKSPACE="${WORKSPACE}"
@@ -251,14 +263,22 @@ if [ -n "$HF_TOKEN" ]; then
         sed -i.bak "s|your-hf-token|${HF_TOKEN}|g" "$KEY_FILE" && rm -f "${KEY_FILE}.bak"
     fi
 
-    # Verify
-    HF_USER=$("${TOOLS_VENV}/bin/python" -c "
+    # Verify token and list available orgs
+    HF_INFO=$("${TOOLS_VENV}/bin/python" -c "
 from huggingface_hub import HfApi
 api = HfApi(token='${HF_TOKEN}')
-print(api.whoami()['name'])
+info = api.whoami()
+username = info['name']
+orgs = [o['name'] for o in info.get('orgs', [])]
+print(f'{username}|{\"|\".join(orgs)}')
 " 2>/dev/null || echo "")
-    if [ -n "$HF_USER" ]; then
+    if [ -n "$HF_INFO" ]; then
+        HF_USER=$(echo "$HF_INFO" | cut -d'|' -f1)
+        HF_ORGS=$(echo "$HF_INFO" | cut -d'|' -f2-)
         success "HuggingFace: authenticated as ${HF_USER}"
+        if [ -n "$HF_ORGS" ]; then
+            info "  Available orgs: ${HF_ORGS//|/, }"
+        fi
     else
         warn "Could not verify token — you can fix it later in packages/key_handler/key_handler/key_handler.py"
     fi
