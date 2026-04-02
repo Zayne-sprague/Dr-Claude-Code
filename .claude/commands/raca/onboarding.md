@@ -66,10 +66,11 @@ For **each** cluster:
    - VPN required? 2FA required?
 
 3. **CRITICAL: Write the cluster entry to `.raca/clusters.yaml` BEFORE telling the user to run `raca auth`.**
-   `raca auth` reads from this file — if the cluster isn't configured yet, it errors with "Cluster not found."
+   `raca auth` reads from this file — if the cluster isn't configured yet, it crashes with "Cluster not found."
+   **You MUST call a tool to write the YAML file and confirm the write succeeded BEFORE showing the user the `raca auth` command.** Never put `raca auth` in a message unless `.raca/clusters.yaml` already has that cluster in it.
 
-4. Tell the user to auth:
-   > "I've saved the cluster config. Now open a **new terminal tab** and run:"
+4. Tell the user to auth — but ONLY after step 3's write is confirmed:
+   > "I've saved the cluster config to `.raca/clusters.yaml`. Now open a **new terminal tab** and run:"
    > ```bash
    > raca auth <nickname>
    > ```
