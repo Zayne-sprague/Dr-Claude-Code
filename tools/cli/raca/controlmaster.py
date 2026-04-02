@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .config import get_cluster, load_clusters
+from .config import get_cluster, get_connection_mode, get_session_paths, load_clusters
 
 
 @dataclass
@@ -35,6 +35,10 @@ class SSHSessionManager:
 
     def _cluster_cfg(self, cluster: str) -> dict[str, Any]:
         return get_cluster(cluster)
+
+    def _is_persistent(self, cluster: str) -> bool:
+        """Check if a cluster uses persistent daemon mode."""
+        return get_connection_mode(cluster) == "persistent"
 
     def _socket_path(self, cluster: str) -> Path:
         cfg = self._cluster_cfg(cluster)
@@ -77,10 +81,20 @@ class SSHSessionManager:
     # ------------------------------------------------------------------
 
     def is_connected(self, cluster: str) -> bool:
+        if self._is_persistent(cluster):
+            from . import persistent
+            socket_path, pid_path = get_session_paths(cluster)
+            return persistent.is_daemon_running(pid_path, socket_path)
         return self._socket_path(cluster).exists()
 
     def health_check(self, cluster: str) -> tuple[bool, str]:
-        """Returns (healthy, message).
+        """Returns (healthy, message). Dispatches to the appropriate backend."""
+        if self._is_persistent(cluster):
+            return self._health_check_persistent(cluster)
+        return self._health_check_controlmaster(cluster)
+
+    def _health_check_controlmaster(self, cluster: str) -> tuple[bool, str]:
+        """ControlMaster health check via ssh -O check.
 
         If ssh -O check times out the socket is considered BUSY (VPN lag),
         not dead. Socket is only removed on a confirmed non-zero exit.
@@ -124,7 +138,30 @@ class SSHSessionManager:
             # Do NOT delete the socket.
             return True, "busy (timeout on check — VPN lag suspected)"
 
+    def _health_check_persistent(self, cluster: str) -> tuple[bool, str]:
+        """Persistent daemon health check via is_daemon_running + __PING__."""
+        from . import persistent
+
+        socket_path, pid_path = get_session_paths(cluster)
+
+        if not persistent.is_daemon_running(pid_path, socket_path):
+            return False, "daemon not running"
+
+        # Daemon process is alive — verify the SSH session with a ping
+        result = persistent.send_command(socket_path, "__PING__", timeout=10)
+        status = result.get("status", "")
+        if status == "alive":
+            return True, "healthy (persistent daemon)"
+        return False, f"daemon running but SSH not responsive: {status}"
+
     def connect(self, cluster: str, timeout: int = 120) -> RemoteResult:
+        """Connect to a cluster. Dispatches to the appropriate backend."""
+        if self._is_persistent(cluster):
+            return self._connect_persistent(cluster, timeout)
+        return self._connect_controlmaster(cluster, timeout)
+
+    def _connect_controlmaster(self, cluster: str, timeout: int = 120) -> RemoteResult:
+        """Establish a ControlMaster SSH connection."""
         cfg = self._cluster_cfg(cluster)
         uses_2fa = cfg.get("uses_2fa", False) or cfg.get("two_factor", False)
         args = self._base_ssh_args(cluster)
@@ -162,7 +199,43 @@ class SSHSessionManager:
             duration_s=duration,
         )
 
+    def _connect_persistent(self, cluster: str, timeout: int = 120) -> RemoteResult:
+        """Start a persistent SSH daemon for the cluster."""
+        from .persistent import PersistentSSHDaemon
+
+        cfg = self._cluster_cfg(cluster)
+        start = time.monotonic()
+
+        daemon = PersistentSSHDaemon(cfg, cluster)
+        success = daemon.start(timeout=timeout)
+        duration = time.monotonic() - start
+
+        if success:
+            return RemoteResult(
+                stdout="Persistent SSH daemon started",
+                stderr="",
+                returncode=0,
+                cluster=cluster,
+                command="connect (persistent)",
+                duration_s=duration,
+            )
+        return RemoteResult(
+            stdout="",
+            stderr="Failed to start persistent SSH daemon",
+            returncode=1,
+            cluster=cluster,
+            command="connect (persistent)",
+            duration_s=duration,
+        )
+
     def disconnect(self, cluster: str) -> RemoteResult:
+        """Disconnect from a cluster. Dispatches to the appropriate backend."""
+        if self._is_persistent(cluster):
+            return self._disconnect_persistent(cluster)
+        return self._disconnect_controlmaster(cluster)
+
+    def _disconnect_controlmaster(self, cluster: str) -> RemoteResult:
+        """Tear down a ControlMaster SSH connection."""
         socket = self._socket_path(cluster)
         cfg = self._cluster_cfg(cluster)
         host = cfg.get("host") or cfg.get("hostname") or cluster
@@ -193,11 +266,37 @@ class SSHSessionManager:
             duration_s=duration,
         )
 
+    def _disconnect_persistent(self, cluster: str) -> RemoteResult:
+        """Stop the persistent SSH daemon for the cluster."""
+        from . import persistent
+
+        socket_path, pid_path = get_session_paths(cluster)
+        start = time.monotonic()
+
+        success = persistent.stop_daemon(pid_path, socket_path)
+        duration = time.monotonic() - start
+
+        return RemoteResult(
+            stdout="Daemon stopped" if success else "",
+            stderr="" if success else "Failed to stop daemon",
+            returncode=0 if success else 1,
+            cluster=cluster,
+            command="disconnect (persistent)",
+            duration_s=duration,
+        )
+
     # ------------------------------------------------------------------
     # Command execution & file transfer
     # ------------------------------------------------------------------
 
     def run(self, cluster: str, command: str, timeout: int = 300) -> RemoteResult:
+        """Run a command on a cluster. Dispatches to the appropriate backend."""
+        if self._is_persistent(cluster):
+            return self._run_persistent(cluster, command, timeout)
+        return self._run_controlmaster(cluster, command, timeout)
+
+    def _run_controlmaster(self, cluster: str, command: str, timeout: int = 300) -> RemoteResult:
+        """Run a command via ControlMaster SSH."""
         args = self._base_ssh_args(cluster)
         # Replace ControlMaster=auto with ControlMaster=no for slave sessions
         # so we reuse the master without spawning a new one
@@ -225,7 +324,47 @@ class SSHSessionManager:
             duration_s=duration,
         )
 
+    def _run_persistent(self, cluster: str, command: str, timeout: int = 300) -> RemoteResult:
+        """Run a command via the persistent SSH daemon."""
+        from . import persistent
+
+        # Verify daemon is healthy before sending command
+        healthy, msg = self.health_check(cluster)
+        if not healthy:
+            return RemoteResult(
+                stdout="",
+                stderr=f"Persistent session not connected: {msg}",
+                returncode=-1,
+                cluster=cluster,
+                command=command,
+                duration_s=0.0,
+            )
+
+        socket_path, _ = get_session_paths(cluster)
+        start = time.monotonic()
+        result = persistent.send_command(socket_path, command, timeout=timeout)
+        duration = time.monotonic() - start
+
+        return RemoteResult(
+            stdout=result.get("stdout", ""),
+            stderr=result.get("stderr", ""),
+            returncode=result.get("returncode", -1),
+            cluster=cluster,
+            command=command,
+            duration_s=result.get("duration_s", duration),
+        )
+
     def upload(self, cluster: str, local_path: str, remote_path: str) -> RemoteResult:
+        """Upload a file/directory via rsync. Not supported for persistent clusters."""
+        if self._is_persistent(cluster):
+            raise NotImplementedError(
+                f"File transfer is not supported for persistent SSH sessions. "
+                f"Cluster '{cluster}' uses connection_mode=persistent."
+            )
+        return self._upload_controlmaster(cluster, local_path, remote_path)
+
+    def _upload_controlmaster(self, cluster: str, local_path: str, remote_path: str) -> RemoteResult:
+        """Upload via rsync over a ControlMaster socket."""
         socket = str(self._socket_path(cluster))
         cfg = self._cluster_cfg(cluster)
         host = cfg.get("host") or cfg.get("hostname") or cluster
@@ -258,6 +397,16 @@ class SSHSessionManager:
         )
 
     def download(self, cluster: str, remote_path: str, local_path: str) -> RemoteResult:
+        """Download a file/directory via rsync. Not supported for persistent clusters."""
+        if self._is_persistent(cluster):
+            raise NotImplementedError(
+                f"File transfer is not supported for persistent SSH sessions. "
+                f"Cluster '{cluster}' uses connection_mode=persistent."
+            )
+        return self._download_controlmaster(cluster, remote_path, local_path)
+
+    def _download_controlmaster(self, cluster: str, remote_path: str, local_path: str) -> RemoteResult:
+        """Download via rsync over a ControlMaster socket."""
         socket = str(self._socket_path(cluster))
         cfg = self._cluster_cfg(cluster)
         host = cfg.get("host") or cfg.get("hostname") or cluster
