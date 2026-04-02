@@ -25,10 +25,6 @@ REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
 # Config lives inside the workspace at .raca/ (not ~/.raca)
 # RACA_CONFIG_DIR is set after WORKSPACE is known
 
-# Cleanup temp dir on exit
-TMPDIR_RACA=""
-cleanup() { [ -n "$TMPDIR_RACA" ] && [ -d "$TMPDIR_RACA" ] && rm -rf "$TMPDIR_RACA"; }
-trap cleanup EXIT
 
 # ── Preflight ──────────────────────────────────────────────
 echo ""
@@ -79,12 +75,11 @@ if [ -n "$SCRIPT_DIR" ] && [ -f "${SCRIPT_DIR}/.claude/CLAUDE.md" ]; then
     REPO_DIR="$SCRIPT_DIR"
     info "  Using local repo at ${REPO_DIR}"
 else
-    TMPDIR_RACA=$(mktemp -d)
-    info "  Cloning RACA (fresh, no cache)..."
-    git clone --depth=1 --no-single-branch "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" \
-        || git clone --depth=1 "$REPO_URL" "${TMPDIR_RACA}/RACA" 2>&1 | sed "s/^/    /" \
+    mkdir -p "${WORKSPACE}"
+    info "  Cloning RACA..."
+    git clone --depth=1 "$REPO_URL" "${WORKSPACE}/.raca-repo" 2>&1 | sed "s/^/    /" \
         || die "Failed to clone repo."
-    REPO_DIR="${TMPDIR_RACA}/RACA"
+    REPO_DIR="${WORKSPACE}/.raca-repo"
 fi
 
 mkdir -p "${WORKSPACE}/notes/experiments" "${WORKSPACE}/packages"
@@ -136,6 +131,9 @@ else
     # settings.local.json — don't overwrite, user's permissions are sacred
     success "  RACA config merged (your existing files preserved)"
 fi
+
+# Clean up clone dir
+[ -d "${WORKSPACE}/.raca-repo" ] && rm -rf "${WORKSPACE}/.raca-repo"
 
 # ── Migrate from old Dr. Claude Code install ─────────────
 # Clean up stale .drcc/ and commands/drcc/ from pre-rename installs
