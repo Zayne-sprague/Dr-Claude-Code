@@ -96,6 +96,7 @@ Experiment code goes in `private_projects/`. Experiment tracking (configs, READM
 - NEVER hardcode API keys or tokens
 - NEVER push `public_projects/` without explicit user confirmation
 - NEVER git push --force to HuggingFace Spaces — use `HfApi.upload_folder()` only
+- NEVER upload node_modules/, __pycache__/, .venv/, or dist/ to HuggingFace — always build frontend first, then upload from a clean staging dir or use the `.hfignore` in `tools/visualizer/`
 - NEVER mention internal state tracking, phases, or mechanics to the user
 - ALWAYS use `.tools-venv/bin/python` for key_handler and huggingface_hub operations (system Python doesn't have them)
 - ALWAYS use `raca` for cluster commands (it's on PATH after install)
