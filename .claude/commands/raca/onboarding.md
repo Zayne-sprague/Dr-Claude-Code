@@ -1,5 +1,5 @@
 ---
-description: "RACA onboarding — welcome, connect clusters, set up dashboard."
+description: "RACA onboarding — welcome, connect clusters, set up HuggingFace, launch dashboard."
 allowed-tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebFetch", "WebSearch"]
 ---
 
@@ -17,9 +17,11 @@ State lives at `.raca/onboarding_state.json`. Read it only AFTER you've greeted 
 {
   "step": "welcome",
   "clusters": [],
+  "hf_configured": "pending",
   "dashboard_local": "pending",
   "completed": false,
   "dashboard_url": null,
+  "hf_org": null,
   "updated_at": null
 }
 ```
@@ -51,7 +53,7 @@ Greet the user immediately. No tool calls before this message.
 >
 > 1. **A SLURM cluster** (university HPC, national lab, etc.)
 > 2. **RunPod** (cloud GPUs on demand)
-> 3. **I don't have remote compute yet** — that's fine, we'll set up the dashboard and you can add clusters later.
+> 3. **I don't have remote compute yet** — that's fine, we can add clusters later.
 
 ---
 
@@ -109,7 +111,62 @@ Update: `clusters: [...]`
 
 ---
 
-## Step 3: Dashboard
+## Step 3: HuggingFace Setup
+
+RACA stores experiment artifacts (datasets, results, model outputs) on HuggingFace. This needs a token.
+
+> "Next, let's connect HuggingFace — that's where your experiment artifacts get stored and shared."
+>
+> "You'll need a HuggingFace token with **write** access. Here's how:"
+>
+> 1. Go to **https://huggingface.co/settings/tokens**
+> 2. Create a new token (Fine-grained with **Write** permissions, or a classic **Write** token)
+> 3. Open the file `packages/key_handler/key_handler/key_handler__template.py`
+> 4. Copy it to `packages/key_handler/key_handler/key_handler.py` (same folder)
+> 5. Paste your token as the `hf_key` value
+>
+> "Let me know when you've done that!"
+
+**STOP and WAIT for the user to confirm.**
+
+Once they confirm, verify the token works:
+
+```bash
+.tools-venv/bin/python -c "
+from key_handler import KeyHandler
+KeyHandler.set_env_key()
+import os
+token = os.environ.get('HF_TOKEN', '')
+if not token or token.startswith('your-'):
+    print('ERROR: HF token not set. Check packages/key_handler/key_handler/key_handler.py')
+    exit(1)
+from huggingface_hub import HfApi
+api = HfApi(token=token)
+user = api.whoami()
+print(f'Authenticated as: {user[\"name\"]}')
+"
+```
+
+If verification fails, help them troubleshoot (wrong file, placeholder still there, token permissions, etc.).
+
+Once verified, ask about the org:
+
+> "Your artifacts need a HuggingFace org (or username) to live under. Would you like to:"
+> 1. **Use your personal account** (`<their_username>`)
+> 2. **Use an existing org** — tell me the name
+> 3. **Create a new org** — I'll walk you through it
+
+Save their choice to `.raca/config.yaml`:
+
+```yaml
+hf_org: <their_choice>
+```
+
+Update: `hf_configured: "done"`, `hf_org: <org>`
+
+---
+
+## Step 4: Dashboard
 
 Now set up the local experiments dashboard.
 
@@ -124,12 +181,10 @@ cd tools/visualizer && nohup .tools-venv/bin/python -c "from backend.app import 
 echo $! > .raca/dashboard.pid
 ```
 
-Import the onboarding experiment so the dashboard has content:
+Import the onboarding experiment and sync to HF:
 ```bash
 cd tools/visualizer && EXPERIMENTS_DIR=../../notes/experiments WORKSPACE=../.. .tools-venv/bin/python scripts/import_experiments.py 2>&1 | tail -3
 ```
-
-If `import_experiments.py` fails (e.g., no HF token yet), that's fine — the dashboard will still load from the pre-seeded data in `backend/data/`. The import can be re-run later via `/raca:dashboard-sync`.
 
 > "Your experiments dashboard is live at **http://localhost:7860** — there's a sample experiment loaded so you can see how everything works. Check out the tabs!"
 
@@ -137,7 +192,7 @@ Update: `dashboard_local: "done"`, `dashboard_url: "http://localhost:7860"`
 
 ---
 
-## Step 4: Done
+## Step 5: Done
 
 > "That's it — RACA is ready to go."
 >
@@ -163,6 +218,7 @@ Update: `completed: true`
 ## Rules
 
 - **Greet first, work later.** The very first thing the user sees is the welcome message, not tool output.
+- **Never ask for tokens/keys in conversation.** Tell the user where to put them and wait for confirmation.
 - **Don't reveal the step count.** Flow naturally.
-- **Let them drive.** Skip compute if they want. Come back to it later.
+- **Let them drive.** Skip steps if they want. Come back to them later.
 - **Show examples of natural language prompts.** The user should feel like they can just talk.
