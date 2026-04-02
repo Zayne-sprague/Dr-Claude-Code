@@ -9,21 +9,25 @@ from typing import Any
 
 import click
 
-from .config import get_cluster, DCC_DIR
+from .config import get_cluster, get_raca_dir
 
-FORWARDS_FILE = DCC_DIR / "forwards.json"
+
+def _forwards_file() -> Path:
+    return get_raca_dir() / "forwards.json"
 
 
 def _load_forwards() -> dict[str, Any]:
-    if not FORWARDS_FILE.exists():
+    ff = _forwards_file()
+    if not ff.exists():
         return {}
-    with FORWARDS_FILE.open() as f:
+    with ff.open() as f:
         return json.load(f)
 
 
 def _save_forwards(data: dict[str, Any]) -> None:
-    DCC_DIR.mkdir(parents=True, exist_ok=True)
-    with FORWARDS_FILE.open("w") as f:
+    raca_dir = get_raca_dir()
+    raca_dir.mkdir(parents=True, exist_ok=True)
+    with _forwards_file().open("w") as f:
         json.dump(data, f, indent=2)
 
 
