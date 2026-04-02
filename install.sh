@@ -28,18 +28,18 @@ REPO_URL="https://github.com/Zayne-sprague/Dr-Claude-Code.git"
 
 # ── Banner ────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}${BLUE}"
 cat << 'BANNER'
+
   ██████╗   █████╗   ██████╗  █████╗
   ██╔══██╗ ██╔══██╗ ██╔════╝ ██╔══██╗
   ██████╔╝ ███████║ ██║      ███████║
   ██╔══██╗ ██╔══██║ ██║      ██╔══██║
   ██║  ██║ ██║  ██║ ╚██████╗ ██║  ██║
   ╚═╝  ╚═╝ ╚═╝  ╚═╝  ╚═════╝ ╚═╝  ╚═╝
+
+  Research Assistant Coding Agents
 BANNER
-echo -e "${RESET}"
-echo -e "  ${BOLD}Research Assistant Coding Agents${RESET}"
-echo -e "  ${BLUE}v${RACA_INSTALLER_VERSION}${RESET}"
+echo "  v${RACA_INSTALLER_VERSION}"
 echo ""
 
 # ── Preflight ──────────────────────────────────────────────
@@ -75,12 +75,11 @@ success "All prerequisites met."
 # When running via curl|bash, stdin is the pipe — read from /dev/tty instead
 echo ""
 echo ""
+echo "  This folder becomes your research workspace — experiments, code, notes, and results all live here."
 echo ""
-echo -e "  ${BOLD}>>>  Where do you want your new home for research to live?  <<<${RESET}"
+echo -e "  ${BOLD}${GREEN}>>>  Where do you want your new home for research to live?  <<<${RESET}"
 echo ""
-echo -e "  ${BLUE}This folder becomes your research workspace — experiments, code, notes, and results all live here.${RESET}"
-echo ""
-read -rp "$(echo -e "  ${BOLD}>${RESET} Path [$(pwd)]: ")" WORKSPACE < /dev/tty
+read -rp "  > Path [$(pwd)]: " WORKSPACE < /dev/tty
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 WORKSPACE="${WORKSPACE/#\~/$HOME}"
 RACA_CONFIG_DIR="${WORKSPACE}/.raca"
