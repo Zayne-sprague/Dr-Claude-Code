@@ -281,7 +281,7 @@ class PersistentSSHDaemon:
     def __init__(self, cluster_config: dict, cluster_name: str) -> None:
         self.config = cluster_config
         self.cluster_name = cluster_name
-        self.host = cluster_config.get("host", "")
+        self.host = cluster_config.get("host") or cluster_config.get("hostname") or cluster_name
         self.user = cluster_config.get("user", "")
         self.port = cluster_config.get("port", 22)
         self.child = None  # pexpect spawn, set during start()

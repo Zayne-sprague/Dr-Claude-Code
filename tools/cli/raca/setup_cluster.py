@@ -22,7 +22,7 @@ _SILENCE_THRESHOLD = 3  # seconds of silence after user input = auth done
 
 def _build_controlmaster_cmd(cfg: dict, cluster: str) -> str:
     """Build the SSH command string for ControlMaster mode."""
-    host = cfg["host"]
+    host = cfg.get("host") or cfg.get("hostname") or cluster
     user = cfg["user"]
     port = cfg.get("port", 22)
     keepalive = cfg.get("server_alive_interval", 15)
@@ -44,9 +44,9 @@ def _build_controlmaster_cmd(cfg: dict, cluster: str) -> str:
     )
 
 
-def _build_persistent_cmd(cfg: dict) -> str:
+def _build_persistent_cmd(cfg: dict, cluster: str) -> str:
     """Build the SSH command string for persistent (non-ControlMaster) mode."""
-    host = cfg["host"]
+    host = cfg.get("host") or cfg.get("hostname") or cluster
     user = cfg["user"]
     port = cfg.get("port", 22)
     keepalive = cfg.get("server_alive_interval", 15)
@@ -263,10 +263,11 @@ def setup_cluster(cluster: str) -> None:
         + f" Neither ControlMaster nor persistent mode worked for {cluster}."
     )
     click.echo("\n  Debug hints:")
-    click.echo(f"    1. Verify you can SSH manually:  ssh {cfg.get('user', '?')}@{cfg.get('host', '?')}")
+    host_display = cfg.get('host') or cfg.get('hostname', '?')
+    click.echo(f"    1. Verify you can SSH manually:  ssh {cfg.get('user', '?')}@{host_display}")
     click.echo(f"    2. Check that host/user/port are correct in clusters.yaml")
     if cfg.get("vpn_required"):
         click.echo(f"    3. Ensure your VPN is connected and routing to the cluster network")
     click.echo(f"    4. Check ~/.ssh/config for conflicting settings")
-    click.echo(f"    5. Try with verbose SSH:  ssh -vvv {cfg.get('user', '?')}@{cfg.get('host', '?')}")
+    click.echo(f"    5. Try with verbose SSH:  ssh -vvv {cfg.get('user', '?')}@{host_display}")
     raise SystemExit(1)
