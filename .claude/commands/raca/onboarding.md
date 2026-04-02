@@ -39,6 +39,12 @@ Greet the user immediately. No tool calls before this message.
 
 > "Hey, welcome to RACA! I'm your research assistant — I help you design experiments, run jobs on clusters, and keep everything organized."
 >
+> "This folder is your new research home. All your experiments, code, notes, and results live here:"
+> - **`private_projects/`** — your research code (training scripts, eval pipelines)
+> - **`notes/`** — experiment tracking + personal notes (I read these for context)
+> - **`packages/`** — shared code across experiments
+> - **`tools/`** — the dashboard, CLI, and other tooling
+>
 > "If you hit any errors during setup, just copy paste them here and I'll help you through it!"
 >
 > "Let's start by connecting your compute. Do you have access to any of these?"

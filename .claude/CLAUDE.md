@@ -84,9 +84,17 @@ Do not wait for the user to request these. When working on an experiment you sho
 Pay close attention to artifacts that are produced by jobs. Users will want to have access to these and to visualize them as quickly as possible.
 </critical>
 
+## Project Folders
+
+- **`private_projects/`** — research code (training scripts, eval pipelines, analysis). Each project is its own git repo. You can edit and push freely here.
+- **`public_projects/`** — public-facing code (open-source tools, paper code). You can edit but **NEVER push without explicit user approval**. Always show the diff and ask first.
+
+Experiment code goes in `private_projects/`. Experiment tracking (configs, READMEs, timelines, artifacts) goes in `notes/experiments/`.
+
 ## Critical Rules
 
 - NEVER hardcode API keys or tokens
+- NEVER push `public_projects/` without explicit user confirmation
 - NEVER git push --force to HuggingFace Spaces — use `HfApi.upload_folder()` only
 - NEVER mention internal state tracking, phases, or mechanics to the user
 - ALWAYS use `.tools-venv/bin/python` for key_handler and huggingface_hub operations (system Python doesn't have them)
