@@ -6,7 +6,7 @@ import time
 
 import click
 
-from .config import get_cluster, list_cluster_names
+from .config import get_cluster, get_connection_mode, get_session_paths, list_cluster_names
 from .controlmaster import SSHSessionManager
 
 
@@ -63,10 +63,10 @@ def _keepalive_daemon(cluster: str, manager: SSHSessionManager, stop_event: thre
 @click.option("--daemon", is_flag=True, default=False, help="Keep a background thread watching the socket.")
 @click.option("--status", is_flag=True, default=False, help="Show connection status for all clusters.")
 def auth(cluster: str | None, daemon: bool, status: bool) -> None:
-    """Authenticate and open a ControlMaster session to CLUSTER.
+    """Authenticate and open a session to CLUSTER.
 
     Use --status to show all cluster connection states without connecting.
-    Use --daemon to keep a background keepalive thread running.
+    Use --daemon to keep a background keepalive thread running (controlmaster only).
     """
     manager = SSHSessionManager()
 
@@ -75,16 +75,27 @@ def auth(cluster: str | None, daemon: bool, status: bool) -> None:
         if not names:
             click.echo("No clusters configured. Add one with: raca cluster add <name> --host <host> --user <user>")
             return
-        click.echo(f"{'CLUSTER':<20} {'STATUS':<12} {'DETAIL'}")
-        click.echo("-" * 50)
+        click.echo(f"{'CLUSTER':<20} {'STATUS':<12} {'MODE':<16} {'DETAIL'}")
+        click.echo("-" * 70)
         for name in names:
+            mode = get_connection_mode(name) or "not set"
             healthy, msg = manager.health_check(name)
             indicator = click.style("connected", fg="green") if healthy else click.style("disconnected", fg="red")
-            click.echo(f"{name:<20} {indicator:<20} {msg}")
+            click.echo(f"{name:<20} {indicator:<20} {mode:<16} {msg}")
         return
 
     if not cluster:
         raise click.UsageError("Provide a cluster name or use --status.")
+
+    # Check connection_mode is set
+    mode = get_connection_mode(cluster)
+    if mode is None:
+        click.echo(
+            click.style("ERROR:", fg="red", bold=True)
+            + f" Cluster '{cluster}' hasn't been set up yet."
+        )
+        click.echo(f"  Run: raca setup-cluster {cluster}")
+        raise SystemExit(1)
 
     # VPN check
     if _vpn_required(cluster):
@@ -104,7 +115,7 @@ def auth(cluster: str | None, daemon: bool, status: bool) -> None:
     if healthy:
         click.echo(click.style(f"Already connected to {cluster}", fg="green") + f" ({msg})")
     else:
-        click.echo(f"Connecting to {cluster}…")
+        click.echo(f"Connecting to {cluster} ({mode} mode)…")
         try:
             result = manager.connect(cluster)
         except Exception as exc:
@@ -119,7 +130,15 @@ def auth(cluster: str | None, daemon: bool, status: bool) -> None:
                 click.echo(f"  {result.stderr.strip()}")
             raise SystemExit(result.returncode)
 
+    # Daemon keepalive (controlmaster only — persistent has its own heartbeat)
     if daemon:
+        if mode == "persistent":
+            click.echo(
+                click.style("NOTE:", fg="yellow")
+                + " --daemon is not needed for persistent mode (built-in heartbeat)."
+            )
+            return
+
         click.echo(f"Starting keepalive daemon for {cluster}… (Ctrl-C to stop)")
         stop_event = threading.Event()
         t = threading.Thread(
