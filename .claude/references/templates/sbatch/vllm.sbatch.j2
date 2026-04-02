@@ -20,7 +20,9 @@ eval "$({{ conda_prefix }}/bin/conda shell.bash hook)"
 eval "$(conda shell.bash hook)"
 {% endif %}
 conda activate {{ conda_env }}
-python -c "import peft" 2>/dev/null || pip install --quiet peft datasets huggingface_hub
+{% if pip_deps %}
+pip install --quiet {{ pip_deps | join(" ") }}
+{% endif %}
 {% endif %}
 
 {% if hf_org %}

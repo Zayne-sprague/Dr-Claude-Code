@@ -21,8 +21,11 @@ eval "$({{ conda_prefix }}/bin/conda shell.bash hook)"
 eval "$(conda shell.bash hook)"
 {% endif %}
 conda activate {{ conda_env }}
-# Install commonly needed packages if missing
-python -c "import peft" 2>/dev/null || pip install --quiet peft datasets huggingface_hub
+{% if pip_deps %}
+# Install missing deps — always use pip directly, NEVER `python -c "import X" || pip install`
+# (import-check hangs on GPU nodes due to CUDA/torch initialization)
+pip install --quiet {{ pip_deps | join(" ") }}
+{% endif %}
 {% endif %}
 
 # Redirect caches to scratch (avoid quota issues on home)

@@ -38,6 +38,7 @@ The reviewer checks:
 - Checkpointing enabled for long jobs?
 - Evaluator/reward function matches what the hypothesis needs?
 - Output format compatible with HF upload and the dashboard?
+- **No `python -c "import X" || pip install` patterns in sbatch scripts** — these hang on GPU nodes due to CUDA init. Use `pip install --quiet` directly.
 
 If the reviewer returns **FAIL**: show findings, fix them, re-run with a NEW subagent. Repeat until PASS.
 
