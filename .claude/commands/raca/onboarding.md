@@ -188,6 +188,9 @@ Update: `dashboard_local: "done"`, `dashboard_url: "http://localhost:7860"`
 > **Install a framework on your cluster:**
 > > *Set up verl on torch*
 >
+> **Host your dashboard online** (free HuggingFace Space):
+> > *Deploy my dashboard to HuggingFace*
+>
 > **Full guided tutorial** (design → red-team → run → review):
 > > */raca:experiment-tutorial*
 >
