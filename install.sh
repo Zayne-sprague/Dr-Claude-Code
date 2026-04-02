@@ -75,7 +75,7 @@ success "All prerequisites met."
 # When running via curl|bash, stdin is the pipe — read from /dev/tty instead
 echo ""
 echo ""
-echo -e "  ${YELLOW}(This folder becomes your research workspace — experiments, code, notes, and results all live here.)${RESET}"
+echo -e "  ${YELLOW}This folder becomes your research workspace — experiments, code, notes, and results all live here.${RESET}"
 echo ""
 echo -e "  ${BOLD}${GREEN}>>>  Where do you want your new home for research to live?  <<<${RESET}"
 echo ""
