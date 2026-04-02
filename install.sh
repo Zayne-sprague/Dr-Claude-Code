@@ -74,10 +74,10 @@ success "All prerequisites met."
 # ── Workspace ──────────────────────────────────────────────
 # When running via curl|bash, stdin is the pipe — read from /dev/tty instead
 echo ""
-echo -e "${BOLD}${GREEN}  Where do you want your new home for research to live?${RESET}"
 echo ""
-echo -e "  ${YELLOW}(This folder will be set up as your research workspace for you and Claude Code.${RESET}"
-echo -e "  ${YELLOW} Experiments, code, notes, and results will all live here.)${RESET}"
+echo -e "  ${YELLOW}(This folder becomes your research workspace — experiments, code, notes, and results all live here.)${RESET}"
+echo ""
+echo -e "  ${BOLD}${GREEN}>>>  Where do you want your new home for research to live?  <<<${RESET}"
 echo ""
 read -rp "$(echo -e "  ${BOLD}${BLUE}>${RESET} ${BOLD}Path${RESET} [$(pwd)]: ")" WORKSPACE < /dev/tty
 WORKSPACE="${WORKSPACE:-$(pwd)}"
