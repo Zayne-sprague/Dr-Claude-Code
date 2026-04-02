@@ -145,6 +145,24 @@ monitors experiments. It shows READMEs, notes, timelines, artifacts, everything.
 logged to the activity log, or changed experiment status: run `/raca:dashboard-sync`. If the user
 can't see it on the website, it didn't happen.
 
+<critical>
+## Mandatory Dashboard Sync
+
+After writing to ANY of these files, you MUST run `/raca:dashboard-sync` before doing anything else:
+
+- `activity_log.jsonl`
+- `HUGGINGFACE_REPOS.md`
+- `flow_state.json`
+- `EXPERIMENT_README.md`
+- `experiment.yaml`
+
+This is not optional. This is not "when you remember." This is a hard post-condition on every write to these files. The pattern is: write file → sync dashboard → then continue. Not: write file → do three more things → forget to sync.
+
+If you modified multiple files in one batch, sync ONCE at the end — but you must sync before moving to the next task, responding to the user, or starting any new work.
+
+Dashboard sync = `import_experiments.py` + POST to the Space sync endpoint. The `/raca:dashboard-sync` command handles both. If the user can't see it on the dashboard, you didn't sync.
+</critical>
+
 ## Artifact Health
 
 <critical>
