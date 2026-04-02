@@ -132,6 +132,11 @@ else
     success "  RACA config merged (your existing files preserved)"
 fi
 
+# Copy convenience scripts before cleaning up the clone
+cp "${REPO_DIR}/install.sh" "${WORKSPACE}/raca-install.sh" 2>/dev/null || true
+cp "${REPO_DIR}/uninstall.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
+chmod +x "${WORKSPACE}/raca-install.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
+
 # Clean up clone dir
 [ -d "${WORKSPACE}/.raca-repo" ] && rm -rf "${WORKSPACE}/.raca-repo"
 
@@ -216,11 +221,6 @@ YAML
 
 # Add tools venv to PATH for this session
 export PATH="${TOOLS_VENV}/bin:$PATH"
-
-# ── Drop convenience scripts into workspace ──────────────
-cp "${REPO_DIR}/install.sh" "${WORKSPACE}/raca-install.sh" 2>/dev/null || true
-cp "${REPO_DIR}/uninstall.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
-chmod +x "${WORKSPACE}/raca-install.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
 
 # ── Hand off to Claude ────────────────────────────────────
 echo ""
