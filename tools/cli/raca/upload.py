@@ -24,8 +24,12 @@ def upload(cluster: str, local_path: str, remote_path: str) -> None:
         )
         sys.exit(1)
 
-    click.echo(f"Uploading {local_path} → {cluster}:{remote_path}…")
-    result = manager.upload(cluster, local_path, remote_path)
+    try:
+        click.echo(f"Uploading {local_path} → {cluster}:{remote_path}…")
+        result = manager.upload(cluster, local_path, remote_path)
+    except NotImplementedError as e:
+        click.echo(click.style("ERROR:", fg="red", bold=True) + f" {e}")
+        sys.exit(1)
 
     if result.stdout:
         click.echo(result.stdout, nl=False)

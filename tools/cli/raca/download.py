@@ -24,8 +24,12 @@ def download(cluster: str, remote_path: str, local_path: str) -> None:
         )
         sys.exit(1)
 
-    click.echo(f"Downloading {cluster}:{remote_path} → {local_path}…")
-    result = manager.download(cluster, remote_path, local_path)
+    try:
+        click.echo(f"Downloading {cluster}:{remote_path} → {local_path}…")
+        result = manager.download(cluster, remote_path, local_path)
+    except NotImplementedError as e:
+        click.echo(click.style("ERROR:", fg="red", bold=True) + f" {e}")
+        sys.exit(1)
 
     if result.stdout:
         click.echo(result.stdout, nl=False)

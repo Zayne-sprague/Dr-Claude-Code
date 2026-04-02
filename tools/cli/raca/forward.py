@@ -105,6 +105,18 @@ def forward(
         )
 
     cfg = get_cluster(cluster)
+
+    # Check connection mode — port forwarding requires ControlMaster
+    from .config import get_connection_mode
+    mode = get_connection_mode(cluster)
+    if mode == "persistent":
+        click.echo(
+            click.style("ERROR:", fg="red", bold=True)
+            + f" Port forwarding not supported for persistent-mode clusters."
+            + f" Use: raca ssh {cluster} 'ssh -L {local_port}:{remote} localhost' instead"
+        )
+        sys.exit(1)
+
     host = cfg.get("host", cluster)
     user = cfg.get("user")
     port = cfg.get("port", 22)
