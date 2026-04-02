@@ -106,7 +106,7 @@ done
 
 # ── RACA-owned directories ───────────────────────────────
 # tools/, packages/, docs/ — only remove if they were RACA-created (contain RACA files)
-for d in tools/cli tools/visualizer tools/chat-ui tools/setup-agent-deck.sh packages/key_handler docs; do
+for d in tools/cli tools/visualizer tools/chat-ui tools/setup-agent-deck.sh packages/key_handler packages/hf_utility docs; do
     path="${WORKSPACE}/${d}"
     if [ -e "$path" ]; then
         rm -rf "$path"
@@ -117,6 +117,10 @@ done
 rmdir "${WORKSPACE}/tools" 2>/dev/null || true
 rmdir "${WORKSPACE}/packages" 2>/dev/null || true
 rmdir "${WORKSPACE}/docs" 2>/dev/null || true
+
+# ── Remove convenience scripts ──────────────────────────
+rm -f "${WORKSPACE}/raca-install.sh" "${WORKSPACE}/raca-uninstall.sh"
+info "Removed raca-install.sh and raca-uninstall.sh"
 
 echo ""
 success "RACA uninstalled. Your .claude/CLAUDE.md and other personal config are untouched."

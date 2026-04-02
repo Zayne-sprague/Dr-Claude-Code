@@ -229,6 +229,11 @@ YAML
 # Add tools venv to PATH for this session
 export PATH="${TOOLS_VENV}/bin:$PATH"
 
+# ── Drop convenience scripts into workspace ──────────────
+cp "${REPO_DIR}/install.sh" "${WORKSPACE}/raca-install.sh" 2>/dev/null || true
+cp "${REPO_DIR}/uninstall.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
+chmod +x "${WORKSPACE}/raca-install.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
+
 # ── Hand off to Claude ────────────────────────────────────
 echo ""
 echo -e "${GREEN}${BOLD}Workspace ready!${RESET}"
