@@ -94,7 +94,7 @@ push_dataset_to_hub(
 )
 ```
 
-Follow the HF dataset standards in `.claude/rules/huggingface-datasets.md`.
+Follow the HF dataset standards in `.claude/rules/huggingface.md`.
 
 ## Step 5: Update HUGGINGFACE_REPOS.md
 

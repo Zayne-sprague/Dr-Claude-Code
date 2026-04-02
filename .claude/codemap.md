@@ -38,7 +38,7 @@
 
 | Folder | Description |
 |--------|-------------|
-| `rules/` | Always-loaded instruction files (experiments, git-safety, security, python-patterns, workspace, huggingface-datasets) |
+| `rules/` | Always-loaded instruction files (experiments, git-safety, security, python-patterns, workspace, huggingface) |
 | `references/` | On-demand reference docs (experiments detail, compute setup, HF examples, benchmark/task refs, sbatch templates) |
 | `commands/raca/` | Slash commands (benchmark-reference, dashboard-sync, experiment-preflight, find-compute, harvest-and-report, onboarding) |
 | `skills/` | Multi-step skills (dashboard-visualizer, experiment-management, run-job, setup-cluster, setup-runpod) |
@@ -56,4 +56,4 @@
 | `experiments.md` | Full experiment lifecycle detail |
 | `workspace.md` | Folder structure, session startup conventions |
 | `tool-decision-guide.md` | When to use which tool |
-| `huggingface-datasets.md` | HF upload examples and patterns |
+| `huggingface.md` | HF upload examples and patterns |
