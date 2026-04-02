@@ -189,6 +189,15 @@ if [ ! -f "${WORKSPACE}/.raca/onboarding_state.json" ]; then
 STATEJSON
 fi
 
+# ── HuggingFace token ─────────────────────────────────────
+echo ""
+echo "  RACA uploads experiment artifacts to HuggingFace."
+echo "  Get a write token at: https://huggingface.co/settings/tokens"
+echo ""
+read -rsp "  > HF Token (paste, hidden — or Enter to skip): " HF_TOKEN < /dev/tty
+echo ""
+HF_TOKEN=$(echo "$HF_TOKEN" | tr -d '[:space:]')
+
 # ── Install tools ─────────────────────────────────────────
 TOOLS_VENV="${WORKSPACE}/.tools-venv"
 [ ! -d "$TOOLS_VENV" ] && python3 -m venv "$TOOLS_VENV"
@@ -229,15 +238,6 @@ export PATH="${TOOLS_VENV}/bin:$PATH"
 export RACA_WORKSPACE="${WORKSPACE}"
 
 
-
-# ── HuggingFace token ─────────────────────────────────────
-echo ""
-echo "  RACA uploads experiment artifacts to HuggingFace."
-echo "  Get a write token at: https://huggingface.co/settings/tokens"
-echo ""
-read -rsp "  > HF Token (paste, hidden — or Enter to skip): " HF_TOKEN < /dev/tty
-echo ""
-HF_TOKEN=$(echo "$HF_TOKEN" | tr -d '[:space:]')
 
 if [ -n "$HF_TOKEN" ]; then
     # Save to key_handler
