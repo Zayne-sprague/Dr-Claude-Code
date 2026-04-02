@@ -113,54 +113,39 @@ Update: `clusters: [...]`
 
 ## Step 3: HuggingFace Setup
 
-RACA stores experiment artifacts (datasets, results, model outputs) on HuggingFace. This needs a token.
-
-> "Next, let's connect HuggingFace — that's where your experiment artifacts get stored and shared."
->
-> "You'll need a HuggingFace token with **write** access. Here's how:"
->
-> 1. Go to **https://huggingface.co/settings/tokens**
-> 2. Create a new token (Fine-grained with **Write** permissions, or a classic **Write** token)
-> 3. Open the file `packages/key_handler/key_handler/key_handler__template.py`
-> 4. Copy it to `packages/key_handler/key_handler/key_handler.py` (same folder)
-> 5. Paste your token as the `hf_key` value
->
-> "Let me know when you've done that!"
-
-**STOP and WAIT for the user to confirm.**
-
-Once they confirm, verify the token works:
+RACA stores experiment artifacts on HuggingFace. Check if a token is already configured:
 
 ```bash
-.tools-venv/bin/python -c "
-from key_handler import KeyHandler
-KeyHandler.set_env_key()
-import os
-token = os.environ.get('HF_TOKEN', '')
-if not token or token.startswith('your-'):
-    print('ERROR: HF token not set. Check packages/key_handler/key_handler/key_handler.py')
-    exit(1)
-from huggingface_hub import HfApi
-api = HfApi(token=token)
-user = api.whoami()
-print(f'Authenticated as: {user[\"name\"]}')
-"
+.tools-venv/bin/python -c "from key_handler import KeyHandler; KeyHandler.set_env_key(); import os; t=os.environ.get('HF_TOKEN',''); print('OK') if t and not t.startswith('your-') else print('MISSING')"
 ```
 
-If verification fails, help them troubleshoot (wrong file, placeholder still there, token permissions, etc.).
+If **OK** — skip straight to the org question below.
 
-Once verified, ask about the org:
+If **MISSING** — give the user this one-liner to copy-paste (tell them to replace `YOUR_TOKEN_HERE` with their actual token from https://huggingface.co/settings/tokens):
 
-> "Your artifacts need a HuggingFace org (or username) to live under. Would you like to:"
-> 1. **Use your personal account** (`<their_username>`)
-> 2. **Use an existing org** — tell me the name
-> 3. **Create a new org** — I'll walk you through it
+> "We need a HuggingFace token so RACA can upload your experiment artifacts. Grab a **write** token from https://huggingface.co/settings/tokens, then run this:"
+>
+> ```bash
+> .tools-venv/bin/python -c "
+> import shutil; shutil.copy('packages/key_handler/key_handler/key_handler__template.py', 'packages/key_handler/key_handler/key_handler.py')
+> " && sed -i.bak 's|your-hf-token|YOUR_TOKEN_HERE|' packages/key_handler/key_handler/key_handler.py && rm -f packages/key_handler/key_handler/key_handler.py.bak
+> ```
+>
+> "Just replace `YOUR_TOKEN_HERE` with your token. Let me know when done!"
 
-Save their choice to `.raca/config.yaml`:
+**STOP and WAIT.**
 
-```yaml
-hf_org: <their_choice>
+Once they confirm, verify:
+
+```bash
+.tools-venv/bin/python -c "from key_handler import KeyHandler; KeyHandler.set_env_key(); import os; from huggingface_hub import HfApi; api=HfApi(token=os.environ['HF_TOKEN']); print(f'Authenticated as: {api.whoami()[\"name\"]}')"
 ```
+
+Then ask about the org:
+
+> "Would you like artifacts stored under your personal HuggingFace account (`<their_username>`), or do you have an org you'd prefer?"
+
+Save their choice to `.raca/config.yaml` as `hf_org`.
 
 Update: `hf_configured: "done"`, `hf_org: <org>`
 
