@@ -56,20 +56,28 @@ Could we just use their results? Write plan to `EXPERIMENT_README.md`, draft `re
 
 Ensure the `red-team-reviewer` was dispatched. Cannot skip without user override (log skip with `author: user`).
 
-**CANARY**: 5-10 samples. Upload to HF. Then validate.
+**CANARY**: These are "mini" jobs that are meant to represent the main experiment to ensure 1. that the main job will run without error and 2. the artifacts, data, and results are the right format and have no issues. This way, when the big job runs, we do not waste time or compute. These should ideally run for 1-2 hours, produce few outputs, but touch every part of the codebase that the main experiment will run to be a real E2E test. Results from the job (actual artifacts) should be uploaded to huggingface. They should be synced to the dashboard `/raca:dashboard-sync`. If no compute is required for the experiment, you should still do a "canary" job, just smaller inference or a smaller scale. 
 
-**VALIDATE**: Every time an artifact lands — canary, partial, or final — run the artifact chain (below).
-Dispatch `data-validator`. You also review for scientific substance. If bad → stop and fix.
 
-**RUN**: Submit jobs. When partials land → VALIDATE → assess signal → go/no-go in activity log.
-If bugs found mid-run: stop remaining jobs, fix, re-run. Don't burn compute on broken data.
+**VALIDATE**: During the canary run it is vital you are extremely observant of the jobs status (is it running correctly? Any bugs? Did it error?) be proactive in fixing things. AS THE JOB RUNS and produces artifacts (either 1 at the end or multiple throughout) you should be alerting the user of each, inspecting the data of each, and comparing the data with the `red-team-brief.md`. Obvious bugs should be fixed (stack traces, crashes, no outputs, etc.) but you should be proactive about bad data too! If any data produced by the output does not match the expectations or constraints within the `red-team-brief.md` or you think the user would be concerned by the quality of the data you should fix it and or alert the user. (For example, truncated responses in the data).
 
-**REVIEW**: What did we find? Show specific data and examples. Write to `EXPERIMENT_README.md`.
+Pro-tip: You should do this for literally every job. Special mention is given here to "canary" jobs because if we okay a canary job for the real deal experiment, we should be absolutely sure the canary ran fine.
 
-**NEXT**: Signal → scale up. No signal → wrong test or dead idea? Unexpected → new hypothesis.
+
+**RUN**: Actually running an experiment should active the skill `run-job` which handles the life-cycles of the experiment including using `/loop` to continuously check the status of the job especially when the job is in a "Pending" state within a Slurm queue. You should always be **VALIDATING** as the job runs (regardless of it being a canary or real job, but especially during canary runs). Ensure you keep your logs up to date for the website, constantly updating the experiments `activity_log.jsonl`, `flow_state.json`, `HUGGINGFACE_REPOS.md` (when new results are produced and uploaded, which should be done ASAP), `EXPERIMENT_README.md`, etc. then call `/raca:dashboard-sync`. Always track where jobs are running (which cluster, locally, or third-party service like RunPod). 
+
+Whatever the job, you must save everything for reproducing that job. This includes the raw sbatch script, the model parameters for inference, the verl training parameters or Llama-Factory training configs. These get saved in their own Huggingface Repo with columns specifically for these values and reproducing jobs. Think to yourself, "in a year, when the user has no idea what this experiment is, what would we need to rerun and produce these exact same results?"
+
+**REVIEW**: Your main output for the user is getting them, as quickly and transparently as possible, all artifacts from the job that were produced in their most advantageous visualized form. For model responses during an batch vLLM job for example, you may upload partial responses to a huggingface dataset and keep updating it with new rows as the job continues, but you alert the user that X rows are available to review (also you should review them to ensure they are "healthy", i.e. not truncated and matches the `red-team-brief.md`). Other examples may be training wandb logs with evaluation scores exported to huggingface with their raw model responses (if your job requires inference at any point, it's almost always guaranteed you should save the raw model outputs, similarly if it requires training you should always save the model checkpoints to huggingface). PARTIAL DATA IS KEY, get data in front of you and the user ASAP. When all data is collected and the job is done, you may analyze the data and report what was found. It's usually best to keep a description of the results on the artifacts on the website in the artifacts tab AND huggingface repo readme. 
+
+What did we find? Show specific data and examples (ALWAYS give examples, the user must TRUST you and trust is established by seeing RAW DATA -- model traces, model parameters, etc.). Write to `EXPERIMENT_README.md`.
+
+**NEXT**: Signal the user and give them all the time they need to dive deep into the data. If you notice the hypotheses were wrong / unsupported or supported and correct and the user specified what to do next, go ahead and continue on. Otherwise, you should let the user look at the results and you should ensure you have everything recorded and uploaded. The artifacts tab of the dashboard should be up to date with artifacts that are valid and up-to-date, if an artifact had a bug in it, it's better to suppress that artifact link to not confuse the user. Ensure each artifact has enough details about them so the user knows what it is.
 
 <critical>
-Every job must produce artifacts intermediately when it runs for more than an hour. This is to ensure we are not wasting compute. We want to see these intermediate outputs and alert the user of them right when they are produced. You must monitor for these via `/loop` or other mechanisms. A job that does not produce intermediate results MUST BE REFACTORED. Missing intermediate artifacts IS A FAILURE MODE.
+- Every job must produce artifacts intermediately when it runs for more than an hour. This is to ensure we are not wasting compute. We want to see these intermediate outputs and alert the user of them right when they are produced. You must monitor for these via `/loop` or other mechanisms. A job that does not produce intermediate results MUST BE REFACTORED. Missing intermediate artifacts IS A FAILURE MODE.
+- It cannot be stressed enough. If you can get data (model responses, training curves, insight, whatever) within 30minutes during a job -- you should produce an artifact and upload it huggingface and sync the dashboard then alert the user (even if the job will run for 12 hours). GET DATA TO THE USER AS FAST AS POSSIBLE.
+- Queuing jobs on Slurm clusters can take FOREVER. It is better to build jobs that can run for 2-8 hours, hit the timeout, and then be resumed later. When you make a job, ensure it is completely resume-able. Save the checkpoints, optimizers, cache the responses, whatever. Expect a real experiment to need to be rescheduled 2-4 times throughout its life-cycle. You should be able to get intermediate data to the user so they can see data soon (take an intermediate checkpoint and schedule an eval job for example). But 2-4 jobs spread across 48 hours with intermediate data presented to the user IS BETTER THAN running the full experiment quicker but not seeing anything until it's done completely (too much risk of their being bugs).
 </critical>
 
 ## Flow State
@@ -87,21 +95,20 @@ Every job must produce artifacts intermediately when it runs for more than an ho
 
 ## The Artifact Chain
 
-Every artifact produced — canary, partial, or final. No exceptions. **This is a step in the
+Every artifact produced — partial or final, during the canary job or the main job, is uploaded and alerts the user. No exceptions. **This is a step in the
 flow, not optional bookkeeping.**
 
-1. **Upload** to HF via `push_dataset_to_hub()` with full metadata and column docs
-2. **Verify** — load back from HF, check row count, sample 3-5 rows, inspect content
-3. **Validate** — dispatch `data-validator`
-4. **Sync dashboard** — `/raca:dashboard-sync`
-5. **Log** — activity log entry with counts, token lengths, score ranges
+1. **Upload** to HF via `push_dataset_to_hub()` with full metadata and column docs. Use the readme to store information about what the artifact is, the experiment it's associated with, how to reproduce it, if its partial or complete, etc. Use `packages/hf_utility` to help with this, it should also track the dataset in a `X_MANIFEST` huggingface dataset that allows you to find other HF repos. Read me in `.claude/rules/huggingface.md`
+2. **Verify** — Load the data from Huggingface, check the `red-team-brief.md` for what the data should look like and refer to the users expectations from the experiment, then sample a few rows and make sure the content of those rows meet the expectation via dispatching `data-validator` sub-agent.
+4. **Sync dashboard** — Update the experiments `HUGGINGFACE_REPOS.md` and then `/raca:dashboard-sync` so that the artifact gets registered on the site.
+5. **Log** — Update `activity_log.jsonl` with information about what was in the artifact, did it pass our validation, if not why, etc.
 
-If you produced an artifact and didn't run this chain, you skipped a step. Go back.
+If you produced an artifact and didn't run this chain, you skipped a step. Go back. You should be monitoring for new artifacts throughout the time the job is running (jobs may produce many artifacts as they run throughout their time running and then more when they finish). You DO NOT WAIT until the job is finished, you process artifacts AS THEY COME IN.
 
 ## The Dashboard Is the Control Plane
 
-The visualizer (`tools/visualizer/`, live at HF Space) is where the user
-monitors experiments. It shows READMEs, timelines, artifacts, everything. It is open 24/7.
+The visualizer (`tools/visualizer/`, always local but for some users who want it, it can be live in a HF Space) is where the user
+monitors experiments. It shows READMEs, notes, timelines, artifacts, everything. It is open 24/7.
 
 **Every state change must be visible on the dashboard.** If you uploaded data, updated notes,
 logged to the activity log, or changed experiment status: run `/raca:dashboard-sync`. If the user
