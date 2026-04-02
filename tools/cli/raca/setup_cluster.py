@@ -180,6 +180,68 @@ def _probe_with_pexpect(ssh_cmd: str, timeout: int = _PROBE_TIMEOUT) -> bool:
             child.terminate(force=True)
 
 
+def _test_controlmaster_slave(cfg: dict, cluster: str, timeout: int = 10) -> bool:
+    """Test whether a slave connection through the ControlMaster socket works.
+
+    Runs `echo __RACA_PROBE_OK` via a slave SSH (ControlMaster=no) and checks
+    if it returns within the timeout. If the cluster doesn't support multiplexing,
+    this will hang until the timeout expires.
+    """
+    import subprocess
+
+    host = cfg.get("host") or cfg.get("hostname") or cluster
+    user = cfg.get("user", "")
+    port = cfg.get("port", 22)
+    socket_dir = os.path.expanduser("~/.ssh/sockets")
+    socket_path = f"{socket_dir}/{user}@{cluster}"
+
+    cmd = [
+        "ssh",
+        "-o", f"ControlPath={socket_path}",
+        "-o", "ControlMaster=no",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-p", str(port),
+    ]
+    if user:
+        cmd += ["-l", user]
+    cmd += [host, "echo __RACA_PROBE_OK"]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return result.returncode == 0 and "__RACA_PROBE_OK" in result.stdout
+    except subprocess.TimeoutExpired:
+        return False
+
+
+def _kill_controlmaster_socket(cfg: dict, cluster: str) -> None:
+    """Kill the ControlMaster socket so it doesn't interfere with persistent mode."""
+    import subprocess
+
+    host = cfg.get("host") or cfg.get("hostname") or cluster
+    user = cfg.get("user", "")
+    port = cfg.get("port", 22)
+    socket_dir = os.path.expanduser("~/.ssh/sockets")
+    socket_path = f"{socket_dir}/{user}@{cluster}"
+
+    try:
+        subprocess.run(
+            ["ssh", "-o", f"ControlPath={socket_path}", "-p", str(port),
+             "-O", "exit", host],
+            capture_output=True, text=True, timeout=5,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+
+    # Force-remove the socket file if ssh -O exit didn't clean it up
+    from pathlib import Path
+    Path(socket_path).unlink(missing_ok=True)
+
+
 @click.command("setup-cluster")
 @click.argument("cluster")
 def setup_cluster(cluster: str) -> None:
@@ -217,16 +279,29 @@ def setup_cluster(cluster: str) -> None:
     cm_success = _probe_with_pexpect(cm_cmd)
 
     if cm_success:
-        cfg["connection_mode"] = "controlmaster"
-        save_cluster(cluster, cfg)
-        click.echo()
-        click.echo(
-            click.style("SUCCESS:", fg="green", bold=True)
-            + f" ControlMaster works for {cluster}."
-        )
-        click.echo(f"  Saved connection_mode=controlmaster to clusters.yaml.")
-        click.echo(f"  From now on, use: raca auth {cluster}")
-        return
+        # Phase 1.5: Verify slave connections work through the socket.
+        # Some clusters (e.g. TACC Vista) accept the master connection but
+        # hang on multiplexed slave connections. We must test this before
+        # declaring ControlMaster works.
+        click.echo("\nVerifying multiplexed connections work...")
+        slave_ok = _test_controlmaster_slave(cfg, cluster, timeout=10)
+        if slave_ok:
+            cfg["connection_mode"] = "controlmaster"
+            save_cluster(cluster, cfg)
+            click.echo(
+                click.style("SUCCESS:", fg="green", bold=True)
+                + f" ControlMaster works for {cluster}."
+            )
+            click.echo(f"  Saved connection_mode=controlmaster to clusters.yaml.")
+            click.echo(f"  From now on, use: raca auth {cluster}")
+            return
+        else:
+            click.echo(
+                click.style("WARNING:", fg="yellow", bold=True)
+                + " ControlMaster authenticated but multiplexed connections hang."
+            )
+            # Kill the broken ControlMaster socket before falling through
+            _kill_controlmaster_socket(cfg, cluster)
 
     # ─── Phase 2: Try persistent mode ───────────────────────────────────────
     click.echo()
