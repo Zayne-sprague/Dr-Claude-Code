@@ -1,46 +1,85 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 
-def _find_drcc_dir() -> Path:
+def _find_raca_dir() -> Path:
     """Find .raca/ by walking up from cwd, like git finds .git/.
-    Falls back to cwd/.raca if nothing found."""
+
+    Also checks RACA_WORKSPACE env var for when running outside the workspace.
+    """
+    # 1. Explicit env var
+    env_ws = os.environ.get("RACA_WORKSPACE")
+    if env_ws:
+        candidate = Path(env_ws) / ".raca"
+        if candidate.is_dir():
+            return candidate
+
+    # 2. Walk up from cwd
     current = Path.cwd()
     while current != current.parent:
         candidate = current / ".raca"
         if candidate.is_dir():
             return candidate
         current = current.parent
-    # Fallback: use cwd
+
+    # 3. Check if raca is installed as editable — find workspace from package path
+    try:
+        pkg_dir = Path(__file__).resolve().parent  # tools/cli/raca/
+        workspace = pkg_dir.parent.parent.parent    # workspace root
+        candidate = workspace / ".raca"
+        if candidate.is_dir():
+            return candidate
+    except Exception:
+        pass
+
+    # 4. Nothing found — give a helpful error instead of silently using cwd
+    print(
+        f"[raca] Could not find .raca/ directory.\n"
+        f"  Searched from: {Path.cwd()}\n"
+        f"  Fix: cd into your RACA workspace, or set RACA_WORKSPACE=/path/to/workspace",
+        file=sys.stderr,
+    )
+    # Return cwd/.raca so downstream code gets a clear "file not found" rather than
+    # silently reading from an unrelated directory
     return Path.cwd() / ".raca"
 
 
-DCC_DIR = _find_drcc_dir()
-CLUSTERS_FILE = DCC_DIR / "clusters.yaml"
-CONFIG_FILE = DCC_DIR / "config.yaml"
+def get_raca_dir() -> Path:
+    """Get the .raca/ directory path. Re-resolves each time (not cached at import)."""
+    return _find_raca_dir()
+
+
+def _clusters_file() -> Path:
+    return get_raca_dir() / "clusters.yaml"
+
+
+def _config_file() -> Path:
+    return get_raca_dir() / "config.yaml"
 
 
 def _ensure_dir() -> None:
-    DCC_DIR.mkdir(parents=True, exist_ok=True)
+    get_raca_dir().mkdir(parents=True, exist_ok=True)
 
 
 def _read_raw() -> dict[str, Any]:
     _ensure_dir()
-    if not CLUSTERS_FILE.exists():
+    cf = _clusters_file()
+    if not cf.exists():
         return {}
-    with CLUSTERS_FILE.open() as f:
+    with cf.open() as f:
         data = yaml.safe_load(f) or {}
     return data
 
 
 def _write_raw(data: dict[str, Any]) -> None:
     _ensure_dir()
-    with CLUSTERS_FILE.open("w") as f:
+    with _clusters_file().open("w") as f:
         yaml.safe_dump(data, f, default_flow_style=False, sort_keys=True)
 
 
@@ -56,9 +95,11 @@ def get_cluster(name: str) -> dict[str, Any]:
     clusters = load_clusters()
     if name not in clusters:
         available = ", ".join(sorted(clusters)) or "(none configured)"
+        raca_dir = get_raca_dir()
         raise KeyError(
             f"Cluster '{name}' not found. "
             f"Available clusters: {available}. "
+            f"Config: {raca_dir / 'clusters.yaml'}\n"
             f"Add one with: raca cluster add {name} --host <host> --user <user>"
         )
     return clusters[name]
