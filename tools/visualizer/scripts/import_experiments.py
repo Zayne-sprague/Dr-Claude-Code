@@ -402,18 +402,44 @@ def main():
         summary_findings = [{"content_md": content, "updated": os.path.getmtime(summary_path)}]
         print(f"Loaded summary_findings.md ({len(content)} chars)")
 
-    # Upload to HF
+    # ── Write to local backend/data/ ─────────────────────────
+    data_dir = WORKSPACE_ROOT / "tools" / "visualizer" / "backend" / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    all_data = {
+        "experiments": all_experiments,
+        "runs": all_runs,
+        "sub_experiments": all_subs,
+        "experiment_notes": all_notes,
+        "summary_findings": summary_findings,
+        "activity_logs": all_activity_logs,
+        "artifacts": artifacts,
+    }
+
+    for name, data in all_data.items():
+        out_path = data_dir / f"{name}.json"
+        with open(out_path, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+        print(f"Wrote {name}.json locally ({len(data) if isinstance(data, list) else len(data)} records)")
+
+    # ── Upload to HF ──────────────────────────────────────────
+    if HF_ORG == "your-org":
+        print("\nSkipping HF upload (hf_org not configured). Local data written.")
+        print("Set hf_org in .raca/config.yaml or HF_ORG env to enable uploads.")
+        return
+
     api = HfApi()
     try:
         api.create_repo(DASHBOARD_REPO, repo_type="dataset", exist_ok=True)
     except Exception:
         pass
 
-    for name, data in [("experiments", all_experiments), ("runs", all_runs), ("sub_experiments", all_subs), ("experiment_notes", all_notes), ("summary_findings", summary_findings), ("activity_logs", all_activity_logs), ("artifacts", artifacts)]:
+    # Upload each data type as a separate JSON file
+    for name, data in all_data.items():
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
             json.dump(data, f, indent=2, default=str)
             tmp = f.name
-        print(f"Uploading {name}.json ({len(data)} records)...")
+        print(f"Uploading {name}.json to HF ({len(data) if isinstance(data, list) else len(data)} records)...")
         api.upload_file(
             path_or_fileobj=tmp,
             path_in_repo=f"{name}.json",
@@ -422,9 +448,28 @@ def main():
         )
         os.unlink(tmp)
 
-    print("\nDone! Data uploaded to", DASHBOARD_REPO)
-    hf_space = os.environ.get("HF_SPACE_URL", "https://your-space.hf.space")
-    print(f"Sync the dashboard: curl -X POST {hf_space}/api/experiments/sync")
+    # Disable the dataset viewer — our data is multi-schema JSON, not a tabular dataset
+    readme = f"""---
+configs: []
+viewer: false
+---
+# Research Dashboard Data
+
+Internal data store for the RACA experiments dashboard. Not meant for direct browsing.
+
+Use the dashboard at your local URL or HF Space to view experiments.
+
+**Files:** experiments.json, runs.json, sub_experiments.json, experiment_notes.json, activity_logs.json, artifacts.json, summary_findings.json
+"""
+    api.upload_file(
+        path_or_fileobj=readme.encode(),
+        path_in_repo="README.md",
+        repo_id=DASHBOARD_REPO,
+        repo_type="dataset",
+    )
+
+    print(f"\nDone! Data uploaded to {DASHBOARD_REPO}")
+    print("Local data also written to tools/visualizer/backend/data/")
 
 
 if __name__ == "__main__":
