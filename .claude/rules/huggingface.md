@@ -2,6 +2,8 @@
 
 Org is resolved automatically by `hf_utility` (in order): `HF_ORG` env var → `.raca/config.yaml` `hf_org` field → logged-in HF username.
 
+**The canonical source for `hf_org` is `.raca/config.yaml`.** Set once during onboarding, used everywhere. When generating sbatch scripts, pass `hf_org` from config as a template variable. NEVER hardcode an org name in templates, scripts, or rules.
+
 ## hf_utility Package
 
 All HuggingFace uploads go through `hf_utility` (`packages/hf_utility/`). It handles README generation, manifest tracking, and retries.

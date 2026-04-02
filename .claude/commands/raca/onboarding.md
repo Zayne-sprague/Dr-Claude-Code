@@ -123,10 +123,25 @@ $WS/.tools-venv/bin/python -c "from key_handler import KeyHandler; KeyHandler.se
 
 (Where `$WS` = the absolute workspace path you resolved above. Replace in all commands.)
 
-If **OK** — check `.raca/config.yaml` for `hf_org`. If it's set, move on. If not, ask:
-> "Would you like artifacts stored under your personal HuggingFace account, or do you have an org you'd prefer?"
+If **OK** — check `.raca/config.yaml` for `hf_org`. Regardless of whether it's already set, always confirm with the user. Run:
 
-Save their choice to `.raca/config.yaml` as `hf_org`.
+```bash
+$WS/.tools-venv/bin/python -c "
+from huggingface_hub import HfApi
+api = HfApi()
+info = api.whoami()
+print(f'user={info[\"name\"]}')
+orgs = [o['name'] for o in info.get('orgs', [])]
+if orgs: print(f'orgs={\",\".join(orgs)}')
+"
+```
+
+Then ask:
+> "Where should experiment artifacts live on HuggingFace — under your personal account (`<username>`) or under an org? (You can create a new org at https://huggingface.co/organizations/new if you want)"
+
+If they already have orgs, mention them. Don't auto-select — always let the user decide.
+
+Save their choice to `.raca/config.yaml` as `hf_org`. This value flows everywhere — sbatch jobs, dashboard, artifact uploads. Set it once, never think about it again.
 
 If **MISSING** — the user skipped it during install. Tell them:
 > "We'll need a HuggingFace token for uploading artifacts. You can add it anytime by editing `packages/key_handler/key_handler/key_handler.py` — set the `hf_key` field to your token from https://huggingface.co/settings/tokens"
@@ -186,7 +201,7 @@ Update: `dashboard_local: "done"`, `dashboard_url: "http://localhost:7860"`
 > > *I want to test whether Qwen3-8B follows complex instructions better than Llama-3.1-8B*
 >
 > **Install a framework on your cluster:**
-> > *Set up verl on torch*
+> > *Set up verl on <your cluster or runpod>*
 >
 > **Host your dashboard online** (free HuggingFace Space):
 > > *Deploy my dashboard to HuggingFace*

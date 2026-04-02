@@ -263,7 +263,7 @@ if [ -n "$HF_TOKEN" ]; then
         sed -i.bak "s|your-hf-token|${HF_TOKEN}|g" "$KEY_FILE" && rm -f "${KEY_FILE}.bak"
     fi
 
-    # Verify token and list available orgs
+    # Verify token, list available orgs, and ask which one to use
     HF_INFO=$("${TOOLS_VENV}/bin/python" -c "
 from huggingface_hub import HfApi
 api = HfApi(token='${HF_TOKEN}')
@@ -276,11 +276,24 @@ print(f'{username}|{\"|\".join(orgs)}')
         HF_USER=$(echo "$HF_INFO" | cut -d'|' -f1)
         HF_ORGS=$(echo "$HF_INFO" | cut -d'|' -f2-)
         success "HuggingFace: authenticated as ${HF_USER}"
+        # Always ask — user may want to create an org or use a specific one
+        echo ""
+        echo -e "${BOLD}Where should RACA store experiment artifacts on HuggingFace?${RESET}"
+        echo "  Your username: ${HF_USER}"
         if [ -n "$HF_ORGS" ]; then
-            info "  Available orgs: ${HF_ORGS//|/, }"
+            echo "  Your orgs: ${HF_ORGS//|/, }"
         fi
+        echo ""
+        echo "  Enter an org name, or press Enter to use your personal account (${HF_USER})."
+        echo "  (You can create a new org at https://huggingface.co/organizations/new)"
+        read -r -p "  HF org or username: " HF_ORG_CHOICE
+        if [ -z "$HF_ORG_CHOICE" ]; then
+            HF_ORG_CHOICE="${HF_USER}"
+        fi
+        info "  Using: ${HF_ORG_CHOICE}"
     else
         warn "Could not verify token — you can fix it later in packages/key_handler/key_handler/key_handler.py"
+        HF_ORG_CHOICE=""
     fi
 else
     info "Skipped — you can add your HF token later in packages/key_handler/key_handler/key_handler.py"
@@ -291,7 +304,7 @@ mkdir -p "$RACA_CONFIG_DIR"
 cat > "${RACA_CONFIG_DIR}/config.yaml" <<YAML
 workspace: ${WORKSPACE}
 tools_venv: ${TOOLS_VENV}
-hf_org: ${HF_USER:-""}
+hf_org: ${HF_ORG_CHOICE:-""}
 installed_at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 YAML
 
