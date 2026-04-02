@@ -131,3 +131,24 @@ def remove_cluster(name: str) -> None:
 
 def list_cluster_names() -> list[str]:
     return sorted(load_clusters().keys())
+
+
+def get_connection_mode(name: str) -> str | None:
+    """Get the connection mode for a cluster.
+
+    Returns 'controlmaster', 'persistent', or None if not yet probed.
+    Raises KeyError if cluster doesn't exist.
+    """
+    cluster = get_cluster(name)  # raises KeyError if missing
+    return cluster.get("connection_mode")
+
+
+def get_session_paths(name: str) -> tuple[Path, Path]:
+    """Get the persistent daemon socket and PID file paths for a cluster.
+
+    Returns (socket_path, pid_path).
+    """
+    socket_dir = Path.home() / ".ssh" / "sockets"
+    socket_path = socket_dir / f"{name}-session.sock"
+    pid_path = socket_dir / f"{name}-session.pid"
+    return socket_path, pid_path
