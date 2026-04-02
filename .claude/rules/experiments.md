@@ -181,6 +181,8 @@ The user should NEVER wait until a job finishes to see what's happening. IF THEY
 - Scripts must be resumable from checkpoints. Training: frequent checkpoints. Inference: append JSONL.
 - Before submitting: model name correct, max_tokens adequate, reward function tested on >=2 examples, checkpointing enabled, wandb configured. YOU MUST MAKE SURE THESE ARE CORRECT. Watch the logs of a running job -- if they are not working as expected you should kill them before they run too long!
 - **NEVER use `python -c "import X" || pip install` in sbatch scripts.** The import triggers CUDA/torch initialization on GPU nodes and can hang indefinitely. Use `pip install --quiet <pkg>` directly — pip is a no-op if the package is already installed.
+- **vLLM jobs MUST set `export VLLM_WORKER_MULTIPROC_METHOD=spawn`** before any Python runs. Without this, if anything initializes CUDA before vLLM starts (pip install, import torch, etc.), vLLM's forked worker dies with "Cannot re-initialize CUDA in forked subprocess".
+- **NEVER upload to HuggingFace in the same process as vLLM.** HF uploads (push_dataset_to_hub, huggingface_hub imports) create threads/connections that kill vLLM's EngineCore subprocess. Always do uploads in a separate subprocess: `subprocess.run([sys.executable, "upload_helper.py", ...])`.
 - Sbatch templates in `.claude/references/templates/sbatch/` are reference patterns, not mandatory. Experiments can use custom sbatch scripts. Use the templates as a starting point and adapt as needed.
 
 ## Autonomous Boundaries

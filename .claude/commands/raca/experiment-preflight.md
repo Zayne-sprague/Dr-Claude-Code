@@ -39,6 +39,9 @@ The reviewer checks:
 - Evaluator/reward function matches what the hypothesis needs?
 - Output format compatible with HF upload and the dashboard?
 - **No `python -c "import X" || pip install` patterns in sbatch scripts** — these hang on GPU nodes due to CUDA init. Use `pip install --quiet` directly.
+- **vLLM jobs must set `VLLM_WORKER_MULTIPROC_METHOD=spawn`** before any Python runs — prevents "Cannot re-initialize CUDA in forked subprocess" crash.
+- **No HF uploads in the same process as vLLM** — push_dataset_to_hub kills EngineCore. Must use subprocess isolation.
+- **`HF_ORG` in sbatch must be the upload org, not the source org** — if the experiment downloads models from org A but uploads results to org B, these must be separate variables.
 
 If the reviewer returns **FAIL**: show findings, fix them, re-run with a NEW subagent. Repeat until PASS.
 

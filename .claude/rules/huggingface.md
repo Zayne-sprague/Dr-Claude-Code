@@ -4,6 +4,8 @@ Org is resolved automatically by `hf_utility` (in order): `HF_ORG` env var → `
 
 **The canonical source for `hf_org` is `.raca/config.yaml`.** Set once during onboarding, used everywhere. When generating sbatch scripts, pass `hf_org` from config as a template variable. NEVER hardcode an org name in templates, scripts, or rules.
 
+**`hf_org` = upload destination, not download source.** The workspace org (where results go) and the source org (where models/eval data live) are often different. `hf_org` in config is always the upload destination. When downloading from a different org, specify it explicitly in the experiment config or script args — never overload `hf_org` for both.
+
 ## hf_utility Package
 
 All HuggingFace uploads go through `hf_utility` (`packages/hf_utility/`). It handles README generation, manifest tracking, and retries.

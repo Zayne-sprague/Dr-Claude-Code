@@ -8,6 +8,13 @@
 {% if slurm_account %}#SBATCH --account={{ slurm_account }}{% endif %}
 {% if exclude_nodes %}#SBATCH --exclude={{ exclude_nodes }}{% endif %}
 
+# === vLLM Multiprocessing ===
+# Must be set BEFORE any Python/CUDA runs. Without this, if anything
+# initializes CUDA before vLLM starts (pip install, import torch, etc.),
+# vLLM's forked worker subprocess dies with "Cannot re-initialize CUDA
+# in forked subprocess". spawn creates a fresh process instead.
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+
 # === Environment Setup ===
 {% for module in module_loads %}
 module load {{ module }}
