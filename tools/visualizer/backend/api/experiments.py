@@ -8,7 +8,30 @@ from flask import Blueprint, request, jsonify
 
 bp = Blueprint("experiments", __name__, url_prefix="/api/experiments")
 
-HF_ORG = os.environ.get("HF_ORG", "your-org")
+def _resolve_hf_org() -> str:
+    """Resolve HF org from env > .raca/config.yaml > fallback."""
+    org = os.environ.get("HF_ORG")
+    if org and org != "your-org":
+        return org
+    # Walk up from this file looking for .raca/config.yaml
+    from pathlib import Path
+    current = Path(__file__).resolve().parent
+    for _ in range(10):
+        current = current.parent
+        config = current / ".raca" / "config.yaml"
+        if config.exists():
+            try:
+                import yaml
+                with open(config) as f:
+                    cfg = yaml.safe_load(f) or {}
+                org = cfg.get("hf_org", "")
+                if org:
+                    return org
+            except Exception:
+                pass
+    return "your-org"
+
+HF_ORG = _resolve_hf_org()
 DASHBOARD_REPO = f"{HF_ORG}/RESEARCH_DASHBOARD"
 LOCAL_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 

@@ -189,17 +189,32 @@ app.register_blueprint(<new_tab>.bp)
 
 ```bash
 # Build frontend
-cd tools/visualizer/frontend && npm run build
+cd $WS/tools/visualizer/frontend && npm run build
 
-# Commit and push
-cd tools/visualizer
-git add backend/ frontend/src/ frontend/dist/ scripts/
-git commit -m "add <tab_name> visualizer tab"
-git push origin main
-git push space main  # deploys to HF Space
+# Import experiment data so backend/data/ is fresh
+$WS/.tools-venv/bin/python $WS/tools/visualizer/scripts/import_experiments.py
+
+# Deploy to HF Space (use upload_folder — NEVER git push)
+$WS/.tools-venv/bin/python -c "
+from huggingface_hub import HfApi
+from key_handler import KeyHandler
+KeyHandler.set_env_key()
+import os
+api = HfApi(token=os.environ['HF_TOKEN'])
+api.upload_folder(
+    folder_path='$WS/tools/visualizer',
+    repo_id='<HF_ORG>/research-dashboard',
+    repo_type='space',
+    ignore_patterns=['node_modules', '__pycache__', '.venv', '*.pyc'],
+)
+print('Deployed!')
+"
 ```
 
-**Note:** Data syncs (experiment metadata, artifacts) do NOT require a build or deploy. Only source code changes to frontend/backend require this.
+**CRITICAL deployment rules:**
+- **ALWAYS run `import_experiments.py` before deploying** — this writes fresh data to `backend/data/`. Without this, the Space will have empty/stale data.
+- **ALWAYS use `HfApi.upload_folder()`** — NEVER `git push`. Include `ignore_patterns` to skip `node_modules`.
+- **ALWAYS build the frontend first** — the Space serves from `frontend/dist/`, not source files.
 
 ---
 
