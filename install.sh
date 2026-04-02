@@ -191,7 +191,7 @@ fi
 
 # ── HuggingFace token ─────────────────────────────────────
 echo ""
-echo "  RACA uploads experiment artifacts to HuggingFace."
+echo "  RACA uses HuggingFace to store website data, track experiments, and upload results from jobs you run on your compute!"
 echo "  Get a write token at: https://huggingface.co/settings/tokens"
 echo ""
 read -rsp "  > HF Token (paste, hidden — or Enter to skip): " HF_TOKEN < /dev/tty
