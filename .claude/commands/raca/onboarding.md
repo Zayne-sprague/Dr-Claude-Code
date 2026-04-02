@@ -115,9 +115,13 @@ Update: `clusters: [...]`
 
 The installer already asked for the HF token. Verify it's working:
 
+Determine the workspace root first — check `RACA_WORKSPACE` env, or read `.raca/config.yaml`, or walk up from cwd looking for `.raca/`. **Store the absolute path and use it for ALL commands in every step.** Never use relative paths.
+
 ```bash
-.tools-venv/bin/python -c "from key_handler import KeyHandler; KeyHandler.set_env_key(); import os; t=os.environ.get('HF_TOKEN',''); print('OK') if t and not t.startswith('your-') else print('MISSING')"
+$WS/.tools-venv/bin/python -c "from key_handler import KeyHandler; KeyHandler.set_env_key(); import os; t=os.environ.get('HF_TOKEN',''); print('OK') if t and not t.startswith('your-') else print('MISSING')"
 ```
+
+(Where `$WS` = the absolute workspace path you resolved above. Replace in all commands.)
 
 If **OK** — check `.raca/config.yaml` for `hf_org`. If it's set, move on. If not, ask:
 > "Would you like artifacts stored under your personal HuggingFace account, or do you have an org you'd prefer?"
@@ -139,21 +143,30 @@ Update: `hf_configured: "done"` or `hf_configured: "skipped"`
 
 Now set up the local experiments dashboard.
 
+**Use absolute paths for everything.** `$WS` = the workspace root you resolved in Step 3.
+
 Build the frontend:
 ```bash
-cd tools/visualizer/frontend && npm install --silent 2>&1 | tail -1 && npm run build 2>&1 | tail -3
+cd $WS/tools/visualizer/frontend && npm install --silent 2>&1 | tail -1 && npm run build 2>&1 | tail -3
 ```
 
-Start the server:
+Start the server (must `cd` into visualizer dir so Flask finds templates):
 ```bash
-cd tools/visualizer && nohup .tools-venv/bin/python -c "from backend.app import app; app.run(host='127.0.0.1', port=7860)" > .raca/dashboard.log 2>&1 &
-echo $! > .raca/dashboard.pid
+cd $WS/tools/visualizer && nohup $WS/.tools-venv/bin/python -c "from backend.app import app; app.run(host='127.0.0.1', port=7860)" > $WS/.raca/dashboard.log 2>&1 &
+echo $! > $WS/.raca/dashboard.pid
 ```
 
-Import the onboarding experiment and sync to HF:
+Import experiments to HF (script auto-detects workspace and HF org from `.raca/config.yaml`):
 ```bash
-cd tools/visualizer && EXPERIMENTS_DIR=../../notes/experiments WORKSPACE=../.. .tools-venv/bin/python scripts/import_experiments.py 2>&1 | tail -3
+$WS/.tools-venv/bin/python $WS/tools/visualizer/scripts/import_experiments.py 2>&1 | tail -5
 ```
+
+Verify server is up:
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:7860/
+```
+
+If 200 → good. If not → check `$WS/.raca/dashboard.log`.
 
 > "Your experiments dashboard is live at **http://localhost:7860** — there's a sample experiment loaded so you can see how everything works. Check out the tabs!"
 

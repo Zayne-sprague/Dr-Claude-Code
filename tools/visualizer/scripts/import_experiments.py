@@ -9,8 +9,48 @@ import yaml
 from pathlib import Path
 from huggingface_hub import HfApi
 
-EXPERIMENTS_DIR = Path(os.environ.get("EXPERIMENTS_DIR", "./notes/experiments"))
-HF_ORG = os.environ.get("HF_ORG", "your-org")
+def _resolve_workspace() -> Path:
+    """Find the RACA workspace root."""
+    # 1. WORKSPACE env var
+    ws = os.environ.get("WORKSPACE")
+    if ws:
+        return Path(ws)
+    # 2. RACA_WORKSPACE env var
+    ws = os.environ.get("RACA_WORKSPACE")
+    if ws:
+        return Path(ws)
+    # 3. Walk up from this script looking for .raca/
+    current = Path(__file__).resolve().parent
+    while current != current.parent:
+        if (current / ".raca").is_dir():
+            return current
+        current = current.parent
+    # 4. cwd
+    return Path.cwd()
+
+
+def _resolve_hf_org() -> str:
+    """Resolve HF org from env > .raca/config.yaml > fallback."""
+    # 1. Env var
+    org = os.environ.get("HF_ORG")
+    if org and org != "your-org":
+        return org
+    # 2. .raca/config.yaml
+    ws = _resolve_workspace()
+    config_path = ws / ".raca" / "config.yaml"
+    if config_path.exists():
+        with open(config_path) as f:
+            cfg = yaml.safe_load(f) or {}
+        org = cfg.get("hf_org", "")
+        if org:
+            return org
+    # 3. Fallback
+    return "your-org"
+
+
+WORKSPACE_ROOT = _resolve_workspace()
+EXPERIMENTS_DIR = Path(os.environ.get("EXPERIMENTS_DIR", str(WORKSPACE_ROOT / "notes" / "experiments")))
+HF_ORG = _resolve_hf_org()
 DASHBOARD_REPO = f"{HF_ORG}/RESEARCH_DASHBOARD"
 
 # Experiments to exclude from dashboard import. All others are auto-discovered.
