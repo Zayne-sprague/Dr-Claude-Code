@@ -111,43 +111,27 @@ Update: `clusters: [...]`
 
 ---
 
-## Step 3: HuggingFace Setup
+## Step 3: HuggingFace Check
 
-RACA stores experiment artifacts on HuggingFace. Check if a token is already configured:
+The installer already asked for the HF token. Verify it's working:
 
 ```bash
 .tools-venv/bin/python -c "from key_handler import KeyHandler; KeyHandler.set_env_key(); import os; t=os.environ.get('HF_TOKEN',''); print('OK') if t and not t.startswith('your-') else print('MISSING')"
 ```
 
-If **OK** — skip straight to the org question below.
-
-If **MISSING** — give the user this one-liner to copy-paste (tell them to replace `YOUR_TOKEN_HERE` with their actual token from https://huggingface.co/settings/tokens):
-
-> "We need a HuggingFace token so RACA can upload your experiment artifacts. Grab a **write** token from https://huggingface.co/settings/tokens, then run this:"
->
-> ```bash
-> .tools-venv/bin/python -c "
-> import shutil; shutil.copy('packages/key_handler/key_handler/key_handler__template.py', 'packages/key_handler/key_handler/key_handler.py')
-> " && sed -i.bak 's|your-hf-token|YOUR_TOKEN_HERE|' packages/key_handler/key_handler/key_handler.py && rm -f packages/key_handler/key_handler/key_handler.py.bak
-> ```
->
-> "Just replace `YOUR_TOKEN_HERE` with your token. Let me know when done!"
-
-**STOP and WAIT.**
-
-Once they confirm, verify:
-
-```bash
-.tools-venv/bin/python -c "from key_handler import KeyHandler; KeyHandler.set_env_key(); import os; from huggingface_hub import HfApi; api=HfApi(token=os.environ['HF_TOKEN']); print(f'Authenticated as: {api.whoami()[\"name\"]}')"
-```
-
-Then ask about the org:
-
-> "Would you like artifacts stored under your personal HuggingFace account (`<their_username>`), or do you have an org you'd prefer?"
+If **OK** — check `.raca/config.yaml` for `hf_org`. If it's set, move on. If not, ask:
+> "Would you like artifacts stored under your personal HuggingFace account, or do you have an org you'd prefer?"
 
 Save their choice to `.raca/config.yaml` as `hf_org`.
 
-Update: `hf_configured: "done"`, `hf_org: <org>`
+If **MISSING** — the user skipped it during install. Tell them:
+> "We'll need a HuggingFace token for uploading artifacts. You can add it anytime by editing `packages/key_handler/key_handler/key_handler.py` — set the `hf_key` field to your token from https://huggingface.co/settings/tokens"
+>
+> "The dashboard will work locally in the meantime — we'll just skip the HF sync for now."
+
+Move on either way — don't block on this.
+
+Update: `hf_configured: "done"` or `hf_configured: "skipped"`
 
 ---
 

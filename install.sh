@@ -230,11 +230,47 @@ export RACA_WORKSPACE="${WORKSPACE}"
 
 
 
+# ── HuggingFace token ─────────────────────────────────────
+echo ""
+echo "  RACA uploads experiment artifacts to HuggingFace."
+echo "  Get a write token at: https://huggingface.co/settings/tokens"
+echo ""
+read -rsp "  > HF Token (paste, hidden — or Enter to skip): " HF_TOKEN < /dev/tty
+echo ""
+HF_TOKEN=$(echo "$HF_TOKEN" | tr -d '[:space:]')
+
+if [ -n "$HF_TOKEN" ]; then
+    # Save to key_handler
+    KEY_TEMPLATE="${WORKSPACE}/packages/key_handler/key_handler/key_handler__template.py"
+    KEY_FILE="${WORKSPACE}/packages/key_handler/key_handler/key_handler.py"
+    if [ -f "$KEY_TEMPLATE" ] && [ ! -f "$KEY_FILE" ]; then
+        cp "$KEY_TEMPLATE" "$KEY_FILE"
+    fi
+    if [ -f "$KEY_FILE" ]; then
+        sed -i.bak "s|your-hf-token|${HF_TOKEN}|g" "$KEY_FILE" && rm -f "${KEY_FILE}.bak"
+    fi
+
+    # Verify
+    HF_USER=$("${TOOLS_VENV}/bin/python" -c "
+from huggingface_hub import HfApi
+api = HfApi(token='${HF_TOKEN}')
+print(api.whoami()['name'])
+" 2>/dev/null || echo "")
+    if [ -n "$HF_USER" ]; then
+        success "HuggingFace: authenticated as ${HF_USER}"
+    else
+        warn "Could not verify token — you can fix it later in packages/key_handler/key_handler/key_handler.py"
+    fi
+else
+    info "Skipped — you can add your HF token later in packages/key_handler/key_handler/key_handler.py"
+fi
+
 # ── Save config ───────────────────────────────────────────
 mkdir -p "$RACA_CONFIG_DIR"
 cat > "${RACA_CONFIG_DIR}/config.yaml" <<YAML
 workspace: ${WORKSPACE}
 tools_venv: ${TOOLS_VENV}
+hf_org: ${HF_USER:-""}
 installed_at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 YAML
 
