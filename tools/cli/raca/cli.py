@@ -19,6 +19,7 @@ from .upload import upload  # noqa: E402
 from .download import download  # noqa: E402
 from .forward import forward  # noqa: E402
 from .cluster import cluster  # noqa: E402
+from .setup_cluster import setup_cluster  # noqa: E402
 
 main.add_command(auth)
 main.add_command(ssh)
@@ -27,3 +28,4 @@ main.add_command(upload)
 main.add_command(download)
 main.add_command(forward)
 main.add_command(cluster)
+main.add_command(setup_cluster)
