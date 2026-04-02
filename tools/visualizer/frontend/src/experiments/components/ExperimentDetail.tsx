@@ -145,9 +145,9 @@ export default function ExperimentDetail({ experiment, onBack, onSelectNote, onR
             {experiment.zayne_summary ? (
               <div className="mt-1 max-w-2xl">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/80">Researcher's Summary</span>
-                <p className="text-sm text-gray-300 mt-0.5">
-                  {experiment.zayne_summary}
-                </p>
+                <div className="text-sm text-gray-300 mt-0.5">
+                  <Markdown content={experiment.zayne_summary} />
+                </div>
               </div>
             ) : experiment.hypothesis?.statement ? (
               <p className="text-sm text-gray-400 mt-1 max-w-2xl italic">
@@ -212,10 +212,10 @@ export default function ExperimentDetail({ experiment, onBack, onSelectNote, onR
               </div>
             )}
 
-            {/* Agent Notes (EXPERIMENT_README) - only if no zayne_readme */}
-            {!experiment.zayne_readme && experiment.notes && (
+            {/* Agent Notes (EXPERIMENT_README) - always shown */}
+            {experiment.notes && (
               <div className="border-l-4 border-cyan-500 bg-gray-900/80 rounded-r p-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Claude Code: Experiment Notes</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Experiment Notes</span>
                 <div className="mt-2">
                   <Markdown content={experiment.notes} />
                 </div>
