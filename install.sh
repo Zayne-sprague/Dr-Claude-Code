@@ -189,6 +189,8 @@ info "Installing tools..."
     "${TOOLS_VENV}/bin/pip" install --quiet -e "${WORKSPACE}/tools/cli/"
 [ -f "${WORKSPACE}/packages/key_handler/pyproject.toml" ] && \
     "${TOOLS_VENV}/bin/pip" install --quiet -e "${WORKSPACE}/packages/key_handler/"
+[ -f "${WORKSPACE}/packages/hf_utility/pyproject.toml" ] && \
+    "${TOOLS_VENV}/bin/pip" install --quiet -e "${WORKSPACE}/packages/hf_utility/"
 
 # Verify
 "${TOOLS_VENV}/bin/raca" --version &>/dev/null && success "raca CLI installed" || warn "raca install issue"
