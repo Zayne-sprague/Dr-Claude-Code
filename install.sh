@@ -77,7 +77,7 @@ echo ""
 echo ""
 echo "  This folder becomes your research workspace — experiments, code, notes, and results all live here."
 echo ""
-echo -e "  ${BOLD}${GREEN}>>>  Where do you want your new home for research to live?  <<<${RESET}"
+echo -e "  ${BOLD}${YELLOW}>>>  Where do you want your new home for research to live?  <<<${RESET}"
 echo ""
 read -rp "  > Path [$(pwd)]: " WORKSPACE < /dev/tty
 WORKSPACE="${WORKSPACE:-$(pwd)}"
