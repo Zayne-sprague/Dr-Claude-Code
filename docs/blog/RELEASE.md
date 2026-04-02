@@ -2,12 +2,13 @@
 
 
 
-![Intro Diagram](docs/images/intro.png)
+![Intro Diagram](../images/intro.png)
 
-Design an experiment, run on your compute, and analyze the results all without leaving your Claude Code session.
+Before RACA, Claude Code couldn't reach your cluster. You'd design an experiment in one window, SSH into your HPC in another, and hope nothing fell through the cracks.
 
-The workflow of a PhD student involves turning high-level directions into concrete experiments. Claude Code knows how to help turn:
+RACA closes the loop. One session, one conversation: design → sanity-check → run → validate → results. Your compute stays where it is — RACA talks to it, catches mistakes before they waste GPU hours, uploads artifacts to HuggingFace as they come in, and keeps a live dashboard so you never wonder what's happening.
 
+RACA knows how to turn:
 ```text
 > Hey, I want to test something on this paper <link>. It has this cool
 > Figure 6 that looks like the model can branch its reasoning into
@@ -35,9 +36,9 @@ Most of the install is helped by with Claude, it will walk you through everythin
 
 If you want to stick around and read about how it works, how it doesn't, and how it's changing how I think about conducting experiments, keep reading.
 
-[//]: # (![Dashboard]&#40;docs/images/dashboard.png&#41;)
+[//]: # (![Dashboard]&#40;../images/dashboard.png&#41;)
 [//]: # (_The Experiments Dashboard where Claude Code keeps track of my experiments for me. They are tracked on the experiment dashboard. Claude Code builds the scripts for the experiment, handles the uploads to huggingface, writes the code to visualize them on the site, and manages the updates for each experiment so I can have everything in one spot._)
-![Example](docs/images/checking-jobs.gif)
+![Example](../images/checking-jobs.gif)
 _Example of the Research Dashboard that keeps track of all the experiments and its related outputs, files, etc. Along with an example of how you can talk to Claude Code normally, ask about your job scheduled on your slurm clusters, and have it respond. A key motivation of RACA is keeping Claude Code local and connecting it with compute via ssh._
 
 ## Intro
@@ -50,7 +51,7 @@ This post is about how I've been using Claude Code to run experiments as a Ph.D.
 
 ## What It Looks Like
 
-![Dashboard Image](docs/images/dashboard.png)
+![Dashboard Image](../images/dashboard.png)
 _RACA tracks your experiments constantly syncing up the jobs that produce artifacts (huggingface datasets / models etc.) with your experiments along with custom visualizations._
 
 I was interested in the Multiplex Thinking paper (arxiv 2601.08808). Instead of generating one token at a time during chain-of-thought, you sample K candidate tokens at each position and merge their embeddings before feeding them to the next layer. The paper claims this lets the model explore multiple reasoning branches in parallel.
@@ -81,7 +82,7 @@ As a result, RACA expects the following structure:
 
 > **Tools:** [Superpowers](link) makes Claude more proactive during design, asking clarifying questions instead of waiting for me to specify everything. [Agent-Deck](link) orchestrates multiple sessions and lets you set `--dangerously-skip-permissions` so Claude can run commands without stopping to ask at every step. **If you use our GitHub command to install, Claude Code will help you get these tools setup auto-magically!**
 
-![Agent Deck](docs/images/agent-deck.png)
+![Agent Deck](../images/agent-deck.png)
 _An example of my agent deck main window. You can see I have a few experiments all being worked on in parallel, managed by a Conductor usually (a Claude Code session managing Claude Code sessions). Conductors are nice but Agent-Deck really helped me orchestrate, instead of 24 terminal tabs, I just have 1._
 
 The output for this stage is an experiment README file in my workspace's experiments folder. The creation and placement of this file is driven by a series of rules I've defined in `~/Research/.claude/rules`, more on this soon.
@@ -99,7 +100,7 @@ What happens is that the agent produces a red-team brief, a markdown file with a
 
 > **How rules work:** Claude Code lets you define rules in `.claude/rules/` that guide behavior. They're more like strong suggestions than hard constraints (Claude doesn't always follow them), but they can encode a pipeline. I never have to ask for red-teaming; the rule says to do it before any compute gets scheduled for a new experiment.
  
-[//]: # (![Canary Job finding compute]&#40;docs/images/find-compute.jpeg&#41;)
+[//]: # (![Canary Job finding compute]&#40;../images/find-compute.jpeg&#41;)
 [//]: # (_Example of how Claude can talk to your compute clusters to find available GPUs that you need for your experiment. It doesn't just find compute though, you can use Claude Code locally to handle the installation, monitoring, submission, etc. of your jobs on your SLURM cluster, third-party providers &#40;RunPod, etc.&#41;, or your local machines. It makes it so that you don't have to manage multiple sessions on multiple machines, just use ssh and claude code._)
 
 For this experiment, the canary surfaced a calibration issue:
@@ -145,7 +146,7 @@ While training was still running, I didn't have to wait. I asked Claude to sched
 
 My role now is primarily reviewing. The session keeps track of all artifacts and syncs them to the dashboard. All artifacts go into the website visualizer. If I'm not in my Agent-Deck terminal watching over sessions or reading papers, I'm in the experiment website looking at artifacts, HuggingFace datasets, and WandB to make sure the experiment did what it should and to synthesize findings.
 
-![IMAGE: Screenshot of the model trace viewer showing top-K candidates at each token position, with categorization into operational divergence vs synonymous.](docs/images/multiplex_visualizer.png)
+![IMAGE: Screenshot of the model trace viewer showing top-K candidates at each token position, with categorization into operational divergence vs synonymous.](../images/multiplex_visualizer.png)
 
 In this case, Claude Code wrote a fairly complex UI that shows the top-1 token as the continuation, but when you highlight over a token, you can see the Top-K (k=3 for this experiment) tokens taken and merged together using the Multiplex-Thinking algorithm.
 
