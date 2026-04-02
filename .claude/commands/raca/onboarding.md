@@ -53,6 +53,8 @@ Then greet:
 > - *"What can the dashboard show?"*
 > - *"Add a new visualization tab for training curves"*
 > - *"Why isn't my latest data showing up?"*
+>
+> "If you hit any errors during setup, just copy paste them here and I'll help you through it!"
 
 Update: `dashboard_local: "done"`, `dashboard_url: "http://localhost:7860"`
 
@@ -78,10 +80,11 @@ For **each** cluster:
    - Username
    - VPN required? 2FA required?
 
-3. Write the cluster entry to `.raca/clusters.yaml` (minimal config — partition details come next).
+3. **CRITICAL: Write the cluster entry to `.raca/clusters.yaml` BEFORE telling the user to run `raca auth`.**
+   `raca auth` reads from this file — if the cluster isn't configured yet, it errors with "Cluster not found."
 
 4. Tell the user to auth:
-   > "Open a **new terminal tab** and run:"
+   > "I've saved the cluster config. Now open a **new terminal tab** and run:"
    > ```bash
    > raca auth <nickname>
    > ```
