@@ -75,11 +75,12 @@ success "All prerequisites met."
 # When running via curl|bash, stdin is the pipe — read from /dev/tty instead
 echo ""
 echo ""
-echo -e "  ${YELLOW}This folder becomes your research workspace — experiments, code, notes, and results all live here.${RESET}"
 echo ""
-echo -e "  ${BOLD}${GREEN}>>>  Where do you want your new home for research to live?  <<<${RESET}"
+echo -e "  ${BOLD}>>>  Where do you want your new home for research to live?  <<<${RESET}"
 echo ""
-read -rp "$(echo -e "  ${BOLD}${BLUE}>${RESET} ${BOLD}Path${RESET} [$(pwd)]: ")" WORKSPACE < /dev/tty
+echo -e "  ${BLUE}This folder becomes your research workspace — experiments, code, notes, and results all live here.${RESET}"
+echo ""
+read -rp "$(echo -e "  ${BOLD}>${RESET} Path [$(pwd)]: ")" WORKSPACE < /dev/tty
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 WORKSPACE="${WORKSPACE/#\~/$HOME}"
 RACA_CONFIG_DIR="${WORKSPACE}/.raca"
