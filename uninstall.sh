@@ -41,9 +41,9 @@ fi
 # ── .claude/ — remove RACA-installed rules/agents/references ──
 # Only remove files that match the RACA distribution exactly.
 # We track what RACA ships so we don't delete user-created files.
-RACA_RULES="experiments.md git-safety.md huggingface-datasets.md python-patterns.md security.md workspace.md"
+RACA_RULES="experiments.md git-safety.md huggingface.md python-patterns.md security.md workspace.md"
 RACA_AGENTS="data-validator.md red-team-reviewer.md"
-RACA_REFS="experiments.md huggingface-datasets.md tool-decision-guide.md workspace.md"
+RACA_REFS="experiments.md huggingface.md tool-decision-guide.md workspace.md"
 
 remove_if_raca() {
     local dir="$1" file="$2"
