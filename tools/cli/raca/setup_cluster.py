@@ -265,11 +265,31 @@ def setup_cluster(cluster: str) -> None:
     if cm_child is not None:
         # Phase 1.5: Verify slave connections work through the socket.
         # The master pexpect child is still alive, holding the ControlMaster
-        # socket open. We test a slave connection WHILE the master lives —
-        # if we killed it first, the socket would die before ControlPersist
-        # can background it.
+        # socket open. We MUST drain the PTY while testing — otherwise the
+        # remote shell's output fills the PTY buffer (~4KB), SSH blocks on
+        # write, and can't process the slave's ControlMaster request.
+        import threading
+
+        def _drain_pty(child_fd, stop_event):
+            """Read and discard PTY output to prevent buffer deadlock."""
+            import select as _sel
+            while not stop_event.is_set():
+                try:
+                    rlist, _, _ = _sel.select([child_fd], [], [], 0.5)
+                    if rlist:
+                        os.read(child_fd, 4096)
+                except (OSError, ValueError):
+                    break
+
         click.echo("\nVerifying multiplexed connections work...")
+        stop = threading.Event()
+        drain = threading.Thread(
+            target=_drain_pty, args=(cm_child.child_fd, stop), daemon=True
+        )
+        drain.start()
         slave_ok = _test_controlmaster_slave(cfg, cluster, timeout=10)
+        stop.set()
+        drain.join(timeout=2)
 
         # Now we can kill the master. If slave worked, ControlPersist keeps
         # the socket alive. If it didn't, we want it dead anyway.
