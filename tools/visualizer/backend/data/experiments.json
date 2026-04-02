@@ -1,0 +1,33 @@
+[
+  {
+    "id": "onboarding",
+    "name": "Onboarding",
+    "research_project": "",
+    "hypothesis": {
+      "statement": "Qwen3-1.7B can solve basic Countdown arithmetic problems",
+      "type": "exploratory",
+      "status": "active",
+      "success_criteria": "Model produces valid arithmetic expressions that reach the target number on >50% of problems"
+    },
+    "stage": "active",
+    "completeness": 4,
+    "models": [],
+    "tasks": [],
+    "tags": [
+      "countdown",
+      "reasoning",
+      "onboarding",
+      "tutorial"
+    ],
+    "hf_repos": [],
+    "wandb_url": "",
+    "notes": "# Welcome to RACA\n\nThis is a sample experiment to show you how the dashboard works. You're looking at the **Overview** tab right now \u2014 it displays the experiment's README (this file).\n\nEverything you see here is generated from plain files in `notes/experiments/onboarding/`. You can browse them in your editor anytime.\n\n## How This Dashboard Works\n\nEach experiment has several tabs at the top. Here's what they do:\n\n### Overview (you are here)\n\nDisplays the experiment's README and any notes you've written in the `user/` folder. This is the main landing page for each experiment \u2014 a summary of what the experiment is, what you're investigating, and what you found.\n\n### Red Team Brief\n\nBefore any experiment runs, RACA reviews the design for potential problems \u2014 wrong evaluation metrics, truncated outputs, missing baselines, wasted compute. The brief lives at `red_team_brief.md`. This tab will be empty until you run your first real experiment.\n\n### Timeline\n\nA chronological log of everything that happened: when jobs were submitted, when artifacts were uploaded, when bugs were found and fixed. This is auto-generated from `activity_log.jsonl` \u2014 RACA writes to it as events happen.\n\n### Runs\n\nTracks each job submission \u2014 which model, which cluster, what status (pending, running, completed, failed), and links to the HuggingFace dataset with the results. Empty until you run something.\n\n### Artifacts\n\nLinks to all HuggingFace datasets produced by this experiment \u2014 canary runs, partial results, final data. Each artifact has metadata about what generated it. Empty until artifacts are uploaded.\n\n### Files\n\nAll the markdown and YAML files in the experiment folder. Click any file to read it. This is a quick way to browse the experiment's configuration and notes without leaving the dashboard.\n\n## Folder Structure\n\n```\nnotes/experiments/onboarding/\n  EXPERIMENT_README.md    \u2190 this file (shows in Overview tab)\n  experiment.yaml         \u2190 config: hypothesis, models, tasks\n  flow_state.json         \u2190 current phase (design/running/complete)\n  HUGGINGFACE_REPOS.md    \u2190 links to all uploaded datasets\n  questions.md            \u2190 research questions (read-only)\n  red_team_brief.md       \u2190 created during preflight review\n  activity_log.jsonl      \u2190 timeline entries (auto-generated)\n  user/                   \u2190 YOUR notes \u2014 RACA doesn't touch these\n    README.md             \u2190 your interpretation and observations\n    FINDINGS.md           \u2190 key results and surprises\n    DECISIONS.md          \u2190 design decisions and rationale\n    summary.md            \u2190 one-paragraph summary when done\n```\n\n**Most of this is automated.** RACA creates and updates the experiment files, uploads artifacts, and keeps the timeline current. The only files you write are in `user/` \u2014 that's your space for notes, findings, and decisions.\n\n## What's Next\n\nThis sample experiment hasn't been run yet \u2014 it's just here to show you the structure. When you're ready to run a real experiment, just tell RACA:\n\n> *I want to test whether Qwen3-8B follows complex instructions better than Llama-3.1-8B*\n\nOr try the full guided tutorial:\n\n> */raca:experiment-tutorial*\n",
+    "zayne_summary": "# Summary\n\n_Write a one-paragraph summary of the experiment and its outcome when you're done._\n\n## Status: active\n\n## Next Steps\n\n_What to do next based on findings._",
+    "zayne_readme": "# Onboarding Experiment \u2014 Your Notes\n\n## What I'm investigating\n\nThis is the tutorial experiment \u2014 testing Qwen3-1.7B on Countdown to learn the RACA pipeline.\n\n## Key observations\n\n_Fill this in as you review the results._\n\n## Open questions\n\n_Anything you want to follow up on._",
+    "zayne_findings": "# Findings\n\n## Key Results\n\n_Fill this in after reviewing the experiment results._\n\n## Surprising Results\n\n_Anything unexpected._\n\n## Null Results\n\n_What didn't work and why._",
+    "zayne_decisions": "# Decisions\n\n| Date | Decision | Rationale |\n|------|----------|-----------|",
+    "red_team_brief": "",
+    "created": "",
+    "updated": ""
+  }
+]

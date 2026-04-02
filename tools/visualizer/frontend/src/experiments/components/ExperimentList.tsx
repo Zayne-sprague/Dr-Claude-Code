@@ -21,10 +21,9 @@ interface Props {
   experiments: Experiment[];
   onSelect: (id: string) => void;
   onRefresh: () => void;
-  onSummary: () => void;
 }
 
-export default function ExperimentList({ experiments, onSelect, onRefresh, onSummary }: Props) {
+export default function ExperimentList({ experiments, onSelect, onRefresh }: Props) {
   const [sortBy, setSortBy] = useState<SortKey>("updated");
   const [filterFinished, setFilterFinished] = useState<"all" | "finished" | "active">("all");
 
@@ -75,12 +74,6 @@ export default function ExperimentList({ experiments, onSelect, onRefresh, onSum
             <option value="completeness">Completeness</option>
           </select>
 
-          <button
-            onClick={onSummary}
-            className="bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-3 py-1.5 rounded transition-colors"
-          >
-            Findings / Summary
-          </button>
         </div>
       </div>
 

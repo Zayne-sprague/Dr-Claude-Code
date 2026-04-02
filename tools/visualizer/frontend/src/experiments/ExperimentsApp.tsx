@@ -3,7 +3,6 @@ import ExperimentList from "./components/ExperimentList";
 import ExperimentDetail from "./components/ExperimentDetail";
 import SubExperimentView from "./components/SubExperimentView";
 import NoteView from "./components/NoteView";
-import SummaryFindingsView from "./components/SummaryFindingsView";
 
 export default function ExperimentsApp() {
   const state = useExperimentsState();
@@ -27,15 +26,6 @@ export default function ExperimentsApp() {
           Retry
         </button>
       </div>
-    );
-  }
-
-  if (state.view.kind === "summary") {
-    return (
-      <SummaryFindingsView
-        content={state.summaryContent}
-        onBack={state.navigateToList}
-      />
     );
   }
 
@@ -76,7 +66,6 @@ export default function ExperimentsApp() {
       experiments={state.experiments}
       onSelect={state.navigateToDetail}
       onRefresh={state.loadExperiments}
-      onSummary={state.navigateToSummary}
     />
   );
 }

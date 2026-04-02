@@ -141,20 +141,22 @@ def load_experiment(exp_dir: Path) -> tuple[dict, list[dict], list[dict], list[d
     # Completeness
     completeness = compute_completeness(exp_dir, config)
 
-    # Zayne's custom files (zaynes/ folder)
-    def _load_zayne_file(filename: str) -> str:
-        p = exp_dir / "zaynes" / filename
-        if p.exists():
-            with open(p) as f:
-                content = f.read().strip()
-            if content and not content.startswith("<!--"):
-                return content
+    # User's notes (user/ folder)
+    def _load_user_file(filename: str) -> str:
+        # Check user/ first, fall back to zaynes/ for backwards compat
+        for folder in ("user", "zaynes"):
+            p = exp_dir / folder / filename
+            if p.exists():
+                with open(p) as f:
+                    content = f.read().strip()
+                if content and not content.startswith("<!--"):
+                    return content
         return ""
 
-    zayne_summary = _load_zayne_file("summary.md")
-    zayne_readme = _load_zayne_file("README.md")
-    zayne_findings = _load_zayne_file("FINDINGS.md")
-    zayne_decisions = _load_zayne_file("DECISIONS.md")
+    zayne_summary = _load_user_file("summary.md")
+    zayne_readme = _load_user_file("README.md")
+    zayne_findings = _load_user_file("FINDINGS.md")
+    zayne_decisions = _load_user_file("DECISIONS.md")
 
     # Red team brief
     red_team_brief = ""
@@ -234,7 +236,7 @@ def load_experiment(exp_dir: Path) -> tuple[dict, list[dict], list[dict], list[d
 
     # Collect ALL .md and .yaml files related to this experiment, organized by path
     RESEARCH_ROOT = Path(os.environ.get("WORKSPACE", Path.home() / "Research"))
-    SKIP_DIRS = {"old", "__pycache__", ".venv", "node_modules", ".git", "zaynes"}
+    SKIP_DIRS = {"old", "__pycache__", ".venv", "node_modules", ".git", "zaynes", "user"}
     experiment_notes = []
     seen_paths = set()
 
