@@ -65,18 +65,23 @@ For **each** cluster:
 
 1. Ask: **SLURM cluster** or **RunPod**?
 
-2. For SLURM — gather connection info:
+2. For SLURM — **ask ALL questions and WAIT for answers before doing anything**:
    - Cluster nickname (e.g., `torch`, `empire`)
-   - Hostname (check `~/.ssh/config` first — if found, use it and tell the user)
+   - Hostname (check `~/.ssh/config` first — if found, tell the user what you found and confirm)
    - Username
-   - VPN required? 2FA required?
+   - VPN required?
+   - 2FA required?
+   
+   **DO NOT write any config or run any tools while waiting for the user's answers.**
+   **DO NOT fill in "unknown" for fields the user hasn't answered yet.**
+   Ask the questions, then STOP and WAIT for the user to respond.
 
-3. **CRITICAL: Write the cluster entry to `.raca/clusters.yaml` BEFORE telling the user to run `raca auth`.**
-   `raca auth` reads from this file — if the cluster isn't configured yet, it crashes with "Cluster not found."
-   **You MUST call a tool to write the YAML file and confirm the write succeeded BEFORE showing the user the `raca auth` command.** Never put `raca auth` in a message unless `.raca/clusters.yaml` already has that cluster in it.
+3. **Only AFTER the user has answered**: write the cluster entry to `.raca/clusters.yaml`.
+   `raca auth` reads from this file — if the cluster isn't configured yet, it crashes.
+   **You MUST confirm the write succeeded BEFORE showing the user the `raca auth` command.**
 
 4. Tell the user to auth — but ONLY after step 3's write is confirmed:
-   > "I've saved the cluster config to `.raca/clusters.yaml`. Now open a **new terminal tab** and run:"
+   > "I've saved the cluster config. Now open a **new terminal tab** and run:"
    > ```bash
    > raca auth <nickname>
    > ```
