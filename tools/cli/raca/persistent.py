@@ -344,6 +344,21 @@ class PersistentSSHDaemon:
 
         return self._fork_daemon()
 
+    def adopt_session(self, child) -> bool:
+        """Adopt an existing authenticated pexpect child and daemonize it.
+
+        Used when ControlMaster auth succeeds but multiplexing doesn't work.
+        Skips spawning SSH and interactive auth — goes straight to daemonizing.
+
+        Args:
+            child: An alive pexpect spawn object with an authenticated shell.
+
+        Returns:
+            True if daemon was started successfully.
+        """
+        self.child = child
+        return self._fork_daemon()
+
     def _interactive_auth(self, timeout: int) -> bool:
         """Proxy SSH's PTY to the user's terminal for interactive authentication.
 
@@ -456,26 +471,42 @@ class PersistentSSHDaemon:
             for _ in range(50):  # 50 * 0.1s = 5s
                 if pid_path.exists():
                     logger.info("Daemon started (PID file: %s)", pid_path)
-                    # Fully detach pexpect so its __del__ doesn't kill SSH
+                    # Fully detach pexpect so its __del__ doesn't kill SSH.
+                    # Must close ptyproc.fileobj (BufferedRWPair wrapping
+                    # the PTY fd) — otherwise its GC finalizer tries to
+                    # close an already-closed fd and emits "Bad file
+                    # descriptor" warnings.
                     if self.child is not None:
                         pty_fd = self.child.child_fd
+                        # Close ptyproc's file objects first — they own
+                        # the raw fd via an internal FileIO.
+                        ptyproc = getattr(self.child, "ptyproc", None)
+                        fd_closed_by_ptyproc = False
+                        if ptyproc is not None:
+                            ptyproc_fobj = getattr(ptyproc, "fileobj", None)
+                            if ptyproc_fobj is not None:
+                                try:
+                                    ptyproc_fobj.close()
+                                    fd_closed_by_ptyproc = True
+                                except OSError:
+                                    pass
+                            ptyproc.fd = -1
+                            ptyproc.closed = True
+                        # Close spawn-level fileobj if present
                         fileobj = getattr(self.child, "fileobj", None)
                         if fileobj is not None:
                             try:
                                 fileobj.close()
                             except OSError:
                                 pass
-                        if pty_fd >= 0:
+                        # Fallback: close raw fd if ptyproc didn't
+                        if not fd_closed_by_ptyproc and pty_fd >= 0:
                             try:
                                 os.close(pty_fd)
                             except OSError:
                                 pass
                         self.child.child_fd = -1
                         self.child.terminated = True
-                        ptyproc = getattr(self.child, "ptyproc", None)
-                        if ptyproc is not None:
-                            ptyproc.fd = -1
-                            ptyproc.closed = True
                         self.child = None
                     return True
                 time.sleep(0.1)

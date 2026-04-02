@@ -291,11 +291,10 @@ def setup_cluster(cluster: str) -> None:
         stop.set()
         drain.join(timeout=2)
 
-        # Now we can kill the master. If slave worked, ControlPersist keeps
-        # the socket alive. If it didn't, we want it dead anyway.
-        cm_child.terminate(force=True)
-
         if slave_ok:
+            # Slave works — ControlMaster mode is fully functional.
+            # Kill the probe session; ControlPersist keeps the socket alive.
+            cm_child.terminate(force=True)
             cfg["connection_mode"] = "controlmaster"
             save_cluster(cluster, cfg)
             click.echo(
@@ -310,11 +309,43 @@ def setup_cluster(cluster: str) -> None:
                 click.style("WARNING:", fg="yellow", bold=True)
                 + " ControlMaster authenticated but multiplexed connections hang."
             )
-            # Kill the broken ControlMaster socket before falling through
-            _kill_controlmaster_socket(cfg, cluster)
 
-    # ─── Phase 2: Try persistent mode ───────────────────────────────────────
-    cm_reason = "timed out waiting for shell prompt" if cm_child is None else "multiplexed connections failed"
+            # Remove the ControlMaster socket file so nothing tries to
+            # multiplex through it. Do NOT send `ssh -O exit` — that would
+            # kill the SSH session we want to keep.
+            from pathlib import Path
+            user = cfg.get("user", "")
+            socket_dir = os.path.expanduser("~/.ssh/sockets")
+            cm_socket = Path(f"{socket_dir}/{user}@{cluster}")
+            cm_socket.unlink(missing_ok=True)
+
+            # Repurpose the authenticated session as a persistent daemon
+            # so the user doesn't have to authenticate a second time.
+            click.echo(
+                "  Repurposing authenticated session as persistent daemon..."
+            )
+
+            from .persistent import PersistentSSHDaemon
+
+            daemon = PersistentSSHDaemon(cfg, cluster)
+            persistent_success = daemon.adopt_session(cm_child)
+
+            if persistent_success:
+                cfg["connection_mode"] = "persistent"
+                save_cluster(cluster, cfg)
+                click.echo(
+                    click.style("SUCCESS:", fg="green", bold=True)
+                    + f" Persistent daemon mode works for {cluster}."
+                )
+                click.echo(f"  Saved connection_mode=persistent to clusters.yaml.")
+                click.echo(f"  From now on, use: raca auth {cluster}")
+                return
+            else:
+                # Adoption failed — kill the child, fall through to Phase 2
+                cm_child.terminate(force=True)
+
+    # ─── Phase 2: Try persistent mode (fresh auth) ─────────────────────────
+    cm_reason = "timed out waiting for shell prompt" if cm_child is None else "session adoption failed"
     click.echo()
     click.echo(
         click.style("WARNING:", fg="yellow", bold=True)

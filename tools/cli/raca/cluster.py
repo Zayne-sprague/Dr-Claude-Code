@@ -33,7 +33,7 @@ def cluster_list() -> None:
     for name in names:
         cfg = clusters[name]
         click.echo(
-            f"{name:<20} {cfg.get('host', name):<30} "
+            f"{name:<20} {cfg.get('host') or cfg.get('hostname', name):<30} "
             f"{cfg.get('user', ''):<15} {cfg.get('port', 22)}"
         )
 

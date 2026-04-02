@@ -117,7 +117,7 @@ def forward(
         )
         sys.exit(1)
 
-    host = cfg.get("host", cluster)
+    host = cfg.get("host") or cfg.get("hostname", cluster)
     user = cfg.get("user")
     port = cfg.get("port", 22)
     socket_dir = Path.home() / ".ssh" / "sockets"
