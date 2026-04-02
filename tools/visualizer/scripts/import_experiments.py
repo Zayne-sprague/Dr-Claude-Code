@@ -83,10 +83,17 @@ def compute_completeness(exp_dir: Path, config: dict) -> int:
 
 
 def parse_hf_repos(content: str) -> list[dict]:
-    """Extract HF repo links from HUGGINGFACE_REPOS.md markdown tables."""
+    """Extract HF repo links from HUGGINGFACE_REPOS.md.
+
+    Matches three formats:
+    1. Markdown links: [description](https://huggingface.co/datasets/org/repo)
+    2. Bare URLs: https://huggingface.co/datasets/org/repo
+    3. Plain repo refs: org/repo-name (where org matches HF_ORG)
+    """
     repos = []
     seen = set()
-    # Match markdown links like [name](https://huggingface.co/datasets/org/repo)
+
+    # 1. Markdown links [text](url) — preferred format, text becomes description
     link_pattern = re.compile(r'\[([^\]]*)\]\(https://huggingface\.co/datasets/([^)]+)\)')
     for match in link_pattern.finditer(content):
         name, repo = match.groups()
@@ -94,7 +101,20 @@ def parse_hf_repos(content: str) -> list[dict]:
             seen.add(repo)
             repos.append({"repo": repo, "description": name.strip(), "date": ""})
 
-    # Also match plain repo references like {HF_ORG}/something
+    # 2. Bare URLs not inside markdown links
+    bare_url_pattern = re.compile(r'(?<!\()https://huggingface\.co/datasets/([\w.-]+/[\w.-]+)')
+    for match in bare_url_pattern.finditer(content):
+        repo = match.group(1)
+        if repo not in seen:
+            seen.add(repo)
+            # Try to extract a description from the surrounding line
+            line_start = content.rfind("\n", 0, match.start()) + 1
+            line = content[line_start:match.start()].strip().rstrip(":")
+            # Strip markdown bold/label prefixes like "**Link:**"
+            desc = re.sub(r'^\*\*[^*]+\*\*\s*', '', line).strip().rstrip(":")
+            repos.append({"repo": repo, "description": desc, "date": ""})
+
+    # 3. Plain repo references like {HF_ORG}/something
     hf_org = os.environ.get("HF_ORG", "your-org")
     plain_pattern = re.compile(rf'(?:^|\s)({re.escape(hf_org)}/[\w-]+)')
     for match in plain_pattern.finditer(content):
@@ -337,18 +357,41 @@ def load_experiment(exp_dir: Path) -> tuple[dict, list[dict], list[dict], list[d
             if paper_path.exists() and paper_path.suffix == ".md":
                 _add_file(paper_path)
 
-    # Activity log
+    # Activity log — normalize entries to the schema the frontend expects:
+    #   type: action|result|note|milestone (controls filter chips)
+    #   scope: experiment|job|artifact|infra (controls scope dropdown)
+    #   author: agent|researcher (controls badge color)
+    #   message: display text
+    #   timestamp: ISO 8601
     activity_log = []
     log_path = exp_dir / "activity_log.jsonl"
     if log_path.exists():
         with open(log_path) as f:
             for line in f:
                 line = line.strip()
-                if line:
-                    try:
-                        activity_log.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        pass
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                # Normalize missing fields
+                if "type" not in entry:
+                    # Infer from event field if present
+                    event = entry.get("event", "")
+                    if any(k in event for k in ("created", "started", "submitted", "completed")):
+                        entry["type"] = "milestone"
+                    elif any(k in event for k in ("result", "upload", "artifact")):
+                        entry["type"] = "result"
+                    else:
+                        entry["type"] = "action"
+                if "message" not in entry:
+                    entry["message"] = entry.get("details", entry.get("event", ""))
+                if "author" not in entry:
+                    entry["author"] = "agent"
+                if "scope" not in entry:
+                    entry["scope"] = "experiment"
+                activity_log.append(entry)
 
     return experiment, runs, sub_experiments, experiment_notes, activity_log
 

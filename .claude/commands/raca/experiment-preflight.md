@@ -51,6 +51,24 @@ Propose a canary job — a small-scale version of the full experiment that:
 - Touches every part of the pipeline the full job will use
 - Catches bugs, format issues, logic errors before they waste real compute
 
+### Coverage requirements
+
+The canary MUST cover all domains/conditions in the experiment, not just the first one.
+
+**If the experiment has N domains/tasks/conditions:**
+- The canary must touch ALL N (e.g., 5 questions per domain instead of 20 from one domain)
+- Each domain may use a different parser, scorer, prompt template, or metadata schema — a single-domain canary cannot catch bugs in the others
+- Randomly sample questions (not first-N) to avoid clustering at one difficulty level
+- Include at least 1 question from the hardest difficulty per domain
+
+**What to verify per domain:**
+- Parser produces correct output (not just "it ran")
+- No truncation (`finish_reason != "length"`)
+- Metadata deserialization works (e.g., JSON string vs dict)
+- Score distribution is plausible (not all 0 or all 1)
+
+**A single-domain canary for a multi-domain experiment is insufficient coverage — flag it in the red team brief.**
+
 Tell the user what the canary will do and ask if they want to run it. If yes, submit it via the `run-job` skill.
 
 The canary is not optional — it's the cheapest way to catch problems. But the user can override: log it with `author: user` if they skip.

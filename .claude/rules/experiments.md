@@ -80,6 +80,37 @@ What did we find? Show specific data and examples (ALWAYS give examples, the use
 - Queuing jobs on Slurm clusters can take FOREVER. It is better to build jobs that can run for 2-8 hours, hit the timeout, and then be resumed later. When you make a job, ensure it is completely resume-able. Save the checkpoints, optimizers, cache the responses, whatever. Expect a real experiment to need to be rescheduled 2-4 times throughout its life-cycle. You should be able to get intermediate data to the user so they can see data soon (take an intermediate checkpoint and schedule an eval job for example). But 2-4 jobs spread across 48 hours with intermediate data presented to the user IS BETTER THAN running the full experiment quicker but not seeing anything until it's done completely (too much risk of there being bugs).
 </critical>
 
+## Activity Log Schema
+
+Every entry in `activity_log.jsonl` MUST have these fields for the dashboard to display it:
+
+```jsonl
+{"timestamp": "2026-04-02T12:00:00Z", "type": "milestone", "scope": "experiment", "author": "agent", "message": "Canary job submitted to torch"}
+```
+
+| Field | Values | Controls |
+|-------|--------|----------|
+| `type` | `action`, `result`, `note`, `milestone` | Filter chips on Timeline tab |
+| `scope` | `experiment`, `job`, `artifact`, `infra` | Scope dropdown |
+| `author` | `agent`, `researcher` | Badge color (cyan vs amber) |
+| `message` | Free text | Display text shown to user |
+| `timestamp` | ISO 8601 | Sort order |
+
+Missing fields = entry silently filtered out of the dashboard. The import script normalizes old entries, but always write the full schema.
+
+## HUGGINGFACE_REPOS.md Format
+
+Always use markdown link format — the link text becomes the artifact description on the dashboard:
+
+```markdown
+## dataset-name (YYYY-MM-DD)
+- **Rows:** N
+- **Purpose:** brief description
+- [Descriptive name — N rows, key metric (date)](https://huggingface.co/datasets/org/dataset-name)
+```
+
+Bare URLs (`https://huggingface.co/datasets/...`) are also parsed but produce empty descriptions. Always prefer `[description](url)`.
+
 ## Flow State
 
 ```json
