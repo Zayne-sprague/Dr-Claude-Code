@@ -148,10 +148,22 @@ class SSHSessionManager:
             return False, "daemon not running"
 
         # Daemon process is alive — verify the SSH session with a ping
-        result = persistent.send_command(socket_path, "__PING__", timeout=10)
+        try:
+            result = persistent.send_command(socket_path, "__PING__", timeout=5)
+        except Exception:
+            # Socket error / timeout — daemon likely busy, don't kill
+            return True, "connected (persistent session, busy)"
+
         status = result.get("status", "")
         if status == "alive":
-            return True, "healthy (persistent daemon)"
+            return True, "connected (persistent session)"
+        if status == "dead":
+            # SSH session died — stop the daemon
+            persistent.stop_daemon(pid_path, socket_path)
+            return False, "SSH session died"
+        # Socket error in result (returncode=-1) — daemon may be busy
+        if result.get("returncode") == -1:
+            return True, "connected (persistent session, busy)"
         return False, f"daemon running but SSH not responsive: {status}"
 
     def connect(self, cluster: str, timeout: int = 120) -> RemoteResult:
@@ -325,20 +337,12 @@ class SSHSessionManager:
         )
 
     def _run_persistent(self, cluster: str, command: str, timeout: int = 300) -> RemoteResult:
-        """Run a command via the persistent SSH daemon."""
-        from . import persistent
+        """Run a command via the persistent SSH daemon.
 
-        # Verify daemon is healthy before sending command
-        healthy, msg = self.health_check(cluster)
-        if not healthy:
-            return RemoteResult(
-                stdout="",
-                stderr=f"Persistent session not connected: {msg}",
-                returncode=-1,
-                cluster=cluster,
-                command=command,
-                duration_s=0.0,
-            )
+        No pre-flight health check — send_command will return a socket error
+        if the daemon is down, which is faster than a redundant PING round-trip.
+        """
+        from . import persistent
 
         socket_path, _ = get_session_paths(cluster)
         start = time.monotonic()

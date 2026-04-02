@@ -35,6 +35,16 @@ SENTINEL_PREFIX = "__RACA_"
 # TACC kills shells inactive for ~3 minutes; 30s gives wide margin.
 HEARTBEAT_INTERVAL = 30
 
+# Shell prompt patterns (bytes) for detecting successful authentication.
+# Shared by PersistentSSHDaemon and setup_cluster probe.
+PROMPT_PATTERNS = [
+    rb'[\$%#>]\s*$',       # common prompts: $, %, #, >
+    rb'\)\$\s*$',          # (env)$
+    rb'\]\$\s*$',          # [user@host ~]$
+    rb'\]%\s*$',           # [user@host ~]%
+    rb'\]#\s*$',           # [user@host ~]# (root)
+]
+
 
 # ─── Module-Level Functions ──────────────────────────────────────────────────
 
@@ -266,14 +276,7 @@ class PersistentSSHDaemon:
     - Serves command execution requests over a Unix domain socket
     """
 
-    # Shell prompt patterns (bytes) for detecting successful authentication
-    PROMPT_PATTERNS = [
-        rb'[\$%#>]\s*$',       # common prompts: $, %, #, >
-        rb'\)\$\s*$',          # (env)$
-        rb'\]\$\s*$',          # [user@host ~]$
-        rb'\]%\s*$',           # [user@host ~]%
-        rb'\]#\s*$',           # [user@host ~]# (root)
-    ]
+    PROMPT_PATTERNS = PROMPT_PATTERNS  # Use module-level constant
 
     def __init__(self, cluster_config: dict, cluster_name: str) -> None:
         self.config = cluster_config
@@ -321,8 +324,7 @@ class PersistentSSHDaemon:
 
         ssh_cmd = (
             f"ssh -tt"
-            f" -o StrictHostKeyChecking=no"
-            f" -o UserKnownHostsFile=/dev/null"
+            f" -o StrictHostKeyChecking=accept-new"
             f" -o LogLevel=ERROR"
             f" -o ServerAliveInterval={server_alive_interval}"
             f" -o ServerAliveCountMax={server_alive_count_max}"

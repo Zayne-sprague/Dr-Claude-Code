@@ -1,38 +1,12 @@
 from __future__ import annotations
 
-import subprocess
 import threading
 import time
 
 import click
 
-from .config import get_cluster, get_connection_mode, get_session_paths, list_cluster_names
+from .config import check_vpn, get_cluster, get_connection_mode, get_session_paths, list_cluster_names
 from .controlmaster import SSHSessionManager
-
-
-def _check_vpn() -> bool:
-    """Return True if any utun interface has an inet address (VPN active)."""
-    try:
-        result = subprocess.run(
-            ["ifconfig"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        lines = result.stdout.splitlines()
-        current_utun = False
-        for line in lines:
-            if line.startswith("utun"):
-                current_utun = True
-            elif line.startswith("\t") and current_utun:
-                if "inet " in line:
-                    return True
-            else:
-                if not line.startswith("\t"):
-                    current_utun = False
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
-    return False
 
 
 def _vpn_required(cluster: str) -> bool:
@@ -99,7 +73,7 @@ def auth(cluster: str | None, daemon: bool, status: bool) -> None:
 
     # VPN check
     if _vpn_required(cluster):
-        vpn_up = _check_vpn()
+        vpn_up = check_vpn()
         if not vpn_up:
             click.echo(
                 click.style("WARNING:", fg="yellow", bold=True)

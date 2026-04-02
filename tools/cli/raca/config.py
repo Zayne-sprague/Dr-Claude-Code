@@ -152,3 +152,30 @@ def get_session_paths(name: str) -> tuple[Path, Path]:
     socket_path = socket_dir / f"{name}-session.sock"
     pid_path = socket_dir / f"{name}-session.pid"
     return socket_path, pid_path
+
+
+def check_vpn() -> bool:
+    """Return True if any utun interface has an inet address (VPN active)."""
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["ifconfig"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        lines = result.stdout.splitlines()
+        current_utun = False
+        for line in lines:
+            if line.startswith("utun"):
+                current_utun = True
+            elif line.startswith("\t") and current_utun:
+                if "inet " in line:
+                    return True
+            else:
+                if not line.startswith("\t"):
+                    current_utun = False
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    return False

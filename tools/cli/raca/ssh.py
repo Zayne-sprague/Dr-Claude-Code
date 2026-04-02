@@ -12,7 +12,7 @@ from .controlmaster import SSHSessionManager
 @click.argument("command")
 @click.option("--timeout", default=300, show_default=True, help="Command timeout in seconds.")
 def ssh(cluster: str, command: str, timeout: int) -> None:
-    """Run COMMAND on CLUSTER via ControlMaster.
+    """Run COMMAND on CLUSTER via the active SSH session.
 
     Intended for Claude Code integration: always exits with the remote
     return code, and prints stdout/stderr verbatim.

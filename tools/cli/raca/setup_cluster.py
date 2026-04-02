@@ -8,50 +8,16 @@ from __future__ import annotations
 
 import os
 import re
-import subprocess
 import sys
 import time
 
 import click
 
-from .config import get_cluster, save_cluster
-
-# Shell prompt patterns (bytes) — same as PersistentSSHDaemon.PROMPT_PATTERNS
-_PROMPT_PATTERNS = [
-    rb'[\$%#>]\s*$',       # common prompts: $, %, #, >
-    rb'\)\$\s*$',          # (env)$
-    rb'\]\$\s*$',          # [user@host ~]$
-    rb'\]%\s*$',           # [user@host ~]%
-    rb'\]#\s*$',           # [user@host ~]# (root)
-]
+from .config import check_vpn, get_cluster, save_cluster
+from .persistent import PROMPT_PATTERNS as _PROMPT_PATTERNS
 
 _PROBE_TIMEOUT = 120  # seconds
 _SILENCE_THRESHOLD = 3  # seconds of silence after user input = auth done
-
-
-def _check_vpn() -> bool:
-    """Return True if any utun interface has an inet address (VPN active)."""
-    try:
-        result = subprocess.run(
-            ["ifconfig"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        lines = result.stdout.splitlines()
-        current_utun = False
-        for line in lines:
-            if line.startswith("utun"):
-                current_utun = True
-            elif line.startswith("\t") and current_utun:
-                if "inet " in line:
-                    return True
-            else:
-                if not line.startswith("\t"):
-                    current_utun = False
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
-    return False
 
 
 def _build_controlmaster_cmd(cfg: dict, cluster: str) -> str:
@@ -231,7 +197,7 @@ def setup_cluster(cluster: str) -> None:
 
     # VPN check
     if cfg.get("vpn_required", False):
-        if not _check_vpn():
+        if not check_vpn():
             click.echo(
                 click.style("WARNING:", fg="yellow", bold=True)
                 + f" Cluster '{cluster}' requires VPN but no active utun interface was detected."
