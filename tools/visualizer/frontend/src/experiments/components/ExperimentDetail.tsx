@@ -7,13 +7,7 @@ import Markdown from "./Markdown";
 import TimelineTab from "./TimelineTab";
 import ArtifactsTab from "./ArtifactsTab";
 
-const RUN_STATUS_COLORS: Record<string, string> = {
-  running: "text-yellow-400",
-  completed: "text-green-400",
-  failed: "text-red-400",
-};
-
-type Tab = "overview" | "runs" | "artifacts" | "notes" | "live" | "timeline" | "red_team_brief";
+type Tab = "overview" | "artifacts" | "notes" | "live" | "timeline" | "red_team_brief";
 
 const LIVE_JOB_STATUS_COLORS: Record<string, string> = {
   pending: "text-gray-400",
@@ -52,7 +46,7 @@ function groupNotesByDir(notes: ExperimentNote[]): Map<string, ExperimentNote[]>
   return new Map([...groups.entries()].sort(([a], [b]) => a.localeCompare(b)));
 }
 
-const VALID_TABS = new Set<Tab>(["overview", "runs", "artifacts", "notes", "live", "timeline", "red_team_brief"]);
+const VALID_TABS = new Set<Tab>(["overview", "artifacts", "notes", "live", "timeline", "red_team_brief"]);
 
 function getInitialTab(): Tab {
   const route = parseHash();
@@ -76,25 +70,6 @@ export default function ExperimentDetail({ experiment, onBack, onSelectNote, onR
     replaceRoute({ params });
   }, []);
 
-  // Add run form
-  const [showAddRun, setShowAddRun] = useState(false);
-  const [runForm, setRunForm] = useState({ condition: "", model: "", cluster: "", hf_dataset: "", notes: "" });
-
-  const handleAddRun = async () => {
-    if (!runForm.condition) return;
-    const { experimentsApi } = await import("../api");
-    await experimentsApi.createRun(experiment.id, runForm);
-    setRunForm({ condition: "", model: "", cluster: "", hf_dataset: "", notes: "" });
-    setShowAddRun(false);
-    onRefresh();
-  };
-
-  const handleDeleteRun = async (runId: string) => {
-    const { experimentsApi } = await import("../api");
-    await experimentsApi.deleteRun(experiment.id, runId);
-    onRefresh();
-  };
-
   const liveJobCount = Object.keys(experiment.live_jobs || {}).length;
   const isFinished = !!experiment.zayne_findings;
 
@@ -107,7 +82,6 @@ export default function ExperimentDetail({ experiment, onBack, onSelectNote, onR
       ? [{ id: "live" as Tab, label: "Live Jobs", count: liveJobCount }]
       : []),
     { id: "timeline", label: "Timeline", count: experiment.activity_log?.length || 0 },
-    { id: "runs", label: "Runs", count: experiment.runs?.length || 0 },
     { id: "artifacts", label: "Artifacts", count: experiment.artifacts?.length || experiment.hf_repos?.length || 0 },
     { id: "notes", label: "Files", count: experiment.experiment_notes?.length || 0 },
   ];
@@ -219,100 +193,6 @@ export default function ExperimentDetail({ experiment, onBack, onSelectNote, onR
                 <div className="mt-2">
                   <Markdown content={experiment.notes} />
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === "runs" && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-sm font-medium text-gray-300">Run History</h2>
-              <button
-                onClick={() => setShowAddRun(true)}
-                className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium px-2.5 py-1 rounded transition-colors"
-              >
-                + Add Run
-              </button>
-            </div>
-
-            {showAddRun && (
-              <div className="mb-4 p-3 bg-gray-800 rounded-lg border border-gray-700">
-                <div className="grid grid-cols-2 gap-2">
-                  <input placeholder="Condition" value={runForm.condition} onChange={(e) => setRunForm({ ...runForm, condition: e.target.value })}
-                    className="bg-gray-900 text-gray-200 text-sm rounded px-2 py-1.5 border border-gray-700 outline-none" />
-                  <input placeholder="Model" value={runForm.model} onChange={(e) => setRunForm({ ...runForm, model: e.target.value })}
-                    className="bg-gray-900 text-gray-200 text-sm rounded px-2 py-1.5 border border-gray-700 outline-none" />
-                  <input placeholder="Cluster" value={runForm.cluster} onChange={(e) => setRunForm({ ...runForm, cluster: e.target.value })}
-                    className="bg-gray-900 text-gray-200 text-sm rounded px-2 py-1.5 border border-gray-700 outline-none" />
-                  <input placeholder="HF Dataset" value={runForm.hf_dataset} onChange={(e) => setRunForm({ ...runForm, hf_dataset: e.target.value })}
-                    className="bg-gray-900 text-gray-200 text-sm rounded px-2 py-1.5 border border-gray-700 outline-none" />
-                </div>
-                <input placeholder="Notes" value={runForm.notes} onChange={(e) => setRunForm({ ...runForm, notes: e.target.value })}
-                  className="w-full mt-2 bg-gray-900 text-gray-200 text-sm rounded px-2 py-1.5 border border-gray-700 outline-none" />
-                <div className="flex gap-2 justify-end mt-2">
-                  <button onClick={() => setShowAddRun(false)} className="text-gray-400 text-xs px-2 py-1">Cancel</button>
-                  <button onClick={handleAddRun} className="bg-cyan-600 text-white text-xs px-2.5 py-1 rounded">Add</button>
-                </div>
-              </div>
-            )}
-
-            {(experiment.runs || []).length === 0 ? (
-              <p className="text-sm text-gray-500">No runs recorded yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-gray-500 uppercase tracking-wide border-b border-gray-800">
-                      <th className="text-left py-2 px-2">Condition</th>
-                      <th className="text-left py-2 px-2">Model</th>
-                      <th className="text-left py-2 px-2">Cluster</th>
-                      <th className="text-left py-2 px-2">Status</th>
-                      <th className="text-left py-2 px-2">Metrics</th>
-                      <th className="text-left py-2 px-2">HF Dataset</th>
-                      <th className="text-left py-2 px-2">Date</th>
-                      <th className="text-left py-2 px-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...experiment.runs].reverse().map((run) => (
-                      <tr key={run.id} className="border-b border-gray-800/50 hover:bg-gray-900/50">
-                        <td className="py-2 px-2 text-gray-300">{run.condition || "-"}</td>
-                        <td className="py-2 px-2 text-gray-400">{run.model || "-"}</td>
-                        <td className="py-2 px-2 text-gray-400">{run.cluster || "-"}</td>
-                        <td className={`py-2 px-2 ${RUN_STATUS_COLORS[run.status] || "text-gray-400"}`}>{run.status}</td>
-                        <td className="py-2 px-2 text-gray-400 font-mono text-xs">
-                          {Object.keys(run.metrics || {}).length > 0
-                            ? Object.entries(run.metrics).map(([k, v]) => `${k}: ${typeof v === "number" ? v.toFixed(3) : v}`).join(", ")
-                            : "-"}
-                        </td>
-                        <td className="py-2 px-2">
-                          {run.hf_dataset ? (
-                            <a
-                              href={`https://huggingface.co/datasets/${run.hf_dataset}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-cyan-400 hover:text-cyan-300 text-xs"
-                            >
-                              {run.hf_dataset.split("/").pop()}
-                            </a>
-                          ) : "-"}
-                        </td>
-                        <td className="py-2 px-2 text-gray-500 text-xs">
-                          {run.timestamp ? new Date(run.timestamp).toLocaleDateString() : "-"}
-                        </td>
-                        <td className="py-2 px-2">
-                          <button
-                            onClick={() => handleDeleteRun(run.id)}
-                            className="text-gray-600 hover:text-red-400 text-xs transition-colors"
-                          >
-                            &times;
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             )}
           </div>

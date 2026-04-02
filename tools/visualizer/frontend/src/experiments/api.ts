@@ -1,4 +1,4 @@
-import type { Experiment, ExperimentDetail, RunRecord, SubExperiment, ExperimentNote, ActivityLogEntry, Artifact } from "./types";
+import type { Experiment, ExperimentDetail, SubExperiment, ExperimentNote, ActivityLogEntry, Artifact } from "./types";
 
 const BASE = "/api/experiments";
 
@@ -39,24 +39,6 @@ export const experimentsApi = {
 
   delete(id: string) {
     return fetchJSON<{ status: string }>(`${BASE}/${id}`, { method: "DELETE" });
-  },
-
-  createRun(expId: string, data: Partial<RunRecord>) {
-    return fetchJSON<RunRecord>(`${BASE}/${expId}/runs`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  updateRun(expId: string, runId: string, data: Partial<RunRecord>) {
-    return fetchJSON<RunRecord>(`${BASE}/${expId}/runs/${runId}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
-  },
-
-  deleteRun(expId: string, runId: string) {
-    return fetchJSON<{ status: string }>(`${BASE}/${expId}/runs/${runId}`, { method: "DELETE" });
   },
 
   createSub(expId: string, data: Partial<SubExperiment>) {
