@@ -212,73 +212,14 @@ if [ -n "$SHELL_RC" ]; then
 fi
 export PATH="${TOOLS_VENV}/bin:$PATH"
 
-# ── Hooks (optional) ─────────────────────────────────────
-if [ -f "${WORKSPACE}/.claude/settings.local.json" ]; then
-    echo ""
-    info "RACA includes two optional hooks:"
-    info "  - git-push-safety: blocks force pushes and pushes to upstream"
-    info "  - python-lint: auto-runs ruff on edited Python files"
-    read -rp "$(echo -e "${BLUE}>${RESET} Enable hooks? (y/n) [y]: ")" ENABLE_HOOKS < /dev/tty
-    ENABLE_HOOKS="${ENABLE_HOOKS:-y}"
-    if [[ ! "$ENABLE_HOOKS" =~ ^[Yy] ]]; then
-        "${TOOLS_VENV}/bin/python" -c "
-import json
-p = '${WORKSPACE}/.claude/settings.local.json'
-with open(p) as f: d = json.load(f)
-d.pop('hooks', None)
-with open(p, 'w') as f: json.dump(d, f, indent=2)
-" 2>/dev/null || true
-        info "  Hooks disabled"
-    else
-        success "  Hooks enabled"
-    fi
-fi
-
-# ── HuggingFace token ─────────────────────────────────────
-echo ""
-info "A HuggingFace token lets Claude deploy your dashboard and upload datasets."
-info "Get one at: ${BOLD}https://huggingface.co/settings/tokens${RESET} (write access)"
-echo ""
-read -rsp "$(echo -e "${BLUE}>${RESET} HuggingFace token (paste, hidden — or Enter to skip): ")" HF_TOKEN < /dev/tty
-echo ""
-HF_TOKEN=$(echo "$HF_TOKEN" | tr -d '[:space:]')
-
-if [ -n "$HF_TOKEN" ]; then
-    # Save to key_handler
-    KEY_TEMPLATE="${WORKSPACE}/packages/key_handler/key_handler/key_handler__template.py"
-    KEY_FILE="${WORKSPACE}/packages/key_handler/key_handler/key_handler.py"
-    if [ -f "$KEY_TEMPLATE" ]; then
-        cp "$KEY_TEMPLATE" "$KEY_FILE"
-        sed -i.bak "s|your-hf-token|${HF_TOKEN}|g" "$KEY_FILE" && rm -f "${KEY_FILE}.bak"
-        success "HF token saved to key_handler"
-    fi
-
-    # HF login
-    RACA_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" - <<'PYEOF' 2>/dev/null || true
-import os
-from huggingface_hub import login
-login(token=os.environ["RACA_HF_TOKEN"], add_to_git_credential=False)
-PYEOF
-
-    # Get username for config
-    HF_USER=$(RACA_HF_TOKEN="$HF_TOKEN" "${TOOLS_VENV}/bin/python" -c "
-import os, sys, io, warnings
-warnings.filterwarnings('ignore')
-sys.stderr = io.StringIO()
-from huggingface_hub import HfApi
-api = HfApi(token=os.environ['RACA_HF_TOKEN'])
-sys.stderr = sys.__stderr__
-print(api.whoami()['name'])
-" 2>/dev/null || echo "")
-    [ -n "$HF_USER" ] && success "Authenticated as: ${HF_USER}"
-fi
+# ── Hooks (enabled by default) ───────────────────────────
+# git-push-safety + python-lint — disable later via settings.local.json if unwanted
+success "Hooks enabled (git-push-safety, python-lint)"
 
 # ── Save config ───────────────────────────────────────────
 mkdir -p "$RACA_CONFIG_DIR"
 cat > "${RACA_CONFIG_DIR}/config.yaml" <<YAML
 workspace: ${WORKSPACE}
-hf_token_set: $([ -n "${HF_TOKEN}" ] && echo "true" || echo "false")
-hf_user: ${HF_USER:-""}
 tools_venv: ${TOOLS_VENV}
 installed_at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 YAML
