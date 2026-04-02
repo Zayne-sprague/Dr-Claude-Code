@@ -191,15 +191,18 @@ elif [ -f "$HOME/.bashrc" ]; then
 fi
 
 PATH_LINE="export PATH=\"${TOOLS_VENV}/bin:\$PATH\""
+WS_LINE="export RACA_WORKSPACE=\"${WORKSPACE}\""
 if [ -n "$SHELL_RC" ]; then
-    if ! grep -q ".tools-venv/bin" "$SHELL_RC" 2>/dev/null; then
+    if ! grep -q "RACA_WORKSPACE" "$SHELL_RC" 2>/dev/null; then
         echo "" >> "$SHELL_RC"
         echo "# RACA tools" >> "$SHELL_RC"
+        echo "$WS_LINE" >> "$SHELL_RC"
         echo "$PATH_LINE" >> "$SHELL_RC"
-        success "Added raca to PATH in $(basename "$SHELL_RC")"
+        success "Added RACA_WORKSPACE and raca to PATH in $(basename "$SHELL_RC")"
     fi
 fi
 export PATH="${TOOLS_VENV}/bin:$PATH"
+export RACA_WORKSPACE="${WORKSPACE}"
 
 
 

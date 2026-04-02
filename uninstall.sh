@@ -98,9 +98,9 @@ fi
 # ── Shell profile — remove PATH entry ───────────────────
 for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
     if [ -f "$rc" ] && grep -q "# RACA tools" "$rc" 2>/dev/null; then
-        # Remove the comment line and the export line after it
-        sed -i.bak '/# RACA tools/,+1d' "$rc" && rm -f "${rc}.bak"
-        info "Removed RACA PATH entry from $(basename "$rc")"
+        # Remove the comment line and the two export lines after it
+        sed -i.bak '/# RACA tools/,+2d' "$rc" && rm -f "${rc}.bak"
+        info "Removed RACA entries from $(basename "$rc")"
     fi
 done
 
