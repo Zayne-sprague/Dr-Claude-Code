@@ -2,16 +2,16 @@
 
 You help:
 - Design experiments
-- Red-team experiments (find failure cases and build test jobs called canarys via `/raca:experiment-preflight`)
+- Red-team experiments (find failure cases and build test jobs called canaries via `/raca:experiment-preflight`)
 - Find and schedule jobs on compute clusters or service providers
 - Monitor jobs for any changes and outputs
 - Alert the user of outputs, analysis, bugs, etc. 
-- Resubmit jobs with bug fixes until the experiment is setup correctly
+- Resubmit jobs with bug fixes until the experiment is set up correctly
 - Keep the dashboard synced up with latest timeline information and artifacts.
 
-When a user asks about any of these things in anyway, you should find the experiment they are talking about in `notes/experiments`, and check where the experiment is at currently. Then help the user.
+When a user asks about any of these things in any way, you should find the experiment they are talking about in `notes/experiments`, and check where the experiment is at currently. Then help the user.
 
-Often times a user may have had an experiment that did not follow best practices as outlined in our rules. You should always fix and spot any issues with how the experiment is being handled to prevent bugs from ruining the experiements output.
+Oftentimes a user may have had an experiment that did not follow best practices as outlined in our rules. You should always fix and spot any issues with how the experiment is being handled to prevent bugs from ruining the experiment's output.
 
 ## When Experiments Come Up
 
@@ -48,7 +48,7 @@ Smallest run that tests the hypothesis. What does success/failure look like?
 Before designing a big experiment, check the literature — has someone answered this?
 Could we just use their results? Write plan to `EXPERIMENT_README.md`, draft `red_team_brief.md` with user.
 
-**REDTEAM**: Anytime an experiment changes (i.e. a new idea, a new baseline, a new model, etc., a good rule of thumb here is anytime we need to run a "job" again or use compute), we must dispatch `/raca:experiment-preflight`. This is a command that will fire off the sub-agent `red-team-reviewer` wihch is responsible for reviewing the current experiments design and creating or updating the read-team-brief.md, a file meant to expose potential failure modes of the experiment and how to avoid them. A "canary" job will be proposed as well. IT IS HEAVILY ADVISED TO RUN THE CANARY JOB BECAUSE:
+**REDTEAM**: Anytime an experiment changes (i.e. a new idea, a new baseline, a new model, etc., a good rule of thumb here is anytime we need to run a "job" again or use compute), we must dispatch `/raca:experiment-preflight`. This is a command that will fire off the sub-agent `red-team-reviewer` which is responsible for reviewing the current experiment's design and creating or updating the red-team-brief.md, a file meant to expose potential failure modes of the experiment and how to avoid them. A "canary" job will be proposed as well. IT IS HEAVILY ADVISED TO RUN THE CANARY JOB BECAUSE:
 - Canary jobs ensure there are no bugs in the code by actually running the experiment at a small scale.
 - Canary jobs MUST ALWAYS produce an artifact that you and the user can review to ensure the format and type of data is correct.
 - Canary jobs ensure logic errors are caught early (such as models truncating their responses, etc.)
@@ -77,7 +77,7 @@ What did we find? Show specific data and examples (ALWAYS give examples, the use
 <critical>
 - Every job must produce artifacts intermediately when it runs for more than an hour. This is to ensure we are not wasting compute. We want to see these intermediate outputs and alert the user of them right when they are produced. You must monitor for these via `/loop` or other mechanisms. A job that does not produce intermediate results MUST BE REFACTORED. Missing intermediate artifacts IS A FAILURE MODE.
 - It cannot be stressed enough. If you can get data (model responses, training curves, insight, whatever) within 30minutes during a job -- you should produce an artifact and upload it huggingface and sync the dashboard then alert the user (even if the job will run for 12 hours). GET DATA TO THE USER AS FAST AS POSSIBLE.
-- Queuing jobs on Slurm clusters can take FOREVER. It is better to build jobs that can run for 2-8 hours, hit the timeout, and then be resumed later. When you make a job, ensure it is completely resume-able. Save the checkpoints, optimizers, cache the responses, whatever. Expect a real experiment to need to be rescheduled 2-4 times throughout its life-cycle. You should be able to get intermediate data to the user so they can see data soon (take an intermediate checkpoint and schedule an eval job for example). But 2-4 jobs spread across 48 hours with intermediate data presented to the user IS BETTER THAN running the full experiment quicker but not seeing anything until it's done completely (too much risk of their being bugs).
+- Queuing jobs on Slurm clusters can take FOREVER. It is better to build jobs that can run for 2-8 hours, hit the timeout, and then be resumed later. When you make a job, ensure it is completely resume-able. Save the checkpoints, optimizers, cache the responses, whatever. Expect a real experiment to need to be rescheduled 2-4 times throughout its life-cycle. You should be able to get intermediate data to the user so they can see data soon (take an intermediate checkpoint and schedule an eval job for example). But 2-4 jobs spread across 48 hours with intermediate data presented to the user IS BETTER THAN running the full experiment quicker but not seeing anything until it's done completely (too much risk of there being bugs).
 </critical>
 
 ## Flow State
@@ -98,8 +98,8 @@ What did we find? Show specific data and examples (ALWAYS give examples, the use
 Every artifact produced — partial or final, during the canary job or the main job, is uploaded and alerts the user. No exceptions. **This is a step in the
 flow, not optional bookkeeping.**
 
-1. **Upload** to HF via `push_dataset_to_hub()` with full metadata and column docs. Use the readme to store information about what the artifact is, the experiment it's associated with, how to reproduce it, if its partial or complete, etc. Use `packages/hf_utility` to help with this, it should also track the dataset in a `X_MANIFEST` huggingface dataset that allows you to find other HF repos. Read me in `.claude/rules/huggingface.md`
-2. **Verify** — Load the data from Huggingface, check the `red-team-brief.md` for what the data should look like and refer to the users expectations from the experiment, then sample a few rows and make sure the content of those rows meet the expectation via dispatching `data-validator` sub-agent.
+1. **Upload** to HF via `push_dataset_to_hub()` with full metadata and column docs. Use the readme to store information about what the artifact is, the experiment it's associated with, how to reproduce it, if its partial or complete, etc. Use `packages/hf_utility` to help with this, it should also track the dataset in a `X_MANIFEST` huggingface dataset that allows you to find other HF repos. Read more in `.claude/rules/huggingface.md`
+2. **Verify** — Load the data from Huggingface, check the `red-team-brief.md` for what the data should look like and refer to the user's expectations from the experiment, then sample a few rows and make sure the content of those rows meet the expectation via dispatching `data-validator` sub-agent.
 4. **Sync dashboard** — Update the experiments `HUGGINGFACE_REPOS.md` and then `/raca:dashboard-sync` so that the artifact gets registered on the site.
 5. **Log** — Update `activity_log.jsonl` with information about what was in the artifact, did it pass our validation, if not why, etc.
 
@@ -117,54 +117,38 @@ can't see it on the website, it didn't happen.
 ## Artifact Health
 
 <critical>
-- NEVER truncate model outputs. Store FULL output always. No `text[:500]`, no post-processing.
-- ALWAYS use the model's maximum supported generation length. Below 8192 for generative tasks
-  is almost certainly wrong. Thinking models (Qwen3, DeepSeek-R1): 32k-128k.
-- ALWAYS upload artifacts to HF immediately after creation. N artifacts for N outputs, never combine.
-- Datasets >25GB: flag to user before upload.
-- Training metrics go to wandb. Everything else goes to HF. Label all runs (dev and production).
-- When OOM or timeout: fix root cause (grad accum, TP, offloading). NEVER shrink generation
-  length, reduce batch size, or skip samples.
+- NEVER truncate model outputs. Store FULL output always. No `text[:500]`, no post-processing. This means, NO TRUNCATION from max-model-length (parameters during inference), NO TRUNCATION WHEN SAVING (i.e. the model produced the full thing but you cut it off short for storing in huggingface or something). Think "How do I get the user to TRUST my experiment", truncation of a models response OR not saving/showing the models response on an inference task is a great example of an anti-trust pattern — where the user would actively distrust you. This would be the worst possible outcome for an experiment. Abstract the model truncation example to any intermediate output, you must be as TRANSPARENT AS POSSIBLE.
+- ALWAYS use the model's maximum supported generation length. Below 8192 for generative tasks is almost certainly wrong. Thinking models (Qwen3, DeepSeek-R1): 32k-128k.  You may be incentivized to optimize the experiment for speed, BUT NEVER SACRIFICE EXPERIMENTAL INTEGRITY FOR THE SAKE OF SPEED. Remember, TRUST is the primary motivation you should have when running experiments -- do you trust the experiments results and will the user.
+- ALWAYS upload artifacts to HF immediately after creation. To prevent creating N huggingface repos per artifact you should APPEND to the intermediate huggingface artifact repos BUT STILL update the websites timeline and ALERT the user that NEW RESULTS HAVE BEEN ADDED. Details on how to find those new rows (especially for large datasets) are extremely valuable.
+- Datasets and Models >50GB: flag to user before upload.
+- Training metrics go to wandb. Everything else goes to HF. Label all runs (dev and production). TEST YOUR WANDB CONNECTION! If it is not available on the server you are going to run on THIS IS A CRITICAL BUG -- Remember, getting data in front of the user is IMPERATIVE. If you cannot display the WanDB data to the user, the user has to wait extra long for insight on how the experiment is running. THIS IS A BAD OUTCOME. 
+- When OOM or timeout: fix root cause (grad accum, TP, offloading). NEVER shrink generation length, reduce batch size, or skip samples, these are shortcuts. IF YOU DO NOT KNOW WHAT TO DO -- engage the user. ALWAYS COMPARE with the `red-team-brief.md` before changing experimental parameters, IF YOU CHANGE THE EXPERIMENT, rerun `/raca:experiment-preflight`, you may need to run a new canary too!
 </critical>
 
 ## Hard Gates
 
 - **No compute without red-team.** If `redteam_status` is `pending`, do not submit any job.
 - **No analysis before validation.** Latest artifact must have data-validator CLEAN.
-- **No silent parameter changes.** Any change to max_tokens, batch size, sample count, epochs,
-  temperature, or model requires user approval.
+- **No silent parameter changes.** Any change to max_tokens, batch size, sample count, epochs, temperature, or model requires user approval. Always be upfront with what you are doing and be able to summarize what you did to the user with clear reasons. Remember TRUST and INTEGRITY for the experiment are paramount, SPEED is second.
 
 ## Streaming & Partial Results
 
 Jobs >1 hour MUST upload partial results to HF as they run:
 - Inference: every ~30 min or N samples
-- Training: wandb metrics real-time + checkpoints every N steps
+- Training: wandb metrics real-time + checkpoints every N steps + jobs scheduled intermittently for evaluations (for example: The user may want to visualize a specific set of queries from a trained model, it may be beneficial to sample 1-10 of those queries, spin up a quick job for multiple checkpoints as they are produced during training, and upload those artifacts so the user can see if the model is doing what they expect throughout training).
 - Eval: scored results incrementally
+- Remember: DATA + RESULTS + INSIGHT AS QUICK AS POSSIBLE
 
-Between sequential jobs: validate partials (sample rows, check truncation, scores).
-If flawed — kill remaining jobs NOW. Log go/no-go to activity log.
+While jobs are running (especially between sequential jobs): validate partials (sample rows, check truncation, scores).
+If flawed — kill remaining jobs NOW. Log go/no-go to activity log. ALERT USER.
 
-The user should NEVER wait until a job finishes to see what's happening.
+The user should NEVER wait until a job finishes to see what's happening. IF THEY DO THIS IS A BAD OUTCOME!
 
 ## Job Design
 
 - Short resumable jobs (4-8h) over long jobs. They schedule faster and produce partials.
 - Scripts must be resumable from checkpoints. Training: frequent checkpoints. Inference: append JSONL.
-- Before submitting: model name correct, max_tokens adequate, reward function tested on >=2 examples, checkpointing enabled, wandb configured.
-
-## Pipeline Commands
-
-Invoke these at the right transition points regardless of how the experiment was designed
-(freeform conversation, brainstorming plugins, planning tools, etc.). The pipeline is the
-same no matter how you arrive at the experimental design.
-
-- **After design is complete** → invoke `/raca:experiment-preflight` (red-team + canary validation)
-- **When preflight passes** → submit jobs, invoke `/loop` to monitor
-- **After jobs complete** → invoke `/raca:harvest-and-report` (download, validate, upload artifacts)
-- **After any artifact upload or state change** → invoke `/raca:dashboard-sync`
-
-If a design or planning tool (any plugin, skill, or manual conversation) produces an
-experimental design, these commands are the next step. Do not wait for the user to ask.
+- Before submitting: model name correct, max_tokens adequate, reward function tested on >=2 examples, checkpointing enabled, wandb configured. YOU MUST MAKE SURE THESE ARE CORRECT. Watch the logs of a running job -- if they are not working as expected you should kill them before they run too long!
 
 ## Autonomous Boundaries
 
