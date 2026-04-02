@@ -64,25 +64,16 @@ def _build_persistent_cmd(cfg: dict, cluster: str) -> str:
     )
 
 
-def _probe_with_pexpect(ssh_cmd: str, timeout: int = _PROBE_TIMEOUT) -> bool:
+def _probe_with_pexpect(ssh_cmd: str, timeout: int = _PROBE_TIMEOUT):
     """Spawn SSH, proxy interactive auth, and detect a shell prompt.
 
-    Flow:
-    1. Spawn pexpect child with the SSH command.
-    2. Enter raw terminal mode.
-    3. Shuttle bytes between SSH child and stdin/stdout (select loop).
-    4. Track whether the user has sent input and when the last output arrived.
-    5. After 3s of silence following user input, print the "testing" message.
-    6. Check prompt patterns on each output chunk.
-    7. Return True if prompt found within timeout, False otherwise.
-    8. Always terminate the child and restore terminal settings.
+    Returns the pexpect child process on success (caller must clean up),
+    or None if auth/prompt detection failed.
 
-    Args:
-        ssh_cmd: Full SSH command string to spawn.
-        timeout: Max seconds to wait for a shell prompt.
-
-    Returns:
-        True if a shell prompt was detected (connection works).
+    The child is returned ALIVE so the caller can run further tests
+    (e.g. ControlMaster slave verification) while the session holds
+    the socket open. The caller is responsible for calling
+    child.terminate() when done.
     """
     import select
     import termios
@@ -92,7 +83,7 @@ def _probe_with_pexpect(ssh_cmd: str, timeout: int = _PROBE_TIMEOUT) -> bool:
 
     if not sys.stdin.isatty():
         click.echo(click.style("ERROR:", fg="red", bold=True) + " Cannot probe without a TTY.")
-        return False
+        return None
 
     child = pexpect.spawn(ssh_cmd, encoding=None, timeout=timeout)
     fd = sys.stdin.fileno()
@@ -118,51 +109,45 @@ def _probe_with_pexpect(ssh_cmd: str, timeout: int = _PROBE_TIMEOUT) -> bool:
 
             now = time.monotonic()
 
-            # Check if we should show the "testing" message:
-            # user has sent input, 3s of silence, and we haven't shown it yet
             if (
                 user_sent_input
                 and not testing_message_shown
                 and (now - last_output_time) >= _SILENCE_THRESHOLD
             ):
-                # Restore terminal to print the message cleanly
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                 in_raw_mode = False
-                click.echo()  # newline after any auth prompts
+                click.echo()
                 click.echo(
                     click.style("\nAuthenticated.", fg="green")
                     + " Testing connection mode -- this may take up to 2 minutes..."
                 )
                 testing_message_shown = True
-                # Re-enter raw mode
                 tty.setraw(fd)
                 in_raw_mode = True
 
             for ready_fd in rlist:
                 if ready_fd == child_fd:
-                    # Data from SSH -> user's terminal
                     try:
                         data = os.read(child_fd, 4096)
                     except OSError:
-                        return False
+                        child.terminate(force=True)
+                        return None
                     if not data:
-                        return False
+                        child.terminate(force=True)
+                        return None
 
                     os.write(sys.stdout.fileno(), data)
                     last_output_time = time.monotonic()
                     recent_output += data
-                    # Keep only last 512 bytes for prompt matching
                     recent_output = recent_output[-512:]
 
-                    # Check for shell prompt
                     for pattern in _PROMPT_PATTERNS:
                         if re.search(pattern, recent_output):
-                            # Give the shell a moment to settle
                             time.sleep(0.3)
-                            return True
+                            # Return child ALIVE — caller handles cleanup
+                            return child
 
                 elif ready_fd == fd:
-                    # Data from user -> SSH
                     try:
                         data = os.read(fd, 4096)
                     except OSError:
@@ -171,13 +156,12 @@ def _probe_with_pexpect(ssh_cmd: str, timeout: int = _PROBE_TIMEOUT) -> bool:
                         os.write(child_fd, data)
                         user_sent_input = True
 
-        return False
+        # Timeout — kill and return None
+        child.terminate(force=True)
+        return None
     finally:
-        # Always restore terminal and clean up the child process
         if in_raw_mode:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        if child.isalive():
-            child.terminate(force=True)
 
 
 def _test_controlmaster_slave(cfg: dict, cluster: str, timeout: int = 10) -> bool:
@@ -276,15 +260,21 @@ def setup_cluster(cluster: str) -> None:
     click.echo("  You may be prompted for credentials (password, 2FA, etc.).\n")
 
     cm_cmd = _build_controlmaster_cmd(cfg, cluster)
-    cm_success = _probe_with_pexpect(cm_cmd)
+    cm_child = _probe_with_pexpect(cm_cmd)
 
-    if cm_success:
+    if cm_child is not None:
         # Phase 1.5: Verify slave connections work through the socket.
-        # Some clusters (e.g. TACC Vista) accept the master connection but
-        # hang on multiplexed slave connections. We must test this before
-        # declaring ControlMaster works.
+        # The master pexpect child is still alive, holding the ControlMaster
+        # socket open. We test a slave connection WHILE the master lives —
+        # if we killed it first, the socket would die before ControlPersist
+        # can background it.
         click.echo("\nVerifying multiplexed connections work...")
         slave_ok = _test_controlmaster_slave(cfg, cluster, timeout=10)
+
+        # Now we can kill the master. If slave worked, ControlPersist keeps
+        # the socket alive. If it didn't, we want it dead anyway.
+        cm_child.terminate(force=True)
+
         if slave_ok:
             cfg["connection_mode"] = "controlmaster"
             save_cluster(cluster, cfg)
@@ -304,10 +294,11 @@ def setup_cluster(cluster: str) -> None:
             _kill_controlmaster_socket(cfg, cluster)
 
     # ─── Phase 2: Try persistent mode ───────────────────────────────────────
+    cm_reason = "timed out waiting for shell prompt" if cm_child is None else "multiplexed connections failed"
     click.echo()
     click.echo(
         click.style("WARNING:", fg="yellow", bold=True)
-        + " ControlMaster did not work (timed out waiting for shell prompt)."
+        + f" ControlMaster did not work ({cm_reason})."
     )
     click.echo(
         f"\n{click.style('Phase 2:', bold=True)} Trying persistent daemon mode for {cluster}..."
