@@ -121,6 +121,8 @@ Update: `dashboard_local: "done"`, `dashboard_url: "http://localhost:7860"`
 
 > "That's it — RACA is ready to go."
 >
+> "Your dashboard: **http://localhost:7860**"
+>
 > "From here, just talk to me like you would a lab partner:"
 >
 > **Run an experiment:**

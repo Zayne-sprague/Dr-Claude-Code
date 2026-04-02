@@ -158,21 +158,10 @@ if [ ! -f "${WORKSPACE}/.raca/onboarding_state.json" ]; then
     cat > "${WORKSPACE}/.raca/onboarding_state.json" <<'STATEJSON'
 {
   "step": "welcome",
-  "plugins": "pending",
-  "compute": "pending",
-  "experiment_setup": "pending",
+  "clusters": [],
   "dashboard_local": "pending",
-  "dashboard_hf": "pending",
-  "redteam": "pending",
-  "model_hosted": "pending",
-  "job_ran": "pending",
-  "results_reviewed": "pending",
-  "user_notes": "pending",
   "completed": false,
-  "cluster_name": null,
-  "model_url": null,
   "dashboard_url": null,
-  "hf_org": null,
   "updated_at": null
 }
 STATEJSON
