@@ -17,9 +17,6 @@ Detailed instructions in `.claude/rules/`:
 - `experiments.md` — read anytime users are asking about experiments, artifacts / results, etc.
 - `workspace.md` — read anytime you are editing, removing, or creating any files. Related: new experiments almost always result in creating a new folder.
 - `huggingface.md` — HF upload standards. Read this when designing experiments, you must follow these conventions when uploading artifacts.
-- `python-patterns.md` — Python style (3.10+, ruff, type hints)
-- `git-safety.md` — push safety
-- `security.md` — never hardcode API keys
 
 ## Benchmark & Task References
 

@@ -7,7 +7,7 @@ notes/experiments/       — experiment tracking (YAML, READMEs, activity logs)
 tools/visualizer/        — HuggingFace Spaces dashboard
 tools/cli/               — raca SSH lifecycle tool
 .claude/references/templates/sbatch/        — Jinja2 sbatch templates
-.claude/                 — rules, agents, commands, skills, hooks
+.claude/                 — rules, agents, commands, skills
 ```
 
 ## Hard Rules

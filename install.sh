@@ -203,9 +203,7 @@ if [ -n "$SHELL_RC" ]; then
 fi
 export PATH="${TOOLS_VENV}/bin:$PATH"
 
-# ── Hooks (enabled by default) ───────────────────────────
-# git-push-safety + python-lint — disable later via settings.local.json if unwanted
-success "Hooks enabled (git-push-safety, python-lint)"
+
 
 # ── Save config ───────────────────────────────────────────
 mkdir -p "$RACA_CONFIG_DIR"

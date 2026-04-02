@@ -11,7 +11,7 @@ curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/in
 ```
 
 
-![Intro](images/intro.png)
+![Intro](docs/images/intro.png)
 
 The common PhD student's research cycle is to design experiments, manage compute, analyze results, then iterate. RACA puts all of this into your Claude Code sessions, making the research process a tight loop between you and Claude.
 
@@ -28,10 +28,10 @@ The script sets up your workspace, installs the tools, then launches Claude Code
 
 ## What You Get
 
-![Checking Jobs](images/checking-jobs.gif)
+![Checking Jobs](docs/images/checking-jobs.gif)
 *Claude connects to your clusters over SSH, finds available GPUs, installs dependencies, and schedules jobs. You authenticate once with `raca auth <cluster>` and talk to Claude from there.*
 
-![Dashboard](images/dashboard.png)
+![Dashboard](docs/images/dashboard.png)
 *The Research Dashboard tracks all your experiments, artifacts, and findings in one place. Claude uploads results to HuggingFace and builds custom visualizations for each experiment.*
 
 If you want to know more about how Claude talks to your clusters, manages experiments, builds visualizations, etc., see [Commands and Skills](docs/commands-and-skills.md).

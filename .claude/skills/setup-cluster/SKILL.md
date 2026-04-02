@@ -1,5 +1,5 @@
 ---
-name: cluster-setup
+name: setup-cluster
 description: |
   Walk the user through connecting a new compute cluster (SLURM, RunPod, or local GPU)
   to RACA. Writes config to .raca/clusters.yaml and verifies connectivity.

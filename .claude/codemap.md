@@ -10,7 +10,7 @@
 | `docs/` | Documentation (commands/skills reference, images) |
 | `dev/` | Development scripts (cleanup, testing) |
 | `images/` | Project images and assets |
-| `.claude/` | Rules, agents, commands, skills, hooks (read-only config) |
+| `.claude/` | Rules, agents, commands, skills (read-only config) |
 | `.raca/` | Workspace runtime state (onboarding, job tracking — Claude reads/writes freely) |
 
 ## `packages/`
@@ -38,13 +38,11 @@
 
 | Folder | Description |
 |--------|-------------|
-| `rules/` | Always-loaded instruction files (experiments, git-safety, security, python-patterns, workspace, huggingface) |
+| `rules/` | Always-loaded instruction files (experiments, workspace, huggingface) |
 | `references/` | On-demand reference docs (experiments detail, compute setup, HF examples, benchmark/task refs, sbatch templates) |
 | `commands/raca/` | Slash commands (benchmark-reference, dashboard-sync, experiment-preflight, find-compute, harvest-and-report, onboarding) |
 | `skills/` | Multi-step skills (dashboard-visualizer, experiment-management, run-job, setup-cluster, setup-runpod) |
 | `agents/` | Subagent definitions (data-validator, red-team-reviewer) |
-| `hooks/` | Git and lint hooks (git-push-safety.sh, python-lint.sh) |
-| `settings.local.json` | Permissions, hooks, enabled plugins |
 
 ## `.claude/references/`
 
