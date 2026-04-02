@@ -132,6 +132,7 @@ done
 
 # ── Remove convenience scripts (this script removes itself last) ──
 _rm "${WORKSPACE}/raca-install.sh"
+_rm "${WORKSPACE}/raca-update.sh"
 
 echo ""
 success "RACA uninstalled."

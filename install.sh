@@ -154,7 +154,8 @@ fi
 # Copy convenience scripts before cleaning up the clone
 cp "${REPO_DIR}/install.sh" "${WORKSPACE}/raca-install.sh" 2>/dev/null || true
 cp "${REPO_DIR}/uninstall.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
-chmod +x "${WORKSPACE}/raca-install.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || true
+cp "${REPO_DIR}/update.sh" "${WORKSPACE}/raca-update.sh" 2>/dev/null || true
+chmod +x "${WORKSPACE}/raca-install.sh" "${WORKSPACE}/raca-uninstall.sh" "${WORKSPACE}/raca-update.sh" 2>/dev/null || true
 
 # Clean up clone dir
 [ -d "${WORKSPACE}/.raca-repo" ] && rm -rf "${WORKSPACE}/.raca-repo"
