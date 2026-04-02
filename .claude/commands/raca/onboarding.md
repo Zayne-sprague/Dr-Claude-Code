@@ -113,16 +113,25 @@ Update: `clusters: [...]`
 
 Now set up the local experiments dashboard.
 
+Build the frontend:
 ```bash
 cd tools/visualizer/frontend && npm install --silent 2>&1 | tail -1 && npm run build 2>&1 | tail -3
 ```
 
+Start the server:
 ```bash
 cd tools/visualizer && nohup .tools-venv/bin/python -c "from backend.app import app; app.run(host='127.0.0.1', port=7860)" > .raca/dashboard.log 2>&1 &
 echo $! > .raca/dashboard.pid
 ```
 
-> "Your experiments dashboard is live at **http://localhost:7860** — this is where your experiments, results, and artifacts show up."
+Import the onboarding experiment so the dashboard has content:
+```bash
+cd tools/visualizer && EXPERIMENTS_DIR=../../notes/experiments WORKSPACE=../.. .tools-venv/bin/python scripts/import_experiments.py 2>&1 | tail -3
+```
+
+If `import_experiments.py` fails (e.g., no HF token yet), that's fine — the dashboard will still load from the pre-seeded data in `backend/data/`. The import can be re-run later via `/raca:dashboard-sync`.
+
+> "Your experiments dashboard is live at **http://localhost:7860** — there's a sample experiment loaded so you can see how everything works. Check out the tabs!"
 
 Update: `dashboard_local: "done"`, `dashboard_url: "http://localhost:7860"`
 

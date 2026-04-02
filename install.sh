@@ -84,8 +84,8 @@ fi
 
 mkdir -p "${WORKSPACE}/notes/experiments" "${WORKSPACE}/packages"
 
-# Copy tools, packages, docs
-for d in tools packages docs; do
+# Copy tools, packages, docs, notes, project folders
+for d in tools packages docs notes private_projects public_projects; do
     [ -d "${REPO_DIR}/${d}" ] && {
         info "  Syncing ${d}/"
         # Use cp instead of rsync — rsync misinterprets paths with colons as remote hosts
