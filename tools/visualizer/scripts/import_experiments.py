@@ -471,6 +471,22 @@ Use the dashboard at your local URL or HF Space to view experiments.
     print(f"\nDone! Data uploaded to {DASHBOARD_REPO}")
     print("Local data also written to tools/visualizer/backend/data/")
 
+    # Bust the HF Space cache so the dashboard picks up the new data.
+    # The Space caches experiment data in memory; without this, uploads
+    # are invisible until the Space restarts.
+    import urllib.request
+    space_urls = [
+        f"https://{HF_ORG.replace('/', '-')}-dashboard.hf.space/api/experiments/sync",
+        "http://localhost:7860/api/experiments/sync",  # local dev server
+    ]
+    for url in space_urls:
+        try:
+            req = urllib.request.Request(url, method="POST")
+            urllib.request.urlopen(req, timeout=10)
+            print(f"Cache synced: {url}")
+        except Exception:
+            pass  # Space may be down or not deployed — that's fine
+
 
 if __name__ == "__main__":
     main()

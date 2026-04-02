@@ -14,10 +14,21 @@ module load {{ module }}
 {% endfor %}
 
 {% if conda_env %}
-source activate {{ conda_env }}
+# Activate conda — must use full init, not bare `source activate`
+{% if conda_prefix %}
+eval "$({{ conda_prefix }}/bin/conda shell.bash hook)"
+{% else %}
+eval "$(conda shell.bash hook)"
+{% endif %}
+conda activate {{ conda_env }}
+# Install commonly needed packages if missing
+python -c "import peft" 2>/dev/null || pip install --quiet peft datasets huggingface_hub
 {% endif %}
 
 # Redirect caches to scratch (avoid quota issues on home)
+{% if hf_org %}
+export HF_ORG={{ hf_org }}
+{% endif %}
 export HF_HOME={{ scratch }}/.cache/huggingface
 export TORCH_HOME={{ scratch }}/.cache/torch
 export TMPDIR={{ scratch }}/tmp
