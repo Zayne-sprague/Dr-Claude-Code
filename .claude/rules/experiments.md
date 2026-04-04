@@ -64,7 +64,7 @@ Ensure the `red-team-reviewer` was dispatched. Cannot skip without user override
 Pro-tip: You should do this for literally every job. Special mention is given here to "canary" jobs because if we okay a canary job for the real deal experiment, we should be absolutely sure the canary ran fine.
 
 
-**RUN**: Actually running an experiment should active the skill `run-job` which handles the life-cycles of the experiment including using `/loop` to continuously check the status of the job especially when the job is in a "Pending" state within a Slurm queue. You should always be **VALIDATING** as the job runs (regardless of it being a canary or real job, but especially during canary runs). Ensure you keep your logs up to date for the website, constantly updating the experiments `activity_log.jsonl`, `flow_state.json`, `HUGGINGFACE_REPOS.md` (when new results are produced and uploaded, which should be done ASAP), `EXPERIMENT_README.md`, etc. then call `/raca:dashboard-sync`. Always track where jobs are running (which cluster, locally, or third-party service like RunPod). 
+**RUN**: Actually running an experiment should active the skill `run-job` which handles the life-cycles of the experiment including using `/loop` to continuously check the status of the job especially when the job is in a "Pending" state within a Slurm queue. **Every loop check MUST include the timestamp** (e.g., "Checked at 2026-04-04 14:32 UTC — job still PENDING") so the user always knows when the last check was and whether monitoring is still active. You should always be **VALIDATING** as the job runs (regardless of it being a canary or real job, but especially during canary runs). Ensure you keep your logs up to date for the website, constantly updating the experiments `activity_log.jsonl`, `flow_state.json`, `HUGGINGFACE_REPOS.md` (when new results are produced and uploaded, which should be done ASAP), `EXPERIMENT_README.md`, etc. then call `/raca:dashboard-sync`. Always track where jobs are running (which cluster, locally, or third-party service like RunPod). 
 
 Whatever the job, you must save everything for reproducing that job. This includes the raw sbatch script, the model parameters for inference, the verl training parameters or Llama-Factory training configs. These get saved in their own Huggingface Repo with columns specifically for these values and reproducing jobs. Think to yourself, "in a year, when the user has no idea what this experiment is, what would we need to rerun and produce these exact same results?"
 
@@ -192,6 +192,19 @@ While jobs are running (especially between sequential jobs): validate partials (
 If flawed — kill remaining jobs NOW. Log go/no-go to activity log. ALERT USER.
 
 The user should NEVER wait until a job finishes to see what's happening. IF THEY DO THIS IS A BAD OUTCOME!
+
+## Job Monitoring
+
+When using `/loop` to monitor jobs, **always include the timestamp of each check in your report**. The user needs to know:
+- When you last checked (exact time, not "just now")
+- Whether the loop is still active
+- What changed since the last check
+
+Format: `[2026-04-04 14:32 UTC] Job 926435: RUNNING (was PENDING). 3h elapsed, 50 rows produced so far.`
+
+If nothing changed, still report the timestamp: `[2026-04-04 14:42 UTC] No change — job still PENDING in queue.`
+
+This prevents the user from wondering "is it still checking? when was the last check? did it stop?"
 
 ## Job Design
 
