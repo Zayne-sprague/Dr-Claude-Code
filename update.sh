@@ -86,51 +86,102 @@ for pkg in key_handler hf_utility; do
 done
 [ -f "${REPO_DIR}/packages/README.md" ] && cp "${REPO_DIR}/packages/README.md" "${WORKSPACE}/packages/README.md"
 
-# .claude/ — overwrite RACA-owned config, preserve user additions
+# .claude/ — overwrite RACA-owned config, preserve user modifications
 info "Updating .claude/ config"
 
-# Rules, agents, references — overwrite with latest
+# ── Hash-based conflict detection ─────────────────────────
+# Load stored hashes from last install/update
+HASH_FILE="${WORKSPACE}/.raca/file_hashes.json"
+CONFLICT_FILE=$(mktemp)
+trap 'rm -f "$CONFLICT_FILE"' EXIT
+
+# hash_matches <relative_path> — returns 0 if file is unmodified (or new), 1 if user-modified
+hash_matches() {
+    local rel_path="$1"
+    local abs_path="${WORKSPACE}/${rel_path}"
+    # New file (didn't exist before) — safe to write
+    [ ! -f "$abs_path" ] && return 0
+    # No hash file — first update after old install, treat as safe
+    [ ! -f "$HASH_FILE" ] && return 0
+    # Look up stored hash (simple grep from JSON)
+    local stored_hash
+    stored_hash=$(grep "\"${rel_path}\"" "$HASH_FILE" 2>/dev/null | sed 's/.*: *"//;s/".*//' || echo "")
+    # No stored hash for this file — new RACA file, safe to write
+    [ -z "$stored_hash" ] && return 0
+    # Compare current file hash to stored hash
+    local current_hash
+    current_hash=$(shasum -a 256 "$abs_path" | cut -d' ' -f1)
+    [ "$current_hash" = "$stored_hash" ] && return 0
+    # Hash mismatch — user modified this file
+    return 1
+}
+
+# safe_copy <source> <relative_dest> — copy if unmodified, skip if user-modified
+safe_copy() {
+    local src="$1"
+    local rel="$2"
+    local dst="${WORKSPACE}/${rel}"
+    mkdir -p "$(dirname "$dst")"
+    if hash_matches "$rel"; then
+        cp "$src" "$dst"
+    else
+        echo "$rel" >> "$CONFLICT_FILE"
+    fi
+}
+
+# Rules, agents, references — check each file before overwriting
 for subdir in rules agents references; do
     if [ -d "${REPO_DIR}/.claude/${subdir}" ]; then
-        # Copy each file, overwriting existing RACA files
         find "${REPO_DIR}/.claude/${subdir}" -type f | while read -r f; do
-            rel="${f#${REPO_DIR}/.claude/${subdir}/}"
-            target="${WORKSPACE}/.claude/${subdir}/${rel}"
-            mkdir -p "$(dirname "$target")"
-            cp "$f" "$target"
+            rel="${f#${REPO_DIR}/}"
+            safe_copy "$f" "$rel"
         done
     fi
 done
 
-# Commands/raca — overwrite entirely
-rm -rf "${WORKSPACE}/.claude/commands/raca"
-cp -R "${REPO_DIR}/.claude/commands/raca" "${WORKSPACE}/.claude/commands/raca"
-
-# Skills — overwrite RACA-shipped skills, leave user-added skills alone
-for skill_dir in "${REPO_DIR}/.claude/skills"/*/; do
-    skill_name=$(basename "$skill_dir")
-    rm -rf "${WORKSPACE}/.claude/skills/${skill_name}"
-    cp -R "$skill_dir" "${WORKSPACE}/.claude/skills/${skill_name}"
-done
-
-# Agents
-if [ -d "${REPO_DIR}/.claude/agents" ]; then
-    mkdir -p "${WORKSPACE}/.claude/agents"
-    cp "${REPO_DIR}/.claude/agents/"*.md "${WORKSPACE}/.claude/agents/" 2>/dev/null || true
+# Commands/raca — check each file instead of blowing away the directory
+if [ -d "${REPO_DIR}/.claude/commands/raca" ]; then
+    find "${REPO_DIR}/.claude/commands/raca" -type f | while read -r f; do
+        rel="${f#${REPO_DIR}/}"
+        safe_copy "$f" "$rel"
+    done
+    # Remove files that no longer exist in repo (cleanup stale commands)
+    if [ -d "${WORKSPACE}/.claude/commands/raca" ]; then
+        find "${WORKSPACE}/.claude/commands/raca" -type f | while read -r f; do
+            rel="${f#${WORKSPACE}/}"
+            repo_file="${REPO_DIR}/${rel}"
+            if [ ! -f "$repo_file" ] && hash_matches "$rel"; then
+                rm "$f"
+            fi
+        done
+    fi
 fi
 
-# Codemap
-[ -f "${REPO_DIR}/.claude/codemap.md" ] && cp "${REPO_DIR}/.claude/codemap.md" "${WORKSPACE}/.claude/codemap.md"
+# Skills — check each file, leave user-added skills alone
+for skill_dir in "${REPO_DIR}/.claude/skills"/*/; do
+    [ -d "$skill_dir" ] || continue
+    find "$skill_dir" -type f | while read -r f; do
+        rel="${f#${REPO_DIR}/}"
+        safe_copy "$f" "$rel"
+    done
+done
 
 # Hooks
 if [ -d "${REPO_DIR}/.claude/hooks" ]; then
     mkdir -p "${WORKSPACE}/.claude/hooks"
-    cp "${REPO_DIR}/.claude/hooks/"* "${WORKSPACE}/.claude/hooks/" 2>/dev/null || true
+    for f in "${REPO_DIR}/.claude/hooks/"*; do
+        [ -f "$f" ] || continue
+        rel=".claude/hooks/$(basename "$f")"
+        safe_copy "$f" "$rel"
+    done
     chmod +x "${WORKSPACE}/.claude/hooks/"*.sh 2>/dev/null || true
 fi
 
-# CLAUDE.md — always overwrite (this is RACA's, not the user's)
-[ -f "${REPO_DIR}/.claude/CLAUDE.md" ] && cp "${REPO_DIR}/.claude/CLAUDE.md" "${WORKSPACE}/.claude/CLAUDE.md"
+# Codemap
+[ -f "${REPO_DIR}/.claude/codemap.md" ] && safe_copy "${REPO_DIR}/.claude/codemap.md" ".claude/codemap.md"
+
+# CLAUDE.md
+[ -f "${REPO_DIR}/.claude/CLAUDE.md" ] && safe_copy "${REPO_DIR}/.claude/CLAUDE.md" ".claude/CLAUDE.md"
 
 # Docs
 info "Updating docs/"
@@ -167,10 +218,56 @@ cp "${REPO_DIR}/uninstall.sh" "${WORKSPACE}/raca-uninstall.sh" 2>/dev/null || tr
 cp "${REPO_DIR}/update.sh" "${WORKSPACE}/raca-update.sh" 2>/dev/null || true
 chmod +x "${WORKSPACE}/raca-install.sh" "${WORKSPACE}/raca-uninstall.sh" "${WORKSPACE}/raca-update.sh" 2>/dev/null || true
 
+# ── Regenerate file hashes ────────────────────────────────
+# For files we overwrote: hash the new content.
+# For files the user modified (conflicts): keep the OLD stored hash so future
+# updates continue to detect the user's modification.
+info "Recording file hashes..."
+NEW_HASH_FILE="${WORKSPACE}/.raca/file_hashes.json"
+echo "{" > "$NEW_HASH_FILE"
+FIRST=true
+while IFS= read -r f; do
+    rel="${f#${WORKSPACE}/}"
+    # Check if this file was a conflict (user-modified, skipped)
+    if [ -s "$CONFLICT_FILE" ] && grep -qxF "$rel" "$CONFLICT_FILE" 2>/dev/null; then
+        # Keep the old stored hash so next update still detects the modification
+        hash=$(grep "\"${rel}\"" "$HASH_FILE" 2>/dev/null | sed 's/.*: *"//;s/".*//' || echo "")
+        # If no old hash found (shouldn't happen), hash the current file
+        [ -z "$hash" ] && hash=$(shasum -a 256 "$f" | cut -d' ' -f1)
+    else
+        hash=$(shasum -a 256 "$f" | cut -d' ' -f1)
+    fi
+    if [ "$FIRST" = true ]; then
+        FIRST=false
+    else
+        echo "," >> "$NEW_HASH_FILE"
+    fi
+    printf '  "%s": "%s"' "$rel" "$hash" >> "$NEW_HASH_FILE"
+done < <(find "${WORKSPACE}/.claude/rules" "${WORKSPACE}/.claude/agents" \
+    "${WORKSPACE}/.claude/references" "${WORKSPACE}/.claude/commands/raca" \
+    "${WORKSPACE}/.claude/skills" "${WORKSPACE}/.claude/hooks" \
+    -type f 2>/dev/null; \
+    for single in "${WORKSPACE}/.claude/codemap.md" "${WORKSPACE}/.claude/CLAUDE.md"; do \
+        [ -f "$single" ] && echo "$single"; \
+    done)
+echo "" >> "$NEW_HASH_FILE"
+echo "}" >> "$NEW_HASH_FILE"
+
 # ── Cleanup ───────────────────────────────────────────────
 rm -rf "${WORKSPACE}/.raca-repo"
 
 echo ""
 success "RACA updated!"
 info "Your experiments, notes, API keys, and cluster config are untouched."
+
+# ── Report conflicts ─────────────────────────────────────
+if [ -s "$CONFLICT_FILE" ]; then
+    echo ""
+    warn "${BOLD}These files were modified by you and skipped:${RESET}"
+    while IFS= read -r c; do
+        echo -e "  ${YELLOW}•${RESET} ${c}"
+    done < "$CONFLICT_FILE"
+    echo ""
+    info "Run ${BOLD}/raca:update${RESET} to have Claude help merge them."
+fi
 echo ""

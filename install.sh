@@ -311,6 +311,32 @@ YAML
 # Add tools venv to PATH for this session
 export PATH="${TOOLS_VENV}/bin:$PATH"
 
+# ── Generate file hashes for update tracking ─────────────
+info "Recording file hashes for update tracking..."
+HASH_FILE="${RACA_CONFIG_DIR}/file_hashes.json"
+echo "{" > "$HASH_FILE"
+FIRST=true
+# Hash all RACA-owned files in .claude/ (rules, agents, references, commands/raca, skills, hooks, codemap.md, CLAUDE.md)
+while IFS= read -r f; do
+    rel="${f#${WORKSPACE}/.claude/}"
+    hash=$(shasum -a 256 "$f" | cut -d' ' -f1)
+    if [ "$FIRST" = true ]; then
+        FIRST=false
+    else
+        echo "," >> "$HASH_FILE"
+    fi
+    printf '  ".claude/%s": "%s"' "$rel" "$hash" >> "$HASH_FILE"
+done < <(find "${WORKSPACE}/.claude/rules" "${WORKSPACE}/.claude/agents" \
+    "${WORKSPACE}/.claude/references" "${WORKSPACE}/.claude/commands/raca" \
+    "${WORKSPACE}/.claude/skills" "${WORKSPACE}/.claude/hooks" \
+    -type f 2>/dev/null; \
+    for single in "${WORKSPACE}/.claude/codemap.md" "${WORKSPACE}/.claude/CLAUDE.md"; do \
+        [ -f "$single" ] && echo "$single"; \
+    done)
+echo "" >> "$HASH_FILE"
+echo "}" >> "$HASH_FILE"
+success "File hashes saved to .raca/file_hashes.json"
+
 # ── Hand off to Claude ────────────────────────────────────
 echo ""
 echo -e "${GREEN}${BOLD}Workspace ready!${RESET}"
