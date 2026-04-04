@@ -44,9 +44,61 @@ The package is installed in `.tools-venv/` by the installer. Use `.tools-venv/bi
 - Column docs must be specific: not "the score" but "circle packing score: sum_radii / 2.635, range [0, 1+]"
 - Record every upload in experiment's `HUGGINGFACE_REPOS.md` (newest first)
 
-## Naming
+## Naming (Slug-Based)
 
-Pattern: `{experiment}-{content}-{version}` (e.g., `my-exp-results-qwen3-30b-v1`)
+All artifacts from one experiment share the experiment folder name as a slug prefix:
+
+```
+{experiment-slug}-{description}-{version}
+```
+
+The slug comes from the experiment folder name in `notes/experiments/`. Examples for experiment `scaling-laws`:
+- `scaling-laws-canary-v1`
+- `scaling-laws-results-qwen3-8b`
+- `scaling-laws-eval-v2`
+
+Pass `experiment_slug` to enforce this:
+```python
+push_dataset_to_hub(
+    dataset=dataset,
+    dataset_name="scaling-laws-results-v1",
+    experiment_slug="scaling-laws",  # raises ValueError if name doesn't match
+    ...
+)
+```
+
+## Provenance Metadata
+
+Every upload should include provenance metadata when experiment/job context is available:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `experiment_name` | str | Experiment folder name |
+| `job_id` | str | Cluster job ID (e.g., "empire:926435") |
+| `cluster` | str | Which cluster it ran on |
+| `artifact_status` | str | "partial" or "final" |
+| `canary` | bool | Whether this is a canary run |
+
+Pass them in the `metadata` dict — the README auto-generates a Provenance section:
+
+```python
+push_dataset_to_hub(
+    dataset=dataset,
+    dataset_name="scaling-laws-results-v1",
+    experiment_slug="scaling-laws",
+    metadata={
+        "script_name": "run_eval.py",
+        "model": "Qwen/Qwen3-8B",
+        "description": "Evaluation results",
+        "experiment_name": "scaling-laws",
+        "job_id": "empire:926435",
+        "cluster": "empire",
+        "artifact_status": "final",
+        "canary": False,
+    },
+    ...
+)
+```
 
 ## HUGGINGFACE_REPOS.md Entry Format
 

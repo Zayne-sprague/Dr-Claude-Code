@@ -1,22 +1,57 @@
 # RACA: Research Assistant Coding Agent
 
-Design an experiment, run on your compute, and analyze the results all without leaving your Claude Code session.
-
-[//]: # (Talk to Claude Code through **experimental design**, **Slurm management**, and **visualization** &#40;the AI Ph.D. students experiments life-cycle&#41;)
- 
-#### Install
+One Claude Code session: design experiments, run them on your compute, analyze the results.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
 ```
 
-
 ![Intro](docs/images/intro.png)
 
-The common PhD student's research cycle is to design experiments, manage compute, analyze results, then iterate. RACA puts all of this into your Claude Code sessions, making the research process a tight loop between you and Claude.
+## What you type → what happens
 
-[//]: # (RACA puts your compute &#40;Slurm, RunPod, local GPUs&#41;, data analysis &#40;visualization, Huggingface, etc.&#41;, and experimental design in one conversation with Claude Code. The idea is to have the cycle of experiment, compute, and analysis without every leaving your terminal.)
-[//]: # (RACA connects Claude Code with your compute &#40;SLURM, RunPod, local GPUs&#41; and a visualization dashboard &#40;HuggingFace Spaces&#41; so you can design, run, and review experiments without writing sbatch scripts or doing devops.)
+**Design an experiment:**
+> *I want to test whether Qwen3-8B follows complex instructions better than Llama-3.1-8B*
+
+Claude designs the experiment, red-teams it for flaws, proposes a canary job, creates the experiment folder, and syncs your dashboard.
+
+**Run it on your cluster:**
+> *Run this on torch*
+
+Claude finds available GPUs, writes the sbatch script, submits the job, monitors it, and uploads partial results to HuggingFace as they come in.
+
+**Check on a running job:**
+> *How's the experiment going?*
+
+Claude SSHs into your cluster, checks job status, tails the logs, validates any new artifacts, and updates the dashboard — all without you touching a terminal.
+
+**Analyze results:**
+> *Show me what we got*
+
+Claude pulls the results, samples outputs, compares against the hypothesis, writes findings to the experiment README, and gives you a link to the dashboard.
+
+**Set up new compute:**
+> *Connect my university cluster* or *Set up RunPod*
+
+Claude walks you through it. You authenticate once with `raca auth <cluster>`, then just talk.
+
+## How it works
+
+Before RACA, Claude Code couldn't reach your cluster. You'd design an experiment in one window, SSH into your HPC in another, and hope nothing fell through the cracks.
+
+RACA closes the loop. One session, one conversation: design → sanity-check → run → validate → results. Your compute stays where it is — RACA talks to it, catches mistakes before they waste GPU hours, uploads artifacts to HuggingFace as they come in, and keeps a live dashboard so you never wonder what's happening.
+
+![Checking Jobs](docs/images/checking-jobs.gif)
+
+## What you get
+
+- **SSH to any cluster** — SLURM, RunPod, or local GPUs. Authenticate once, talk from there.
+- **Red-team review** — an adversarial agent checks your experiment design before any compute runs.
+- **Live dashboard** — experiment READMEs, timelines, artifacts, results. Local or deployed to a free HuggingFace Space.
+- **Artifact pipeline** — results upload to HuggingFace as they come in, validated automatically, visible on the dashboard immediately.
+- **Resumable jobs** — short jobs that checkpoint and resume. Partial results stream to you throughout.
+
+![Dashboard](docs/images/dashboard.png)
 
 ## Install
 
@@ -24,29 +59,17 @@ The common PhD student's research cycle is to design experiments, manage compute
 curl -sSL https://raw.githubusercontent.com/Zayne-sprague/Dr-Claude-Code/main/install.sh | bash
 ```
 
-The script sets up your workspace, installs the tools, then launches Claude Code automatically. Claude walks you through the rest: connecting your clusters, deploying the dashboard, and running your first experiment. If you ever need to re-run the setup, use `/raca:onboarding`.
+Sets up your workspace, installs tools, then launches Claude Code. Claude walks you through connecting clusters, setting up HuggingFace, and deploying your dashboard. Takes about 5 minutes.
 
-## What You Get
+**Update:** `bash raca-update.sh` (in your workspace)
+**Uninstall:** `bash raca-uninstall.sh`
 
-![Checking Jobs](docs/images/checking-jobs.gif)
-*Claude connects to your clusters over SSH, finds available GPUs, installs dependencies, and schedules jobs. You authenticate once with `raca auth <cluster>` and talk to Claude from there.*
-
-![Dashboard](docs/images/dashboard.png)
-*The Research Dashboard tracks all your experiments, artifacts, and findings in one place. Claude uploads results to HuggingFace and builds custom visualizations for each experiment.*
-
-If you want to know more about how Claude talks to your clusters, manages experiments, builds visualizations, etc., see [Commands and Skills](docs/commands-and-skills.md).
-
-With this flow, you can talk to Claude, design, red-team, "canary" your job, run it, get results, and populate a dashboard.
-## Optional Tools
+## Optional plugins
 
 RACA works on its own, but these make it better:
 
-- **[Superpowers](https://github.com/anthropics/claude-code-plugins)**: Makes Claude more proactive during design (asks clarifying questions, structured planning)
-- **[Agent-Deck](https://github.com/anthropics/claude-code-plugins)**: Run multiple Claude sessions in parallel with a conductor that monitors them all
-
-## Read More
-
-[Blog Post: How Claude Code Changed the Way I Think About Research](RACA_v7_cc.md)
+- **[Superpowers](https://github.com/anthropics/claude-code-plugins)** — structured planning, proactive design questions
+- **[Agent-Deck](https://github.com/asheshgoplani/agent-deck)** — run multiple Claude sessions in parallel
 
 ## License
 

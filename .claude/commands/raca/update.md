@@ -30,3 +30,16 @@ Tell the user what happened:
 > "RACA updated! Your experiments, notes, API keys, and cluster config are untouched. New skills, rules, and tools have been pulled in."
 
 If the update script reported any warnings or errors, relay them.
+
+## Step 4: Handle conflicts
+
+If the update script reports files that were "modified by you and skipped", those are config files the user customized. RACA chose not to overwrite them.
+
+For each conflicted file:
+1. Read the user's current version
+2. Fetch the latest RACA version (`curl` the raw file from GitHub, or read from `.raca-repo` if still around)
+3. Show the user a summary of what changed on each side
+4. Propose a merged version that preserves the user's customizations while incorporating RACA's updates
+5. Apply with user approval
+
+If there are no conflicts, skip this step.

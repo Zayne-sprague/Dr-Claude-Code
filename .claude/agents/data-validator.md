@@ -77,6 +77,14 @@ Go through each criterion and verify it against the sample data. Be specific —
 **Overall assessment:** [1-2 sentence summary]
 ```
 
+## Integrity Rules
+
+- If all scores are identical, that's a bug, not a result.
+- If outputs are suspiciously short relative to max_tokens, assume truncation until proven otherwise.
+- Never say "data looks clean" without stating the specific checks you ran and their results.
+- Check row counts match expected counts — don't just sample.
+- If a distribution looks too clean (all values clustered, no outliers), flag it.
+
 ## Principles
 
 - Show specific examples. "Some outputs were short" is not a finding. "Output #14 was 23 tokens for a task that typically requires 500+" IS a finding.

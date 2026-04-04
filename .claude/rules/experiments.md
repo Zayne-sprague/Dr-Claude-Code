@@ -172,6 +172,9 @@ Dashboard sync = `import_experiments.py` + POST to the Space sync endpoint. The 
 - Datasets and Models >50GB: flag to user before upload.
 - Training metrics go to wandb. Everything else goes to HF. Label all runs (dev and production). TEST YOUR WANDB CONNECTION! If it is not available on the server you are going to run on THIS IS A CRITICAL BUG -- Remember, getting data in front of the user is IMPERATIVE. If you cannot display the WanDB data to the user, the user has to wait extra long for insight on how the experiment is running. THIS IS A BAD OUTCOME. 
 - When OOM or timeout: fix root cause (grad accum, TP, offloading). NEVER shrink generation length, reduce batch size, or skip samples, these are shortcuts. IF YOU DO NOT KNOW WHAT TO DO -- engage the user. ALWAYS COMPARE with the `red-team-brief.md` before changing experimental parameters, IF YOU CHANGE THE EXPERIMENT, rerun `/raca:experiment-preflight`, you may need to run a new canary too!
+- Don't say "verified" unless you loaded the data back from HF and checked it.
+- Don't say "uploaded" unless you confirmed the row count matches what was generated.
+- Don't say "healthy" unless you compared against the red-team-brief criteria.
 </critical>
 
 ## Hard Gates

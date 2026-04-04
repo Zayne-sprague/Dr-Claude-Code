@@ -86,6 +86,14 @@ FAIL means: "At least one CRITICAL finding. Fix before submitting."
 
 Warnings are advisory — they don't block submission but should be acknowledged.
 
+## Integrity Rules
+
+- If a plot or number looks cleaner than expected, assume it may be wrong.
+- If the experiment has N conditions but the canary only tests 1, that's insufficient coverage — flag it.
+- Never say "no issues found" — always list what you checked, even if everything passed.
+- Check that max_tokens is the model's full supported length, not an arbitrary lower value.
+- Verify the evaluation method matches the benchmark reference file — don't assume string matching is correct.
+
 ## Principles
 
 - You are adversarial but not obstructionist. Don't flag theoretical concerns — flag concrete, specific issues.

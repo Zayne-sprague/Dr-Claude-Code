@@ -40,11 +40,17 @@ from hf_utility import push_dataset_to_hub
 
 push_dataset_to_hub(
     dataset=dataset,
-    dataset_name="<experiment>-<description>-<version>",
+    dataset_name="<experiment-slug>-<description>-<version>",
+    experiment_slug="<experiment-slug>",  # must match experiment folder name
     metadata={
         "script_name": "<the script that generated this>",
         "model": "<model used>",
         "description": "<what this dataset contains — note if partial>",
+        "experiment_name": "<experiment-slug>",
+        "job_id": "<cluster:job_id>",
+        "cluster": "<cluster>",
+        "artifact_status": "partial",  # or "final"
+        "canary": False,
     },
     tags=["<experiment-name>", "<condition>"],
     column_descriptions={<column: description for each column>},
